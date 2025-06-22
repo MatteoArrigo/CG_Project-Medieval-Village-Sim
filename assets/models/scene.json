@@ -1,0 +1,112 @@
+{
+	"assetfiles": [
+		{"id": "hm", "file": "assets/models/uomo.gltf", "format":"GLTF"},
+		{"id": "a1", "file": "assets/models/running.gltf", "format":"GLTF"},
+		{"id": "a2", "file": "assets/models/idle.gltf", "format":"GLTF"},
+		{"id": "a3", "file": "assets/models/pointing.gltf", "format":"GLTF"},
+		{"id": "a4", "file": "assets/models/waving.gltf", "format":"GLTF"},
+		{"id": "ct", "file": "assets/models/MainSceneEnvOnly.gltf", "format":"GLTF"}
+	],
+	"models": [
+		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
+		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
+		{"id": "gb", "VD": "VDsimp", "model": "assets/models/gelatoBus.mgcg", "format":"MGCG"},
+		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
+		{"id": "scb", "VD": "VDtan", "model": "assets/models/SoccerBall.gltf", "format":"GLTF"},
+		{"id": "ground",  "VD": "VDtan",  "model": "Ground", "node": "Ground", "meshId": 0, "asset": "ct", "format":"ASSET"},
+		{"id": "buRm0",  "VD": "VDtan",  "model": "BuildingR", "node": "BuildingR", "meshId": 0, "asset": "ct", "format":"ASSET"},
+		{"id": "buRm1",  "VD": "VDtan",  "model": "BuildingR", "node": "BuildingR", "meshId": 1, "asset": "ct", "format":"ASSET"},
+		{"id": "buRm2",  "VD": "VDtan",  "model": "BuildingR", "node": "BuildingR", "meshId": 2, "asset": "ct", "format":"ASSET"},
+		{"id": "buRm3",  "VD": "VDtan",  "model": "BuildingR", "node": "BuildingR", "meshId": 3, "asset": "ct", "format":"ASSET"},
+		{"id": "buRm4",  "VD": "VDtan",  "model": "BuildingR", "node": "BuildingR", "meshId": 4, "asset": "ct", "format":"ASSET"},
+		{"id": "buLm0",  "VD": "VDtan",  "model": "BuildingL", "node": "BuildingL", "meshId": 0, "asset": "ct", "format":"ASSET"},
+		{"id": "buLm1",  "VD": "VDtan",  "model": "BuildingL", "node": "BuildingL", "meshId": 1, "asset": "ct", "format":"ASSET"},
+		{"id": "buLm2",  "VD": "VDtan",  "model": "BuildingL", "node": "BuildingL", "meshId": 2, "asset": "ct", "format":"ASSET"},
+		{"id": "buLm3",  "VD": "VDtan",  "model": "BuildingL", "node": "BuildingL", "meshId": 3, "asset": "ct", "format":"ASSET"},
+		{"id": "buLm4",  "VD": "VDtan",  "model": "BuildingL", "node": "BuildingL", "meshId": 4, "asset": "ct", "format":"ASSET"},
+		{"id": "buCm0",  "VD": "VDtan",  "model": "BuildingC", "node": "BuildingC", "meshId": 0, "asset": "ct", "format":"ASSET"},
+		{"id": "buCm1",  "VD": "VDtan",  "model": "BuildingC", "node": "BuildingC", "meshId": 1, "asset": "ct", "format":"ASSET"},
+		{"id": "buCm2",  "VD": "VDtan",  "model": "BuildingC", "node": "BuildingC", "meshId": 2, "asset": "ct", "format":"ASSET"},
+		{"id": "buCm3",  "VD": "VDtan",  "model": "BuildingC", "node": "BuildingC", "meshId": 3, "asset": "ct", "format":"ASSET"},
+		{"id": "buCm4",  "VD": "VDtan",  "model": "BuildingC", "node": "BuildingC", "meshId": 4, "asset": "ct", "format":"ASSET"}
+	],
+	"textures": [
+		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png",	   "format": "C"},
+		{"id": "pnois", "texture": "assets/textures/Perlin_noise.png", "format": "C"},
+		{"id": "main", "texture": "assets/textures/textures0.png", "format": "C"},
+		{"id": "skybox", "texture": "assets/textures/skybox.jpg", "format": "C"},
+		{"id": "scba", "texture": "assets/textures/SoccerBall/ball_euro_2020_PBR_fbx_euro_ball_2020_vray_AlbedoTransparency.png", "format": "C"},
+		{"id": "scbnm", "texture": "assets/textures/SoccerBall/ball_euro_2020_PBR_fbx_euro_ball_2020_vray_Normal.png", "format": "D"},
+		{"id": "scbmt", "texture": "assets/textures/SoccerBall/Untitled.png", "format": "D"},
+		{"id": "scbrf", "texture": "assets/textures/SoccerBall/Untitled-0.png", "format": "D"},
+
+		{"id": "BACKDOOR5", "texture": "assets/textures/MainScene/BACK DOOR 5.jpg", "format": "C"},
+		{"id": "Brick8NM", "texture": "assets/textures/MainScene/Brick8 NM.png", "format": "D"},
+		{"id": "BRICK8", "texture": "assets/textures/MainScene/BRICK 8.jpg", "format": "C"},
+		{"id": "FlatNM", "texture": "assets/textures/MainScene/FlatNM.png", "format": "D"},
+		{"id": "GaraeDoor2NM", "texture": "assets/textures/MainScene/GaraeDoor2NM.png", "format": "D"},
+		{"id": "GARAGEDOOR2", "texture": "assets/textures/MainScene/GARAGE DOOR 2.jpg", "format": "C"},
+		{"id": "METALGREY", "texture": "assets/textures/MainScene/METAL GREY.png", "format": "D"},
+		{"id": "Painted_metal_02_2K_Roughness", "texture": "assets/textures/MainScene/Painted_metal_02_2K_Roughness.png", "format": "D"},
+		{"id": "Pavement_Concrete_Marked_Footprints_UV_CM_1", "texture": "assets/textures/MainScene/Pavement_Concrete_Marked_Footprints_UV_CM_1.jpg", "format": "C"},
+		{"id": "PavementConcreteNM", "texture": "assets/textures/MainScene/PavementConcreteNM.png", "format": "D"},
+		{"id": "ROOFTOP", "texture": "assets/textures/MainScene/ROOFTOP.jpg", "format": "C"},
+		{"id": "RooftopNM", "texture": "assets/textures/MainScene/RooftopNM.png", "format": "D"},
+		{"id": "Untitled", "texture": "assets/textures/MainScene/Untitled.png", "format": "D"},
+		{"id": "Untitled-0", "texture": "assets/textures/MainScene/Untitled-0.png", "format": "D"},
+		{"id": "Untitled-1", "texture": "assets/textures/MainScene/Untitled-1.png", "format": "D"},
+		{"id": "Untitled-2", "texture": "assets/textures/MainScene/Untitled-2.png", "format": "D"},
+		{"id": "wallwhiteLINED", "texture": "assets/textures/MainScene/wall white LINED.jpg", "format": "C"},
+		{"id": "Wall6NM", "texture": "assets/textures/MainScene/Wall6NM.png", "format": "D"},
+		{"id": "WALL6", "texture": "assets/textures/MainScene/WALL 6.jpg", "format": "C"},
+		{"id": "WallWhiteLinedNM", "texture": "assets/textures/MainScene/WallWhiteLinedNM.png", "format": "D"}
+	],
+	"instances": [
+		{"technique": "CookTorranceChar", "elements": [
+			{"id": "hm0",  "model": "hm0",   "texture": ["st"]},
+			{"id": "hm1",  "model": "hm1",   "texture": ["st"]}
+		]}, 
+		{"technique": "CookTorranceNoiseSimp", "elements": [
+			{"id": "gb1",  "model": "gb",   "texture": ["main", "pnois"],
+				"translate": [2, 0, 0],
+				"quaternion" : [0.707, 0, 0.707, 0],
+				"scale": [0.75, 0.25, 0.75]},
+			{"id": "gb2",  "model": "gb",   "texture": ["main", "pnois"],
+				"translate": [-4, 0, 0],
+				"eulerAngles": [0, -90, 0],
+				"scale": [1.0, 1.0, 1.25]},
+			{"id": "gb3",  "model": "gb",   "texture": ["main", "pnois"],
+				"transform": [1, 0, 0, 0,
+							  0, 1, 0, 0,
+							  0, 0, 1, -5,
+							  0, 0, 0, 1]}
+		]}, 
+		{"technique": "SkyBox", "elements": [
+			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
+		]}, 
+		{"technique": "PBR", "elements": [
+			{"id": "scb",  "model": "scb",   "texture": ["scba", "scbnm", "scbmt", "scbrf"],
+				"translate": [0, 0, 1.5],
+				"scale": [0.0015, 0.0015, 0.0015]},
+			{"id": "ground",  "model": "ground",   "texture": ["Pavement_Concrete_Marked_Footprints_UV_CM_1", "PavementConcreteNM", "scbmt", "Untitled"]},
+
+			{"id": "buLm0",  "model": "buLm0",   "texture": ["BRICK8", "Brick8NM", "scbmt", "Untitled"]},
+			{"id": "buLm1",  "model": "buLm1",   "texture": ["ROOFTOP", "RooftopNM", "scbmt", "Untitled"]},
+			{"id": "buLm2",  "model": "buLm2",   "texture": ["Untitled-2", "FlatNM", "scbmt", "Untitled"]},
+			{"id": "buLm3",  "model": "buLm3",   "texture": ["Untitled-2", "FlatNM", "scbmt", "Untitled"]},
+			{"id": "buLm4",  "model": "buLm4",   "texture": ["METALGREY", "FlatNM", "scbmt", "Untitled"]},
+
+			{"id": "buRm0",  "model": "buRm0",   "texture": ["WALL6", "Wall6NM", "scbmt", "Untitled"]},
+			{"id": "buRm1",  "model": "buRm1",   "texture": ["GARAGEDOOR2", "GaraeDoor2NM", "scbmt", "Untitled"]},
+			{"id": "buRm2",  "model": "buRm2",   "texture": ["BACKDOOR5", "FlatNM", "scbmt", "Untitled"]},
+			{"id": "buRm3",  "model": "buRm3",   "texture": ["Untitled-2", "FlatNM", "scbmt", "Untitled"]},
+			{"id": "buRm4",  "model": "buRm4",   "texture": ["METALGREY", "FlatNM", "scbmt", "Untitled"]},
+
+			{"id": "buCm0",  "model": "buCm0",   "texture": ["wallwhiteLINED", "WallWhiteLinedNM", "scbmt", "Untitled"]},
+			{"id": "buCm1",  "model": "buCm1",   "texture": ["GARAGEDOOR2", "GaraeDoor2NM", "scbmt", "Untitled"]},
+			{"id": "buCm2",  "model": "buCm2",   "texture": ["Untitled-2", "FlatNM", "scbmt", "Untitled"]},
+			{"id": "buCm3",  "model": "buCm3",   "texture": ["Untitled", "FlatNM", "scbmt", "Untitled"]},
+			{"id": "buCm4",  "model": "buCm4",   "texture": ["METALGREY", "FlatNM", "scbmt", "Untitled"]}
+		]}
+	]
+}
