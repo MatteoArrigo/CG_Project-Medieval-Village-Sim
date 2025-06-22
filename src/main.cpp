@@ -112,7 +112,7 @@ class CGProject : public BaseProject {
 		// window size, titile and initial background
 		windowWidth = 800;
 		windowHeight = 600;
-		windowTitle = "CGProject - Showing animations";
+		windowTitle = "CGProject - Medieval Village Sim";
     	windowResizable = GLFW_TRUE;
 		
 		// Initial aspect ratio
@@ -436,7 +436,7 @@ std::cout << "\nLoading the scene\n\n";
 				curDebounce = GLFW_KEY_P;
 
 				debug1.z = (float)(((int)debug1.z + 1) % 65);
-std::cout << "Showing bone index: " << debug1.z << "\n";
+//            std::cout << "Showing bone index: " << debug1.z << "\n";
 			}
 		} else {
 			if((curDebounce == GLFW_KEY_P) && debounce) {
@@ -586,7 +586,7 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		const float maxPitch = glm::radians(60.0f);
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
-		const float MOVE_SPEED_BASE = 2.0f;
+		const float MOVE_SPEED_BASE = 5.0f;
 		const float MOVE_SPEED_RUN  = 5.0f;
 		const float ZOOM_SPEED = MOVE_SPEED_BASE * 1.5f;
 		const float MAX_CAM_DIST =  7.5;
