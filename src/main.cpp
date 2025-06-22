@@ -61,7 +61,7 @@ struct skyBoxUniformBufferObject {
 
 
 // MAIN ! 
-class E09 : public BaseProject {
+class CGProject : public BaseProject {
 	protected:
 	// Here you list all the Vulkan objects you need:
 	
@@ -112,7 +112,7 @@ class E09 : public BaseProject {
 		// window size, titile and initial background
 		windowWidth = 800;
 		windowHeight = 600;
-		windowTitle = "E09 - Showing animations";
+		windowTitle = "CGProject - Showing animations";
     	windowResizable = GLFW_TRUE;
 		
 		// Initial aspect ratio
@@ -376,7 +376,7 @@ std::cout << "\nLoading the scene\n\n";
 		// Simple trick to avoid having always 'T->'
 		// in che code that populates the command buffer!
 //std::cout << "Populating command buffer for " << currentImage << "\n";
-		E09 *T = (E09 *)Params;
+		CGProject *T = (CGProject *)Params;
 		T->populateCommandBuffer(commandBuffer, currentImage);
 	}
 	// This is the real place where the Command Buffer is written
@@ -691,7 +691,7 @@ std::cout << "Playing anim: " << curAnim << "\n";
 
 // This is the main: probably you do not need to touch this!
 int main() {
-    E09 app;
+    CGProject app;
 
     try {
         app.run();
