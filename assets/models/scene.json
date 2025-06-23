@@ -5,7 +5,8 @@
 		{"id": "a2", "file": "assets/models/idle.gltf", "format":"GLTF"},
 		{"id": "a3", "file": "assets/models/pointing.gltf", "format":"GLTF"},
 		{"id": "a4", "file": "assets/models/waving.gltf", "format":"GLTF"},
-		{"id": "ct", "file": "assets/models/MainSceneEnvOnly.gltf", "format":"GLTF"}
+		{"id": "ct", "file": "assets/models/MainSceneEnvOnly.gltf", "format":"GLTF"},
+		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"}
 	],
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
@@ -13,7 +14,9 @@
 		{"id": "groundTest", "VD": "VDsimp", "model": "assets/models/SPW_Terrain_Grass_Flat.mgcg", "format":"MGCG"},
 		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
 		{"id": "scb", "VD": "VDtan", "model": "assets/models/SoccerBall.gltf", "format":"GLTF"},
-		{"id": "houseTest", "VD": "VDtan", "model": "assets/models/pf_build_barracks_single_01.gltf", "format":"GLTF"}
+		{"id": "houseTest", "VD": "VDtan", "model": "assets/models/pf_build_barracks_single_01.gltf", "format":"GLTF"},
+
+		{"id": "tr", "VD": "VDtan", "model": "assets/models/terrain_far_01.gltf", "format":"GLTF"}
 	],
 	"textures": [
 		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png",	   "format": "C"},
@@ -30,6 +33,10 @@
 		{"id": "house2", "texture": "assets/textures/house/house2.png", "format": "D"},
 		{"id": "house3", "texture": "assets/textures/house/house3.png", "format": "D"},
 
+		{"id": "terrain_albedo", "texture": "assets/textures/Terrain/terrain_far_01_a2.jpg", "format": "C"},
+		{"id": "terrain_normmap", "texture": "assets/textures/Terrain/terrain_01_n.jpg", "format": "D"},
+		{"id": "terrain_metallic", "texture": "assets/textures/Terrain/terrain_far_01_sg.jpg", "format": "D"},
+		{"id": "terrain_roughness", "texture": "assets/textures/Terrain/terrain_01_o.jpg", "format": "D"},
 
 
 		{"id": "BACKDOOR5", "texture": "assets/textures/MainScene/BACK DOOR 5.jpg", "format": "C"},
@@ -77,7 +84,10 @@
 				"scale": [0.0015, 0.0015, 0.0015]},
 			{"id": "houseTest",  "model": "houseTest", "texture": ["house0", "house1", "house2", "house3"],
 				"translate": [0, 0,0],
-				"scale": [1,1,1]}
+				"scale": [1,1,1]},
+			{"id": "tr",  "model": "tr",   "texture": ["terrain_albedo", "terrain_normmap", "terrain_metallic", "terrain_roughness"],
+				"translate": [0, 0, 0],
+				"scale": [0.1,0.1,0.1]}
 		]}
 	]
 }

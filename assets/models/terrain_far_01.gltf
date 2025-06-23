@@ -1,0 +1,252 @@
+{
+  "asset": {
+    "generator": "UnityGltf 2.17.1, Unity 6000.0.44f1, URP",
+    "version": "2.0"
+  },
+  "extensionsUsed": [
+    "KHR_materials_pbrSpecularGlossiness",
+    "KHR_texture_transform"
+  ],
+  "scene": 0,
+  "scenes": [
+    {
+      "nodes": [
+        0
+      ],
+      "name": "terrain_far_01"
+    }
+  ],
+  "accessors": [
+    {
+      "bufferView": 0,
+      "componentType": 5126,
+      "count": 7063,
+      "type": "VEC3",
+      "max": [
+        6.7536312547304618E-17,
+        110.44135284423828,
+        485.7484130859375
+      ],
+      "min": [
+        -500.05081176757813,
+        -6.5967798233032227,
+        8.9490750354299757E-15
+      ]
+    },
+    {
+      "bufferView": 1,
+      "componentType": 5126,
+      "count": 7063,
+      "type": "VEC3",
+      "max": [
+        1.0,
+        0.99999988079071045,
+        0.97015058994293213
+      ],
+      "min": [
+        -0.9455798864364624,
+        0.0,
+        -0.93296504020690918
+      ]
+    },
+    {
+      "bufferView": 2,
+      "componentType": 5126,
+      "count": 7063,
+      "type": "VEC4",
+      "max": [
+        1.0,
+        1.0,
+        0.5674934983253479,
+        1.0
+      ],
+      "min": [
+        0.0,
+        -0.90355980396270752,
+        -0.46076381206512451,
+        1.0
+      ]
+    },
+    {
+      "bufferView": 3,
+      "componentType": 5126,
+      "count": 7063,
+      "type": "VEC2",
+      "max": [
+        1.0000001192092896,
+        0.97139662504196167
+      ],
+      "min": [
+        1.5497207641601563E-06,
+        -1.1920928955078125E-07
+      ]
+    },
+    {
+      "bufferView": 4,
+      "componentType": 5126,
+      "count": 7063,
+      "type": "VEC2",
+      "max": [
+        1.0,
+        0.97139674425125122
+      ],
+      "min": [
+        1.6093254089355469E-06,
+        2.384185791015625E-07
+      ]
+    },
+    {
+      "bufferView": 5,
+      "componentType": 5123,
+      "count": 41115,
+      "type": "SCALAR",
+      "max": [
+        7062.0
+      ],
+      "min": [
+        0.0
+      ]
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "terrain_far_01.bin",
+      "byteLength": 477760
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteLength": 84756,
+      "byteStride": 12,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 84756,
+      "byteLength": 84756,
+      "byteStride": 12,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 169512,
+      "byteLength": 113008,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 282520,
+      "byteLength": 56504,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 339024,
+      "byteLength": 56504,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 395528,
+      "byteLength": 82232,
+      "target": 34963
+    }
+  ],
+  "images": [
+    {
+      "uri": "terrain_far_01_a2.jpg",
+      "name": "terrain_far_01_a2"
+    },
+    {
+      "uri": "terrain_far_01_sg.jpg",
+      "name": "terrain_far_01_sg"
+    },
+    {
+      "uri": "terrain_01_o.jpg",
+      "name": "terrain_01_o"
+    }
+  ],
+  "materials": [
+    {
+      "occlusionTexture": {
+        "strength": 0.718999981880188,
+        "index": 2,
+        "extensions": {
+          "KHR_texture_transform": {
+            "texCoord": 0
+          }
+        }
+      },
+      "name": "mat_terrain_far_01",
+      "extensions": {
+        "KHR_materials_pbrSpecularGlossiness": {
+          "diffuseFactor": [
+            0.5299,
+            0.5299,
+            0.5299,
+            1.0
+          ],
+          "diffuseTexture": {
+            "index": 0
+          },
+          "specularFactor": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "glossinessFactor": 1.0,
+          "specularGlossinessTexture": {
+            "index": 1
+          }
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": 0,
+            "NORMAL": 1,
+            "TANGENT": 2,
+            "TEXCOORD_0": 3,
+            "TEXCOORD_1": 4
+          },
+          "indices": 5,
+          "material": 0
+        }
+      ],
+      "name": "terrain_far_01"
+    }
+  ],
+  "nodes": [
+    {
+      "mesh": 0,
+      "name": "terrain_far_01"
+    }
+  ],
+  "samplers": [
+    {
+      "minFilter": 9987
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0,
+      "name": "terrain_far_01_a2"
+    },
+    {
+      "sampler": 0,
+      "source": 1,
+      "name": "terrain_far_01_sg"
+    },
+    {
+      "sampler": 0,
+      "source": 2,
+      "name": "terrain_01_o"
+    }
+  ]
+}
