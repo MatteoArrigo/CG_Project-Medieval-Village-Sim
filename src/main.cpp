@@ -83,10 +83,10 @@ class CGProject : public BaseProject {
 	std::vector<TechniqueRef> PRs;
 	//*DBG*/Model MS;
 	//*DBG*/DescriptorSet SSD;
-	
+
 	// To support animation
-	#define N_ANIMATIONS 5
-	
+	#define N_ANIMATIONS 1
+
 	AnimBlender AB;
 	Animations Anim[N_ANIMATIONS];
 	SkeletalAnimation SKA;
@@ -243,6 +243,7 @@ class CGProject : public BaseProject {
 		Pchar.init(this, &VDchar, "shaders/PosNormUvTanWeights.vert.spv", "shaders/CookTorranceForCharacter.frag.spv", {&DSLglobal, &DSLlocalChar});
 
 		PsimpObj.init(this, &VDsimp, "shaders/SimplePosNormUV.vert.spv", "shaders/CookTorrance.frag.spv", {&DSLglobal, &DSLlocalSimp});
+		PsimpObj.init(this, &VDsimp, "shaders/SimplePosNormUV.vert.spv", "shaders/CookTorrance.frag.spv", {&DSLglobal, &DSLlocalSimp});
 
 		PskyBox.init(this, &VDskyBox, "shaders/SkyBoxShader.vert.spv", "shaders/SkyBoxShader.frag.spv", {&DSLskyBox});
 		PskyBox.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
@@ -291,9 +292,9 @@ class CGProject : public BaseProject {
 		// Models, textures and Descriptors (values assigned to the uniforms)
 		
 		// sets the size of the Descriptor Set Pool
-		DPSZs.uniformBlocksInPool = 3;
-		DPSZs.texturesInPool = 4;
-		DPSZs.setsInPool = 3;
+		DPSZs.uniformBlocksInPool = 100;
+		DPSZs.texturesInPool = 100;
+		DPSZs.setsInPool = 100;
 		
 std::cout << "\nLoading the scene\n\n";
 		if(SC.init(this, /*Npasses*/1, VDRs, PRs, "assets/models/scene.json") != 0) {
@@ -306,7 +307,7 @@ std::cout << "\nLoading the scene\n\n";
 		}
 		AB.init({{0,32,0.0f,0}, {0,16,0.0f,1}, {0,263,0.0f,2}, {0,83,0.0f,3}, {0,16,0.0f,4}});
 		//AB.init({{0,31,0.0f}});
-		SKA.init(Anim, 5, "Armature|mixamo.com|Layer0", 0);
+		SKA.init(Anim, N_ANIMATIONS, "Armature|mixamo.com|Layer0", 0);
 		
 		// initializes the textual output
 		txt.init(this, windowWidth, windowHeight);
@@ -363,7 +364,7 @@ std::cout << "\nLoading the scene\n\n";
 
 		SC.localCleanup();	
 		txt.localCleanup();
-		
+
 		for(int ian = 0; ian < N_ANIMATIONS; ian++) {
 			Anim[ian].cleanup();
 		}
@@ -479,7 +480,7 @@ std::cout << "Playing anim: " << curAnim << "\n";
 
 		// moves the view
 		float deltaT = GameLogic();
-		
+
 		// updated the animation
 		const float SpeedUpAnimFact = 0.85f;
 		AB.Advance(deltaT * SpeedUpAnimFact);

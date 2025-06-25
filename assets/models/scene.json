@@ -1,93 +1,54 @@
 {
 	"assetfiles": [
 		{"id": "hm", "file": "assets/models/uomo.gltf", "format":"GLTF"},
-		{"id": "a1", "file": "assets/models/running.gltf", "format":"GLTF"},
-		{"id": "a2", "file": "assets/models/idle.gltf", "format":"GLTF"},
-		{"id": "a3", "file": "assets/models/pointing.gltf", "format":"GLTF"},
-		{"id": "a4", "file": "assets/models/waving.gltf", "format":"GLTF"},
-		{"id": "ct", "file": "assets/models/MainSceneEnvOnly.gltf", "format":"GLTF"},
+
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"}
 	],
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
 		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
+
 		{"id": "groundTest", "VD": "VDsimp", "model": "assets/models/SPW_Terrain_Grass_Flat.mgcg", "format":"MGCG"},
 		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
-		{"id": "scb", "VD": "VDtan", "model": "assets/models/SoccerBall.gltf", "format":"GLTF"},
 		{"id": "houseTest", "VD": "VDtan", "model": "assets/models/pf_build_barracks_single_01.gltf", "format":"GLTF"},
 
-		{"id": "tr", "VD": "VDtan", "model": "assets/models/terrain_far_01.gltf", "format":"GLTF"}
+		{"id": "boat1",  "VD": "VDtan",  "model": "build_boat_01", "node": "build_boat_01", "meshId": 0, "asset": "village", "format":"ASSET"},
+		{"id": "boat2",  "VD": "VDtan",  "model": "build_boat_dragonhead_01", "node": "build_boat_dragonhead_01", "meshId": 0, "asset": "village", "format":"ASSET"},
+		{"id": "barracks_single1",  "VD": "VDtan",  "model": "pf_build_barracks_single_01", "node": "pf_build_barracks_single_01", "meshId": 0, "asset": "village", "format":"ASSET"}
+
 	],
+
 	"textures": [
 		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png",	   "format": "C"},
 		{"id": "pnois", "texture": "assets/textures/Perlin_noise.png", "format": "C"},
 		{"id": "main", "texture": "assets/textures/textures0.png", "format": "C"},
 		{"id": "skybox", "texture": "assets/textures/golden_gate_hills.jpg", "format": "C"},
-		{"id": "scba", "texture": "assets/textures/SoccerBall/ball_euro_2020_PBR_fbx_euro_ball_2020_vray_AlbedoTransparency.png", "format": "C"},
-		{"id": "scbnm", "texture": "assets/textures/SoccerBall/ball_euro_2020_PBR_fbx_euro_ball_2020_vray_Normal.png", "format": "D"},
-		{"id": "scbmt", "texture": "assets/textures/SoccerBall/Untitled.png", "format": "D"},
-		{"id": "scbrf", "texture": "assets/textures/SoccerBall/Untitled-0.png", "format": "D"},
 
-		{"id": "house0", "texture": "assets/textures/house/house0.png", "format": "C"},
-		{"id": "house1", "texture": "assets/textures/house/house1.png", "format": "D"},
-		{"id": "house2", "texture": "assets/textures/house/house2.png", "format": "D"},
-		{"id": "house3", "texture": "assets/textures/house/house3.png", "format": "D"},
+		{"id": "boat1_a", "texture": "assets/textures/all_buildings/build_boat_01_a.jpg", "format": "C"},
+		{"id": "boat1_n", "texture": "assets/textures/all_buildings/build_boat_01_n.jpg", "format": "D"},
+		{"id": "boat1_o", "texture": "assets/textures/all_buildings/build_boat_01_o.jpg", "format": "D"},
 
-		{"id": "terrain_albedo", "texture": "assets/textures/Terrain/terrain_far_01_a2.jpg", "format": "C"},
-		{"id": "terrain_normmap", "texture": "assets/textures/Terrain/terrain_01_n.jpg", "format": "D"},
-		{"id": "terrain_metallic", "texture": "assets/textures/Terrain/terrain_far_01_sg.jpg", "format": "D"},
-		{"id": "terrain_roughness", "texture": "assets/textures/Terrain/terrain_01_o.jpg", "format": "D"},
+		{"id": "boat2_a", "texture": "assets/textures/all_buildings/build_dragonhead_01_a.png", "format": "C"},
+		{"id": "boat2_n", "texture": "assets/textures/all_buildings/build_dragonhead_01_n.jpg", "format": "D"},
+		{"id": "boat2_o", "texture": "assets/textures/all_buildings/build_dragonhead_01_o.jpg", "format": "D"},
 
+		{"id": "building1_a", "texture": "assets/textures/all_buildings/build_building_01_a.jpg", "format": "C"},
+		{"id": "building1_n", "texture": "assets/textures/all_buildings/build_building_01_n.jpg", "format": "D"},
+		{"id": "building1_o", "texture": "assets/textures/all_buildings/build_building_01_o.jpg", "format": "D"}
 
-		{"id": "BACKDOOR5", "texture": "assets/textures/MainScene/BACK DOOR 5.jpg", "format": "C"},
-		{"id": "Brick8NM", "texture": "assets/textures/MainScene/Brick8 NM.png", "format": "D"},
-		{"id": "BRICK8", "texture": "assets/textures/MainScene/BRICK 8.jpg", "format": "C"},
-		{"id": "FlatNM", "texture": "assets/textures/MainScene/FlatNM.png", "format": "D"},
-		{"id": "GaraeDoor2NM", "texture": "assets/textures/MainScene/GaraeDoor2NM.png", "format": "D"},
-		{"id": "GARAGEDOOR2", "texture": "assets/textures/MainScene/GARAGE DOOR 2.jpg", "format": "C"},
-		{"id": "METALGREY", "texture": "assets/textures/MainScene/METAL GREY.png", "format": "D"},
-		{"id": "Painted_metal_02_2K_Roughness", "texture": "assets/textures/MainScene/Painted_metal_02_2K_Roughness.png", "format": "D"},
-		{"id": "Pavement_Concrete_Marked_Footprints_UV_CM_1", "texture": "assets/textures/MainScene/Pavement_Concrete_Marked_Footprints_UV_CM_1.jpg", "format": "C"},
-		{"id": "PavementConcreteNM", "texture": "assets/textures/MainScene/PavementConcreteNM.png", "format": "D"},
-		{"id": "ROOFTOP", "texture": "assets/textures/MainScene/ROOFTOP.jpg", "format": "C"},
-		{"id": "RooftopNM", "texture": "assets/textures/MainScene/RooftopNM.png", "format": "D"},
-		{"id": "Untitled", "texture": "assets/textures/MainScene/Untitled.png", "format": "D"},
-		{"id": "Untitled-0", "texture": "assets/textures/MainScene/Untitled-0.png", "format": "D"},
-		{"id": "Untitled-1", "texture": "assets/textures/MainScene/Untitled-1.png", "format": "D"},
-		{"id": "Untitled-2", "texture": "assets/textures/MainScene/Untitled-2.png", "format": "D"},
-		{"id": "wallwhiteLINED", "texture": "assets/textures/MainScene/wall white LINED.jpg", "format": "C"},
-		{"id": "Wall6NM", "texture": "assets/textures/MainScene/Wall6NM.png", "format": "D"},
-		{"id": "WALL6", "texture": "assets/textures/MainScene/WALL 6.jpg", "format": "C"},
-		{"id": "WallWhiteLinedNM", "texture": "assets/textures/MainScene/WallWhiteLinedNM.png", "format": "D"}
 	],
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
-			{"id": "hm0",  "model": "hm0",   "texture": ["st"]},
-			{"id": "hm1",  "model": "hm1",   "texture": ["st"]}
-		]}, 
+		]},
 		{"technique": "CookTorranceNoiseSimp", "elements": [
-			{"id": "gb1",  "model": "gb",   "texture": ["main", "pnois"],
-				"translate": [2, 0, 0],
-				"quaternion" : [0.7071, 0.7071, 0, 0],
-				"scale": [1,1,1]},
-			{"id": "ground",  "model": "groundTest",   "texture": ["main", "pnois"],
-				"translate": [1, 0, 0],
-				"quaternion" : [0.7071, 0.7071, 0, 0],
-				"scale": [500, 100, 500]}
 		]},
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
-		]}, 
+		]},
 		{"technique": "PBR", "elements": [
-			{"id": "scb",  "model": "scb",   "texture": ["scba", "scbnm", "scbmt", "scbrf"],
-				"translate": [0, 0, 1.5],
-				"scale": [0.0015, 0.0015, 0.0015]},
-			{"id": "houseTest",  "model": "houseTest", "texture": ["house0", "house1", "house2", "house3"],
-				"translate": [0, 0,0],
-				"scale": [1,1,1]},
-			{"id": "tr",  "model": "tr",   "texture": ["terrain_albedo", "terrain_normmap", "terrain_metallic", "terrain_roughness"],
-				"translate": [0, 0, 0],
-				"scale": [0.1,0.1,0.1]}
+			{"id": "boat1",  "model": "boat1",   "texture": ["boat1_a", "boat1_n", "boat1_o", "boat1_o"]},
+			{"id": "boat2",  "model": "boat2",   "texture": ["boat2_a", "boat2_n", "boat2_o", "boat2_o"]},
+			{"id": "barracks_single1",  "model": "barracks_single1",   "texture": ["building1_a", "building1_n", "building1_o", "building1_o"]}
 		]}
 	]
 }
