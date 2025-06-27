@@ -77,7 +77,7 @@ def getTextureMap():
     primitiveTextureMap = {}
     materialsList = getMaterialsList()
     for mesh in gltf.meshes:
-        for primitive in mesh.primitives:
+        for i, primitive in enumerate(mesh.primitives):
             if primitive.material is not None:
                 idx = primitive.material
                 name = mesh.name
@@ -90,7 +90,7 @@ def getTextureMap():
                 else:
                     normalTex = 'void'
 
-                primitiveTextureMap[name] = (albedoTex, normalTex)
+                primitiveTextureMap[f'{name}-{i:02}'] = (albedoTex, normalTex)
                 # line = '{' + f'"id": "{name}",  "model": "{name}","texture": ["{albedoTex}", "{normalTex}", "void", "void"]' + '},'
                 # lines.append(line)
     return primitiveTextureMap
@@ -107,7 +107,7 @@ def getElementsToRender():
     nodeNames = [node.name for node in gltf.nodes]
     toRenderTmp = {}
     for node in gltf.nodes:
-        if node.translation or node.rotation or node.scale:
+        if node.translation:
             children = [nodeNames[i] for i in node.children if 'collider' not in nodeNames[i]]
             if not children and not node.mesh:
                     continue
@@ -156,23 +156,24 @@ def getElementsToRender():
                 usedIdsCount[meshName[:-2]] = child_suffix + 1
             # print(id, meshName)
 
-            if meshName not in primitiveTextureMap:
-                print(f"Warning: {meshName} not found in primitiveTextureMap")
-                continue
-
             primitives = [model for model in models if model['model'] == meshName]
             if(len(primitives) == 0):
                 print(f"Warning: {meshName} not found in models")
                 continue
 
             for i, transf in enumerate(groupData['transf']):
-                for primitiveEntry in primitives:
+                for idxPrimitive, primitiveEntry in enumerate(primitives):
+
+                    if primitiveEntry['id'] not in primitiveTextureMap:
+                        print(f"Warning: {primitiveEntry['id']} not found in primitiveTextureMap")
+                        continue
+
                     entry = {
                        'id': id+f'-{i:02}'+primitiveEntry['id'][-3:],
                        'model': primitiveEntry['id'],
                        'texture': [
-                           primitiveTextureMap[meshName][0],
-                           primitiveTextureMap[meshName][1],
+                           primitiveTextureMap[primitiveEntry['id']][0],
+                           primitiveTextureMap[primitiveEntry['id']][1],
                            "void",
                            "void"
                        ]
