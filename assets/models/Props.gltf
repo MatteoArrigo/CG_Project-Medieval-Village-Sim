@@ -6,7 +6,6 @@
   "extensionsUsed": [
     "KHR_texture_transform",
     "KHR_materials_pbrSpecularGlossiness",
-    "MSFT_lod",
     "KHR_lights_punctual"
   ],
   "scene": 0,
@@ -341,7 +340,7 @@
     },
     {
       "bufferView": 21,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 681,
       "type": "SCALAR",
       "max": [
@@ -1275,7 +1274,7 @@
     },
     {
       "bufferView": 83,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 600,
       "type": "SCALAR",
       "max": [
@@ -1441,7 +1440,7 @@
     },
     {
       "bufferView": 94,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 300,
       "type": "SCALAR",
       "max": [
@@ -1531,7 +1530,7 @@
     },
     {
       "bufferView": 100,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 540,
       "type": "SCALAR",
       "max": [
@@ -1607,7 +1606,7 @@
     },
     {
       "bufferView": 105,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 600,
       "type": "SCALAR",
       "max": [
@@ -1835,7 +1834,7 @@
     },
     {
       "bufferView": 120,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 756,
       "type": "SCALAR",
       "max": [
@@ -2001,7 +2000,7 @@
     },
     {
       "bufferView": 131,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 369,
       "type": "SCALAR",
       "max": [
@@ -2257,7 +2256,7 @@
     },
     {
       "bufferView": 148,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 396,
       "type": "SCALAR",
       "max": [
@@ -2333,7 +2332,7 @@
     },
     {
       "bufferView": 153,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 396,
       "type": "SCALAR",
       "max": [
@@ -2409,7 +2408,7 @@
     },
     {
       "bufferView": 158,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 396,
       "type": "SCALAR",
       "max": [
@@ -4589,7 +4588,7 @@
     },
     {
       "bufferView": 303,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 1008,
       "type": "SCALAR",
       "max": [
@@ -4741,7 +4740,7 @@
     },
     {
       "bufferView": 313,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 522,
       "type": "SCALAR",
       "max": [
@@ -4753,7 +4752,7 @@
     },
     {
       "bufferView": 314,
-      "componentType": 5121,
+      "componentType": 5123,
       "count": 240,
       "type": "SCALAR",
       "max": [
@@ -8729,12 +8728,7 @@
         -8.363718,
         -55.12454
       ],
-      "name": "pf_bucket_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_bucket_01"
     },
     {
       "rotation": [
@@ -8765,12 +8759,7 @@
         -8.900155,
         -60.8594475
       ],
-      "name": "pf_bucket_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_bucket_01"
     },
     {
       "rotation": [
@@ -8801,12 +8790,7 @@
         -9.313334,
         -60.8520164
       ],
-      "name": "pf_bucket_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_bucket_01"
     },
     {
       "rotation": [
@@ -8837,12 +8821,7 @@
         -10.2195,
         -60.99488
       ],
-      "name": "pf_bucket_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_bucket_01"
     },
     {
       "rotation": [
@@ -8873,12 +8852,7 @@
         -9.2742,
         -61.2016373
       ],
-      "name": "pf_bucket_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_bucket_01"
     },
     {
       "rotation": [
@@ -8909,12 +8883,7 @@
         -9.797902,
         -61.0612755
       ],
-      "name": "pf_bucket_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_bucket_01"
     },
     {
       "rotation": [
@@ -8945,12 +8914,7 @@
         -11.5277843,
         -67.9249649
       ],
-      "name": "pf_bucket_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_bucket_01"
     },
     {
       "rotation": [
@@ -8981,12 +8945,7 @@
         1.32708907,
         10.3957186
       ],
-      "name": "pf_bucket_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_bucket_01"
     },
     {
       "rotation": [
@@ -13771,12 +13730,7 @@
         5.895836,
         18.75415
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -13913,12 +13867,7 @@
         7.0793,
         12.4299927
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -14055,12 +14004,7 @@
         8.732002,
         -22.51001
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -14197,12 +14141,7 @@
         7.384941,
         8.939636
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -14339,12 +14278,7 @@
         8.536,
         7.326
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -14481,12 +14415,7 @@
         8.677399,
         -19.6700134
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -14623,12 +14552,7 @@
         5.370907,
         38.7650146
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -14765,12 +14689,7 @@
         8.677,
         -8.899
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -14907,12 +14826,7 @@
         8.346,
         -9.527
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -15049,12 +14963,7 @@
         8.203,
         7.416
       ],
-      "name": "pf_fish_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_stick_01"
     },
     {
       "mesh": 14,
@@ -15184,12 +15093,7 @@
         4.584,
         11.376
       ],
-      "name": "pf_fish_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_01"
     },
     {
       "mesh": 3,
@@ -15204,12 +15108,7 @@
         5.8265,
         -18.1400146
       ],
-      "name": "pf_fish_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_01"
     },
     {
       "mesh": 3,
@@ -15224,12 +15123,7 @@
         2.491,
         43.311
       ],
-      "name": "pf_fish_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_01"
     },
     {
       "mesh": 3,
@@ -15244,12 +15138,7 @@
         5.67309952,
         7.31997728
       ],
-      "name": "pf_fish_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_01"
     },
     {
       "mesh": 3,
@@ -15264,12 +15153,7 @@
         4.32547665,
         10.9090157
       ],
-      "name": "pf_fish_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_01"
     },
     {
       "mesh": 3,
@@ -15284,12 +15168,7 @@
         3.05973935,
         20.87115
       ],
-      "name": "pf_fish_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_01"
     },
     {
       "mesh": 3,
@@ -15304,12 +15183,7 @@
         2.143,
         26.612
       ],
-      "name": "pf_fish_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_01"
     },
     {
       "mesh": 3,
@@ -15324,12 +15198,7 @@
         2.50910187,
         34.8099976
       ],
-      "name": "pf_fish_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_fish_01"
     },
     {
       "children": [
@@ -18373,12 +18242,7 @@
         -1.571,
         13.43
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18398,12 +18262,7 @@
         2.958506,
         -8.912256
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18423,12 +18282,7 @@
         1.50076485,
         -42.00013
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18448,12 +18302,7 @@
         1.44882631,
         -53.3372421
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18473,12 +18322,7 @@
         1.25829363,
         -53.563324
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18498,12 +18342,7 @@
         -0.887805462,
         -12.4149466
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18523,12 +18362,7 @@
         4.17276525,
         -45.270874
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18548,12 +18382,7 @@
         2.10611773,
         -66.83417
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18573,12 +18402,7 @@
         3.18799257,
         -66.42523
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18598,12 +18422,7 @@
         1.35806131,
         -67.39853
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18623,12 +18442,7 @@
         3.65613174,
         -46.7314148
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18648,12 +18462,7 @@
         4.79685736,
         -57.9759827
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18673,12 +18482,7 @@
         4.07791471,
         -40.2244568
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18698,12 +18502,7 @@
         1.30823088,
         -69.44287
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18723,12 +18522,7 @@
         2.52452135,
         -65.1828
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18748,12 +18542,7 @@
         4.32,
         -28.29
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18773,12 +18562,7 @@
         1.57181406,
         -46.9947624
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18798,12 +18582,7 @@
         1.40621519,
         -56.3158569
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18823,12 +18602,7 @@
         1.65940619,
         -72.66638
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18848,12 +18622,7 @@
         4.63622332,
         -63.7190247
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18873,12 +18642,7 @@
         4.040485,
         -64.17334
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18898,12 +18662,7 @@
         3.41291571,
         -62.5469666
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18923,12 +18682,7 @@
         2.01271582,
         -57.41626
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18948,12 +18702,7 @@
         1.37,
         -60.27
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18973,12 +18722,7 @@
         0.3606553,
         4.966465
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -18998,12 +18742,7 @@
         1.28591585,
         -41.79286
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19023,12 +18762,7 @@
         1.3999157,
         -31.4937248
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19048,12 +18782,7 @@
         1.3749156,
         -36.320858
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19073,12 +18802,7 @@
         0.4299159,
         -28.9158573
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19098,12 +18822,7 @@
         0.9109998,
         -18.132
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19123,12 +18842,7 @@
         -2.01,
         33.02
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19148,12 +18862,7 @@
         -1.811,
         32.17
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -19173,12 +18882,7 @@
         -2.03,
         32.1
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19198,12 +18902,7 @@
         -0.21,
         12.37
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19223,12 +18922,7 @@
         -0.4,
         14.4
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19248,12 +18942,7 @@
         -0.31,
         13.44
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -19273,12 +18962,7 @@
         -1.983,
         13.1940384
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -19298,12 +18982,7 @@
         -2.073,
         14.4305954
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19323,12 +19002,7 @@
         -1.88,
         14.02
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19348,12 +19022,7 @@
         -0.408,
         -9.741
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19373,12 +19042,7 @@
         -0.598,
         -7.832
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19398,12 +19062,7 @@
         -0.508,
         -8.45
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -19423,12 +19082,7 @@
         1.02,
         -22.94
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -19448,12 +19102,7 @@
         0.94173,
         -24.26
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19473,12 +19122,7 @@
         1.11954737,
         -24.2900162
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19498,12 +19142,7 @@
         0.926,
         -9.823
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19523,12 +19162,7 @@
         0.743,
         -9.882
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19548,12 +19182,7 @@
         1.04,
         -11.172
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -19573,12 +19202,7 @@
         -2.53,
         7.740196
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19598,12 +19222,7 @@
         -2.31,
         6.281082
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -19623,12 +19242,7 @@
         -2.51,
         6.48097229
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19648,12 +19262,7 @@
         -2.94,
         8.15
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19673,12 +19282,7 @@
         -2.65,
         7.57
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -19698,12 +19302,7 @@
         -2.48,
         5.24
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19723,12 +19322,7 @@
         -2.334,
         20.3281746
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19748,12 +19342,7 @@
         -2.531,
         21.94284
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19773,12 +19362,7 @@
         -0.095,
         -9.855
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 21,
@@ -19798,12 +19382,7 @@
         -0.882,
         18.159
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -19823,12 +19402,7 @@
         -1.114,
         20.509
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -19848,12 +19422,7 @@
         -1.047,
         21.208
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "children": [
@@ -20151,12 +19720,7 @@
         -0.965484142,
         16.8141174
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20176,12 +19740,7 @@
         2.57551575,
         -8.635864
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20201,12 +19760,7 @@
         1.27211714,
         -43.8158569
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20226,12 +19780,7 @@
         1.2249999,
         -52.558
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20251,12 +19800,7 @@
         1.23931456,
         -52.395874
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20276,12 +19820,7 @@
         -0.906784534,
         -14.165863
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20301,12 +19840,7 @@
         0.718999863,
         -23.625
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20326,12 +19860,7 @@
         2.16201639,
         -72.1412659
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20351,12 +19880,7 @@
         3.34067965,
         -63.2796631
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20376,12 +19900,7 @@
         1.70471621,
         -50.7728577
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20401,12 +19920,7 @@
         4.173,
         -42.466
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20426,12 +19940,7 @@
         1.31261587,
         -71.3835754
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20451,12 +19960,7 @@
         3.71231127,
         -61.52646
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20476,12 +19980,7 @@
         2.62491655,
         -68.21069
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20501,12 +20000,7 @@
         0.762,
         -18.282
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20526,12 +20020,7 @@
         0.351,
         -14.1
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20551,12 +20040,7 @@
         1.81805468,
         -52.1624756
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20576,12 +20060,7 @@
         2.15131617,
         -71.9324646
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20601,12 +20080,7 @@
         2.88576365,
         -64.94736
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20626,12 +20100,7 @@
         4.650891,
         -64.20975
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20651,12 +20120,7 @@
         1.83491564,
         -52.19287
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20676,12 +20140,7 @@
         1.89811563,
         -51.4518738
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20701,12 +20160,7 @@
         1.876616,
         -53.6448669
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20726,12 +20180,7 @@
         2.17541552,
         -53.14987
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20751,12 +20200,7 @@
         1.79731607,
         -70.90527
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20776,12 +20220,7 @@
         1.38191652,
         -71.37637
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20801,12 +20240,7 @@
         1.559916,
         -70.9088745
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20826,12 +20260,7 @@
         2.32285452,
         -67.47629
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20851,12 +20280,7 @@
         2.52873373,
         -67.68289
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20876,12 +20300,7 @@
         2.4850297,
         -67.88748
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20901,12 +20320,7 @@
         3.21733427,
         -62.9000854
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20926,12 +20340,7 @@
         3.16841555,
         -65.42807
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20951,12 +20360,7 @@
         3.74755239,
         -60.9060974
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -20976,12 +20380,7 @@
         3.05110121,
         -63.7684937
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21001,12 +20400,7 @@
         2.10731554,
         -72.85898
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21026,12 +20420,7 @@
         1.46001577,
         -48.99588
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21051,12 +20440,7 @@
         1.57341623,
         -49.362854
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21076,12 +20460,7 @@
         3.71697664,
         -66.23178
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21101,12 +20480,7 @@
         3.05114412,
         -65.23349
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21126,12 +20500,7 @@
         3.4601388,
         -64.61969
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21151,12 +20520,7 @@
         4.36695051,
         -15.64856
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21176,12 +20540,7 @@
         3.34011984,
         -62.98059
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21201,12 +20560,7 @@
         3.06334972,
         -69.4281
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21226,12 +20580,7 @@
         1.88637114,
         -65.60062
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21251,12 +20600,7 @@
         2.69109869,
         -62.3704529
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21276,12 +20620,7 @@
         2.71976423,
         -62.4968567
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21301,12 +20640,7 @@
         2.67934847,
         -62.1287231
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21326,12 +20660,7 @@
         1.4785161,
         -69.72955
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21351,12 +20680,7 @@
         1.83068514,
         -52.2406
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21376,12 +20700,7 @@
         2.44651651,
         -72.70877
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21401,12 +20720,7 @@
         3.14501619,
         -69.3911743
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21426,12 +20740,7 @@
         4.43895,
         -15.8675537
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21451,12 +20760,7 @@
         1.28700018,
         -39.908
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21476,12 +20780,7 @@
         1.35105753,
         -36.39093
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21501,12 +20800,7 @@
         -0.203,
         -11.418
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21526,12 +20820,7 @@
         2.97800016,
         -52.527
       ],
-      "name": "pf_boulder_02_015",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_015"
     },
     {
       "mesh": 21,
@@ -21551,12 +20840,7 @@
         3.078,
         -50.927
       ],
-      "name": "pf_boulder_01_040",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_01_040"
     },
     {
       "mesh": 20,
@@ -21655,12 +20939,7 @@
         1.85141611,
         -51.8068542
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21680,12 +20959,7 @@
         2.77333784,
         -68.5564
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21705,12 +20979,7 @@
         2.03991556,
         -71.38727
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21730,12 +20999,7 @@
         3.81795073,
         -42.9495544
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21755,12 +21019,7 @@
         4.544391,
         -62.42563
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21780,12 +21039,7 @@
         2.55691576,
         -72.8440552
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21805,12 +21059,7 @@
         1.92001581,
         -74.04077
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21830,12 +21079,7 @@
         1.65221643,
         -50.9718628
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21855,12 +21099,7 @@
         1.11901331,
         -44.1784668
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21880,12 +21119,7 @@
         0.281,
         -17.28
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21905,12 +21139,7 @@
         2.23381662,
         -39.2278748
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21930,12 +21159,7 @@
         1.09861612,
         -69.3788757
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21955,12 +21179,7 @@
         1.17856836,
         -43.3522034
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -21980,12 +21199,7 @@
         1.40411615,
         -53.4818726
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22005,12 +21219,7 @@
         1.56401587,
         -70.31436
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22030,12 +21239,7 @@
         2.27241564,
         -72.27658
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22055,12 +21259,7 @@
         2.46891642,
         -67.70706
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22080,12 +21279,7 @@
         4.424834,
         -62.7601
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22105,12 +21299,7 @@
         4.213816,
         -61.83908
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22130,12 +21319,7 @@
         4.44522524,
         -64.40561
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22155,12 +21339,7 @@
         1.23991632,
         -43.3338623
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22180,12 +21359,7 @@
         0.463,
         -14.8
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22205,12 +21379,7 @@
         2.22431612,
         -54.64987
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22230,12 +21399,7 @@
         1.86291552,
         -53.0238647
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22255,12 +21419,7 @@
         2.16621637,
         -53.7268677
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22280,12 +21439,7 @@
         1.9276166,
         -52.7038574
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22305,12 +21459,7 @@
         1.484016,
         -69.9325562
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22330,12 +21479,7 @@
         0.674,
         -18.92
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22355,12 +21499,7 @@
         3.15781641,
         -65.21295
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22380,12 +21519,7 @@
         2.37130213,
         -71.43091
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22405,12 +21539,7 @@
         2.08431578,
         -53.8528748
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22430,12 +21559,7 @@
         1.39084768,
         -46.9223022
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22455,12 +21579,7 @@
         2.392016,
         -71.94208
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22480,12 +21599,7 @@
         2.0580163,
         -71.9578552
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22505,12 +21619,7 @@
         2.54991579,
         -72.16388
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22530,12 +21639,7 @@
         2.34251642,
         -72.52536
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22555,12 +21659,7 @@
         1.07313681,
         -46.2789
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22580,12 +21679,7 @@
         3.76651621,
         -60.94861
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22605,12 +21699,7 @@
         0.6919999,
         -23.317
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22630,12 +21719,7 @@
         2.12594748,
         -64.27481
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22655,12 +21739,7 @@
         1.58,
         -70.43
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22680,12 +21759,7 @@
         -0.58,
         -8.74
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22705,12 +21779,7 @@
         1.23391581,
         -42.8998566
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22730,12 +21799,7 @@
         3.16000032,
         -38.59
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22755,12 +21819,7 @@
         1.27300024,
         -32.21
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22780,12 +21839,7 @@
         1.27,
         -36.635
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22805,12 +21859,7 @@
         1.507,
         -46.708
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22830,12 +21879,7 @@
         1.25299978,
         -44.738
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22855,12 +21899,7 @@
         1.434,
         -32.19
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22880,12 +21919,7 @@
         0.9970002,
         -18.6400375
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22905,12 +21939,7 @@
         1.27,
         -16.54
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22930,12 +21959,7 @@
         1.23799992,
         -10.8802376
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22955,12 +21979,7 @@
         0.8299999,
         -14.2695417
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -22980,12 +21999,7 @@
         -0.483999968,
         7.327999
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -23005,12 +22019,7 @@
         -0.542000055,
         -6.70199966
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -23030,12 +22039,7 @@
         1.32000017,
         -25.18
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -23055,12 +22059,7 @@
         1.36000013,
         -38.051
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -23080,12 +22079,7 @@
         -1.53,
         1.50975227
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "mesh": 21,
@@ -23105,12 +22099,7 @@
         2.677,
         -8.263
       ],
-      "name": "pf_boulder_02_025",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_boulder_02_025"
     },
     {
       "children": [
@@ -23147,12 +22136,7 @@
         6.823799,
         -11.0700073
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23167,12 +22151,7 @@
         7.2224,
         -19.6600037
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23187,12 +22166,7 @@
         13.201,
         -16.01001
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23207,12 +22181,7 @@
         13.172,
         -17.3000183
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23227,12 +22196,7 @@
         6.607,
         4.483
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23247,12 +22211,7 @@
         6.64849854,
         -16.0700073
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23267,12 +22226,7 @@
         7.02489853,
         -15.210022
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23287,12 +22241,7 @@
         9.9628,
         26.9199829
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23307,12 +22256,7 @@
         9.9558,
         26.98999
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23327,12 +22271,7 @@
         10.262,
         -13.26001
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23347,12 +22286,7 @@
         10.273,
         -13.1300049
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23367,12 +22301,7 @@
         13.168,
         -15.9500122
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23387,12 +22316,7 @@
         13.178,
         -17.3500061
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23407,12 +22331,7 @@
         7.126027,
         -33.5103149
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23427,12 +22346,7 @@
         9.688,
         4.038
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23447,12 +22361,7 @@
         9.689,
         4.079
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "mesh": 22,
@@ -23467,12 +22376,7 @@
         11.954,
         4.501
       ],
-      "name": "pf_halberd_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_halberd_01"
     },
     {
       "children": [
@@ -24694,12 +23598,7 @@
         7.46,
         14.71
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24719,12 +23618,7 @@
         9.116,
         -27.985
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24744,12 +23638,7 @@
         11.2,
         10.49
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24769,12 +23658,7 @@
         9.107,
         -29.075
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24794,12 +23678,7 @@
         8.13,
         -44.1
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24819,12 +23698,7 @@
         11.09,
         10.42
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24844,12 +23718,7 @@
         7.27,
         7.87
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24869,12 +23738,7 @@
         8.466,
         -15.162
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24894,12 +23758,7 @@
         9.42,
         -41.69
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24919,12 +23778,7 @@
         7.65,
         13.83
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24944,12 +23798,7 @@
         8.02,
         -46.32
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24969,12 +23818,7 @@
         9.39,
         -39.98
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -24994,12 +23838,7 @@
         7.64,
         11.67
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -25019,12 +23858,7 @@
         9.48,
         -44.69
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -25044,12 +23878,7 @@
         4.618,
         14.954
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -25069,12 +23898,7 @@
         4.603,
         14.297
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -25094,12 +23918,7 @@
         5.846,
         -21.732
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -25119,12 +23938,7 @@
         5.701,
         -21.085
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 26,
@@ -25144,12 +23958,7 @@
         5.621,
         7.705
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 27,
@@ -25184,12 +23993,7 @@
         9.45,
         23.46
       ],
-      "name": "pf_plank_02",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_02"
     },
     {
       "mesh": 27,
@@ -25234,12 +24038,7 @@
         4.3983,
         31.8999939
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25254,12 +24053,7 @@
         3.5397,
         33.75998
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25274,12 +24068,7 @@
         3.40929985,
         35.1399841
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25294,12 +24083,7 @@
         3.2366,
         35.8599854
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25314,12 +24098,7 @@
         3.0804,
         36.8099976
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25334,12 +24113,7 @@
         5.1679,
         -6.210022
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25354,12 +24128,7 @@
         4.8474,
         22.5999756
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25374,12 +24143,7 @@
         4.1349,
         23.039978
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25394,12 +24158,7 @@
         3.813,
         42.18
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25414,12 +24173,7 @@
         4.2592,
         35.4400024
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25434,12 +24188,7 @@
         4.6548,
         26.6199951
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25454,12 +24203,7 @@
         4.475,
         35.006
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25474,12 +24218,7 @@
         5.2107,
         17.98999
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25494,12 +24233,7 @@
         5.3305,
         13.1699829
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25514,12 +24248,7 @@
         4.2335,
         36.3399963
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25534,12 +24263,7 @@
         4.1173,
         24.4700012
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25554,12 +24278,7 @@
         3.75440025,
         32.8299866
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25574,12 +24293,7 @@
         4.2248,
         22.019989
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25594,12 +24308,7 @@
         4.2404,
         32.23999
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25614,12 +24323,7 @@
         2.30039978,
         41.9100037
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25634,12 +24338,7 @@
         2.3814,
         41.1799927
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25654,12 +24353,7 @@
         2.7475,
         39.3899841
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25674,12 +24368,7 @@
         2.8989,
         38.6600037
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25694,12 +24383,7 @@
         3.046,
         37.8999939
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25714,12 +24398,7 @@
         2.53320026,
         40.50998
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25728,12 +24407,7 @@
         5.3241,
         -6.700012
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "mesh": 28,
@@ -25748,12 +24422,7 @@
         5.536,
         8.34
       ],
-      "name": "pf_plank_03",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_plank_03"
     },
     {
       "children": [
@@ -26593,12 +25262,7 @@
         9.71,
         -21.32
       ],
-      "name": "pf_scaffold_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_scaffold_01"
     },
     {
       "mesh": 49,
@@ -26613,12 +25277,7 @@
         9.32,
         -11.65
       ],
-      "name": "pf_scaffold_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_scaffold_01"
     },
     {
       "mesh": 49,
@@ -26633,12 +25292,7 @@
         6.385,
         17.24
       ],
-      "name": "pf_scaffold_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_scaffold_01"
     },
     {
       "mesh": 49,
@@ -26653,12 +25307,7 @@
         5.66,
         8.68
       ],
-      "name": "pf_scaffold_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_scaffold_01"
     },
     {
       "mesh": 49,
@@ -26673,12 +25322,7 @@
         5.692,
         -30.208
       ],
-      "name": "pf_scaffold_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_scaffold_01"
     },
     {
       "mesh": 49,
@@ -26693,12 +25337,7 @@
         6.08,
         -25.925
       ],
-      "name": "pf_scaffold_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_scaffold_01"
     },
     {
       "mesh": 49,
@@ -26713,12 +25352,7 @@
         5.463,
         1.16
       ],
-      "name": "pf_scaffold_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_scaffold_01"
     },
     {
       "mesh": 49,
@@ -26733,12 +25367,7 @@
         3.64,
         1.03
       ],
-      "name": "pf_scaffold_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_scaffold_01"
     },
     {
       "mesh": 49,
@@ -26753,12 +25382,7 @@
         5.54,
         -19.46
       ],
-      "name": "pf_scaffold_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_scaffold_01"
     },
     {
       "children": [
@@ -26799,12 +25423,7 @@
         7.162,
         -22.13
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -26852,12 +25471,7 @@
         7.133,
         -20.317
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -26905,12 +25519,7 @@
         7.54380035,
         -13.710022
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -26958,12 +25567,7 @@
         7.131199,
         -13.2200012
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -27011,12 +25615,7 @@
         7.623234,
         -14.3766174
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -27064,12 +25663,7 @@
         6.32870865,
         14.6279907
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -27117,12 +25711,7 @@
         7.154999,
         -14.25
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -27170,12 +25759,7 @@
         6.08739853,
         15.4100037
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -27421,12 +26005,7 @@
         3.957,
         51.228
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -27474,12 +26053,7 @@
         3.797,
         50.574
       ],
-      "name": "pf_skull_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_skull_stick_01"
     },
     {
       "mesh": 14,
@@ -28247,12 +26821,7 @@
         7.2205,
         -40.0
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28267,12 +26836,7 @@
         6.59310055,
         -45.0899963
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28287,12 +26851,7 @@
         8.8632,
         -38.3099976
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28307,12 +26866,7 @@
         5.6209,
         -44.8800049
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28327,12 +26881,7 @@
         7.4558,
         -40.48001
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28347,12 +26896,7 @@
         5.897499,
         -7.64001465
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28367,12 +26911,7 @@
         6.392,
         -8.13
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28387,12 +26926,7 @@
         6.424,
         -8.402
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28407,12 +26941,7 @@
         6.469,
         -7.282
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28421,12 +26950,7 @@
         5.67789841,
         13.4299927
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28441,12 +26965,7 @@
         5.632,
         12.71
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28461,12 +26980,7 @@
         6.254,
         -8.012
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28481,12 +26995,7 @@
         6.2569,
         -25.27002
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28501,12 +27010,7 @@
         6.2691,
         -25.460022
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28521,12 +27025,7 @@
         6.304,
         -25.1000061
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28541,12 +27040,7 @@
         2.7444,
         27.3199768
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28561,12 +27055,7 @@
         6.318699,
         -8.221985
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28581,12 +27070,7 @@
         6.406,
         -7.592
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28601,12 +27085,7 @@
         6.342,
         -25.1300049
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28621,12 +27100,7 @@
         7.2001,
         -9.930023
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28641,12 +27115,7 @@
         6.352,
         -7.262
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28661,12 +27130,7 @@
         6.367,
         -7.412
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28681,12 +27145,7 @@
         4.281,
         20.635
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28701,12 +27160,7 @@
         4.356,
         21.053
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "mesh": 56,
@@ -28721,12 +27175,7 @@
         6.209,
         -36.438
       ],
-      "name": "pf_shovel_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_shovel_01"
     },
     {
       "children": [
@@ -28778,12 +27227,7 @@
         5.27,
         4.98
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -28803,12 +27247,7 @@
         5.37,
         4.86
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -28828,12 +27267,7 @@
         5.371,
         9.687
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -28853,12 +27287,7 @@
         6.1779,
         -11.6700134
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -28878,12 +27307,7 @@
         8.16,
         -22.158
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -28903,12 +27327,7 @@
         8.165,
         -21.034
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -28928,12 +27347,7 @@
         8.202,
         -23.174
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -28953,12 +27367,7 @@
         5.281834,
         16.3825378
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -28978,12 +27387,7 @@
         6.283331,
         -14.3128357
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29003,12 +27407,7 @@
         6.283,
         -15.523
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29028,12 +27427,7 @@
         5.37,
         19.216
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29053,12 +27447,7 @@
         6.307,
         -1.018
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29078,12 +27467,7 @@
         6.198266,
         -8.490753
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29103,12 +27487,7 @@
         5.509,
         20.306
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29128,12 +27507,7 @@
         5.409,
         18.073
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29153,12 +27527,7 @@
         6.137,
         -32.983
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29178,12 +27547,7 @@
         6.1383,
         -33.493988
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29203,12 +27567,7 @@
         6.1402,
         -33.9729919
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29228,12 +27587,7 @@
         5.062,
         3.68
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29253,12 +27607,7 @@
         9.49,
         -1.971
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29278,12 +27627,7 @@
         9.49,
         -2.43
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "children": [
@@ -29376,12 +27720,7 @@
         9.49,
         -2.716
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29401,12 +27740,7 @@
         11.156,
         -0.73
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "mesh": 57,
@@ -29426,12 +27760,7 @@
         8.01,
         -7.11
       ],
-      "name": "pf_sword_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_sword_01"
     },
     {
       "children": [
@@ -29474,12 +27803,7 @@
         5.8246994,
         -10.52002
       ],
-      "name": "pf_torch_fire_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_fire_01"
     },
     {
       "mesh": 58,
@@ -29570,12 +27894,7 @@
         4.874,
         15.1
       ],
-      "name": "pf_torch_fire_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_fire_01"
     },
     {
       "mesh": 58,
@@ -29673,12 +27992,7 @@
         5.97019958,
         15.3999939
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -29779,12 +28093,7 @@
         6.091999,
         17.0699768
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -29885,12 +28194,7 @@
         7.22961426,
         -3.649414
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -29991,12 +28295,7 @@
         6.85366535,
         -8.030024
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -30097,12 +28396,7 @@
         4.554,
         12.193
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -30203,12 +28497,7 @@
         6.277361,
         -11.8360147
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -30309,12 +28598,7 @@
         6.417,
         -9.57
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -30415,12 +28699,7 @@
         6.57,
         -16.33
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -30521,12 +28800,7 @@
         4.87,
         22.92
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -30627,12 +28901,7 @@
         4.02,
         27.262682
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -30733,12 +29002,7 @@
         3.88,
         43.69
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -30839,12 +29103,7 @@
         4.89,
         36.601
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -30945,12 +29204,7 @@
         3.251,
         29.25
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -31051,12 +29305,7 @@
         3.1,
         51.498
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,
@@ -31157,12 +29406,7 @@
         3.92,
         31.91
       ],
-      "name": "pf_torch_stick_01",
-      "extensions": {
-        "MSFT_lod": {
-          "ids": []
-        }
-      }
+      "name": "pf_torch_stick_01"
     },
     {
       "mesh": 14,

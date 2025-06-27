@@ -4,7 +4,9 @@
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 
-		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"}
+		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
+
+		{"id": "village_props", "file": "assets/models/Props.gltf", "format":"GLTF"}
 	],
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
