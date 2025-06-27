@@ -576,7 +576,7 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		// Camera FOV-y, Near Plane and Far Plane
 		const float FOVy = glm::radians(45.0f);
 		const float nearPlane = 0.1f;
-		const float farPlane = 100.f;
+		const float farPlane = 500.f;
 		// Player starting point
 		const glm::vec3 StartingPosition = glm::vec3(0.0, 0.0, 5);
 		// Camera target height and distance
@@ -587,8 +587,8 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		const float maxPitch = glm::radians(60.0f);
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
-		const float MOVE_SPEED_BASE = 5.0f;
-		const float MOVE_SPEED_RUN  = 5.0f;
+		const float MOVE_SPEED_BASE = 10.0f;
+		const float MOVE_SPEED_RUN  = 10.0f;
 		const float ZOOM_SPEED = MOVE_SPEED_BASE * 1.5f;
 		const float MAX_CAM_DIST =  7.5;
 		const float MIN_CAM_DIST =  1.5;

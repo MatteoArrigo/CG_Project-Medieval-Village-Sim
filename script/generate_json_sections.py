@@ -1,34 +1,29 @@
 import json
 import os
+from pygltflib import GLTF2
 
-def parse_primitives(file_path):
+# Carica il file .gltf
+gltf = GLTF2().load("assets/models/Buildings.gltf")
+
+def getModels():
     models = []
-    with open(file_path, 'r') as file:
-        lines = file.readlines()
-        current_mesh = None
-        mesh_id = None
-
-        for line in lines:
-            line = line.strip()
-            if line.startswith("Mesh"):
-                # Parse mesh information
-                parts = line.split(":")
-                mesh_id = int(parts[0].split()[1])
-                mesh_name = parts[1].strip()
-                current_mesh = {"id": mesh_name, "meshId": mesh_id, "primitives": []}
-                models.append(current_mesh)
-            elif line.startswith("Primitive"):
-                # Parse primitive information
-                primitive_id = int(line.split()[1].strip(":"))
-                current_mesh["primitives"].append({"primitiveId": primitive_id, "attributes": []})
-            elif line.startswith("Attribute"):
-                # Parse attribute information
-                attribute = line.split(":")[1].strip()
-                current_mesh["primitives"][-1]["attributes"].append(attribute)
-
+    for mesh in gltf.meshes:
+        model = mesh.name
+        for meshId, primitive in enumerate(mesh.primitives):
+            id = f"{model}-{meshId:02}"
+            models.append({
+                "id": id,
+                'VD': "VDtan",
+                "model": model,
+                'node': model,
+                "meshId": meshId,
+                'asset': 'village',
+                'format': 'ASSET'
+            })
     return models
+models = getModels()
 
-def generate_textures(dir):
+def getTextures(dir):
     texs = os.listdir(dir)
     lines = []
     for tex in texs:
@@ -38,30 +33,18 @@ def generate_textures(dir):
             format = 'C'
         else:
             format = 'D'
-        line = '{' + f'"id": "{tex[:-4]}", "texture": "../assets/textures/all_buildings/{tex}", "format": "{format}"' + '},'
-        lines.append(line)
+        # line = '{' + f'"id": "{tex[:-4]}", "texture": "assets/textures/all_buildings/{tex}", "format": "{format}"' + '},'
+        lines.append({
+            'id': tex[:-4],
+            'texture': f'assets/textures/all_buildings/{tex}',
+            'format': format
+        })
     return lines
-
-def main():
-    file_path = 'list_primitives.txt'
-    models = parse_primitives(file_path)
-    # print(json.dumps(models, indent=2))
-    with open('prova.txt', 'w') as f:
-        for model in models:
-            for i in range(len(model["primitives"])):
-                line = '{' + f'"id": "{model["id"]}", "VD": "VDtan", "model": "{model["id"]}", "node": "{model["id"]}", "meshId": {i}, "asset": "village", "format": "ASSET"' + '},'
-                line = line.replace('\n', '')
-                f.write(line + '\n')
+textures = getTextures('assets/textures/all_buildings')
 
 
 
 
-from pygltflib import GLTF2
-
-# Carica il file .gltf
-gltf = GLTF2().load("../assets/models/Buildings.gltf")
-
-# Funzione per trovare il file URI a partire da un indice texture
 def get_image_uri(texture_index):
     if texture_index is None:
         return None
@@ -69,125 +52,166 @@ def get_image_uri(texture_index):
     image_index = texture.source
     return gltf.images[image_index].uri if image_index is not None else None
 
+def getMaterialsList():
+    materialsList = []
+    for i, material in enumerate(gltf.materials):
+        # print(f"\nMateriale {i}: {material.name or '[senza nome]'}")
 
-materialsList = []
-for i, material in enumerate(gltf.materials):
-    # print(f"\nMateriale {i}: {material.name or '[senza nome]'}")
+        # Albedo (baseColorTexture)
+        albedo_index = None
+        # print(material.extensions['KHR_materials_pbrSpecularGlossiness'])
+        if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
+            albedo_index = material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseTexture']['index']
+        albedo_uri = get_image_uri(albedo_index)
+        # print(f"  Albedo: {albedo_uri or '— nessuna'}")
 
-    # Albedo (baseColorTexture)
-    albedo_index = None
-    # print(material.extensions['KHR_materials_pbrSpecularGlossiness'])
-    if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
-        albedo_index = material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseTexture']['index']
-    albedo_uri = get_image_uri(albedo_index)
-    # print(f"  Albedo: {albedo_uri or '— nessuna'}")
+        # Normal Map
+        normal_index = material.normalTexture.index if material.normalTexture else None
+        normal_uri = get_image_uri(normal_index)
+        # print(f"  Normal map: {normal_uri or '— nessuna'}")
 
-    # Normal Map
-    normal_index = material.normalTexture.index if material.normalTexture else None
-    normal_uri = get_image_uri(normal_index)
-    # print(f"  Normal map: {normal_uri or '— nessuna'}")
+        materialsList.append((albedo_uri, normal_uri, material.name))
+    return materialsList
 
-    materialsList.append((albedo_uri, normal_uri))
+def getTextureMap():
+    primitiveTextureMap = {}
+    materialsList = getMaterialsList()
+    for mesh in gltf.meshes:
+        for primitive in mesh.primitives:
+            if primitive.material is not None:
+                idx = primitive.material
+                name = mesh.name
+                if materialsList[idx][0] is not None:
+                    albedoTex = materialsList[idx][0][:-4]
+                else:
+                    albedoTex = 'void'
+                if materialsList[idx][1] is not None:
+                    normalTex = materialsList[idx][1][:-4]
+                else:
+                    normalTex = 'void'
 
+                primitiveTextureMap[name] = (albedoTex, normalTex)
+                # line = '{' + f'"id": "{name}",  "model": "{name}","texture": ["{albedoTex}", "{normalTex}", "void", "void"]' + '},'
+                # lines.append(line)
+    return primitiveTextureMap
 
-# print(len(materialsList))
+# from scipy.spatial.transform import Rotation as R
+# def quaternion_to_euler(quaternion):
+#     # Crea un oggetto Rotation dal quaternione
+#     rotation = R.from_quat(quaternion)
+#     # Converte il quaternione in angoli di Eulero (ordine: XYZ)
+#     euler_angles = rotation.as_euler('xyz', degrees=True)
+#     return euler_angles
 
-primitiveTextureMap = {}
-for mesh in gltf.meshes:
-    for primitive in mesh.primitives:
-        if primitive.material is not None:
-            idx = primitive.material
-            name = mesh.name
-            if materialsList[idx][0] is not None:
-                albedoTex = materialsList[idx][0][:-4]
+def getElementsToRender():
+    nodeNames = [node.name for node in gltf.nodes]
+    toRenderTmp = {}
+    for node in gltf.nodes:
+        if node.translation or node.rotation or node.scale:
+            children = [nodeNames[i] for i in node.children if 'collider' not in nodeNames[i]]
+            if not children and not node.mesh:
+                    continue
+
+            if node.mesh:
+                children.append(node.name)
+
+            if node.name not in toRenderTmp:
+                toRenderTmp[node.name] = {'children': children}
+                toRenderTmp[node.name]['transf'] = []
+            tranfEntry = {}
+            if node.translation:
+                trans = [coord for coord in node.translation]
+                # trans[0] *= -1
+                tranfEntry['translation'] = trans
+            if node.rotation:
+                rotOld = [node.rotation[i] for i in range(4)]
+                rot = [0.0, 0.0, 0.0, 1.0]  # Inizializza una lista di grandezza 4
+                rot[0] = -rotOld[3]
+                rot[1] = rotOld[2]
+                rot[2] = -rotOld[1]
+                rot[3] = rotOld[0]
+                # rot[0] = -rotOld[1]
+                # rot[1] = rotOld[0]
+                # rot[2] = rotOld[3]
+                # rot[3] = -rotOld[2]
+                # rot = quaternion_to_euler(rot)
+                tranfEntry['rotation'] = rot
+            if node.scale:
+                tranfEntry['scale'] = node.scale
+            toRenderTmp[node.name]['transf'].append(tranfEntry)
+
+    usedIdsCount = {}
+    toRender = []
+    primitiveTextureMap = getTextureMap()
+    for groupName, groupData in toRenderTmp.items():
+
+        for meshName in groupData["children"]:
+            if meshName[:-2] not in usedIdsCount:
+                usedIdsCount[meshName[:-2]] = 1
+                id = meshName
             else:
-                albedoTex = 'void'
-            if materialsList[idx][1] is not None:
-                normalTex = materialsList[idx][1][:-4]
-            else:
-                normalTex = 'void'
+                child_suffix = usedIdsCount[meshName[:-2]]  # Prendi le ultime 2 cifre di `meshName` come intero
+                incremented_suffix = child_suffix + 1  # Incrementa il valore
+                id = f"{meshName[:-2]}{incremented_suffix:02}"  # Riforma il nome con il suffisso incrementato
+                usedIdsCount[meshName[:-2]] = child_suffix + 1
+            # print(id, meshName)
 
-            primitiveTextureMap[name] = (albedoTex, normalTex)
-            # line = '{' + f'"id": "{name}",  "model": "{name}","texture": ["{albedoTex}", "{normalTex}", "void", "void"]' + '},'
-            # lines.append(line)
+            if meshName not in primitiveTextureMap:
+                print(f"Warning: {meshName} not found in primitiveTextureMap")
+                continue
 
-# lines = generate_textures('assets/textures/all_buildings')
-# with open('prova.txt', 'w') as f:
-    # for line in lines:
-#         f.write(line + '\n')
-# with open('textures.json', 'w') as f:
-#     f.write('[' + '\n')
-#     for line in lines:
-#         f.write(line + '\n')
-#     f.write(']')
+            primitives = [model for model in models if model['model'] == meshName]
+            if(len(primitives) == 0):
+                print(f"Warning: {meshName} not found in models")
+                continue
 
-nodeNames = [node.name for node in gltf.nodes]
+            for i, transf in enumerate(groupData['transf']):
+                for primitiveEntry in primitives:
+                    entry = {
+                       'id': id+f'-{i:02}'+primitiveEntry['id'][-3:],
+                       'model': primitiveEntry['id'],
+                       'texture': [
+                           primitiveTextureMap[meshName][0],
+                           primitiveTextureMap[meshName][1],
+                           "void",
+                           "void"
+                       ]
+                    }
+                    if 'translation' in transf:
+                        entry['translate'] = transf["translation"]
+                    if 'rotation' in transf:
+                        entry['quaternion'] = [
+                            transf["rotation"][0],
+                            transf["rotation"][1],
+                            transf["rotation"][2],
+                            transf["rotation"][3]
+                        ]
+                    if 'scale' in transf:
+                        entry['scale'] = transf["scale"]
+                    toRender.append(entry)
 
-from scipy.spatial.transform import Rotation as R
-def quaternion_to_euler(quaternion):
-    # Crea un oggetto Rotation dal quaternione
-    rotation = R.from_quat(quaternion)
-    # Converte il quaternione in angoli di Eulero (ordine: XYZ)
-    euler_angles = rotation.as_euler('xyz', degrees=True)
-    return euler_angles
+    return toRender
 
-toRenderTmp = {}
-for node in gltf.nodes:
-    if node.name == 'Buildings':
-        continue
-    if node.children and (node.translation or node.rotation or node.scale):
-        children = [nodeNames[i] for i in node.children if 'collider' not in nodeNames[i]]
-        if not children:
-            continue
-
-        toRenderTmp[node.name] = {'children': children}
-        if node.translation:
-            trans = [coord for coord in node.translation]
-            trans[0] *= -1
-            toRenderTmp[node.name]['translation'] = trans
-        if node.rotation:
-            rot = [node.rotation[i] for i in range(4)]
-            # rot[1] *= -1
-            # rot[2] *= -1
-            euler_angles = quaternion_to_euler(rot)
-            toRenderTmp[node.name]['rotation'] = euler_angles
-        if node.scale:
-            toRenderTmp[node.name]['scale'] = node.scale
-
-usedIds = {}
-lines = []
-for groupName, groupData in toRenderTmp.items():
-    for model in groupData["children"]:
-        if model[:-2] not in usedIds:
-            usedIds[model[:-2]] = 1
-            id = model
-        else:
-            child_suffix = usedIds[model[:-2]]  # Prendi le ultime 2 cifre di `model` come intero
-            incremented_suffix = child_suffix + 1  # Incrementa il valore
-            id = f"{model[:-2]}{incremented_suffix:02}"  # Riforma il nome con il suffisso incrementato
-            usedIds[model[:-2]] = child_suffix + 1
-        # print(id, model)
-
-        if model not in primitiveTextureMap:
-            print(f"Warning: {model} not found in primitiveTextureMap")
-            continue
-
-        line = '{' + f'"id": "{id}", "model": "{model}", "texture": ["{primitiveTextureMap[model][0]}", "{primitiveTextureMap[model][1]}", "void", "void"]'
-        if 'translation' in groupData:
-            line += f',\n  "translate": {groupData["translation"]}'
-        if 'rotation' in groupData:
-            line += f',\n  "eulerAngles": [{groupData["rotation"][0]}, {groupData["rotation"][1]}, {groupData["rotation"][2]}]'
-        if 'scale' in groupData:
-            line += f',\n  "scale": {groupData["scale"]}'
-        line += '},'
-        lines.append(line)
-
-with open('toRender.json', 'w') as f:
-    f.write('[' + '\n')
-    for line in lines:
-        f.write(line + '\n')
-    f.write(']')
+toRender = getElementsToRender()
 
 
+# sections = {
+#     "models": models,
+#     "textures": textures,
+#     "toRender": toRender
+# }
+# # Salva le sezioni in un file JSON
+# output_file = "script/json_sections.json"
+# with open(output_file, 'w') as f:
+#     json.dump(sections, f, indent=4)
 
+output_file = "script/json_sections.txt"
 
+with open(output_file, "w") as f:
+    for section in [models, textures, toRender]:
+        for entry in section:
+            f.write(f'{entry},\n'.replace("'", '"')
+                    .replace('"quat', '\n  "quat')
+                    .replace('"translate', '\n  "translate')
+                    .replace('"scale', '\n  "scale'))
+        f.write("\n\n")
