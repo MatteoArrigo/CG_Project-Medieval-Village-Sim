@@ -3,7 +3,9 @@ import os
 from pygltflib import GLTF2
 
 # Carica il file .gltf
-gltf = GLTF2().load("assets/models/Buildings.gltf")
+gltf = GLTF2().load("assets/models/Props.gltf")
+texDir = 'assets/textures/props'
+assetName = 'village_props'
 
 def getModels():
     models = []
@@ -17,7 +19,7 @@ def getModels():
                 "model": model,
                 'node': model,
                 "meshId": meshId,
-                'asset': 'village',
+                'asset': assetName,
                 'format': 'ASSET'
             })
     return models
@@ -36,11 +38,11 @@ def getTextures(dir):
         # line = '{' + f'"id": "{tex[:-4]}", "texture": "assets/textures/all_buildings/{tex}", "format": "{format}"' + '},'
         lines.append({
             'id': tex[:-4],
-            'texture': f'assets/textures/all_buildings/{tex}',
+            'texture': f'assets/textures/props/{tex}',
             'format': format
         })
     return lines
-textures = getTextures('assets/textures/all_buildings')
+textures = getTextures(texDir)
 
 
 
@@ -60,6 +62,10 @@ def getMaterialsList():
         # Albedo (baseColorTexture)
         albedo_index = None
         # print(material.extensions['KHR_materials_pbrSpecularGlossiness'])
+        if not material.extensions:
+            print(f"Warning: Material {material.name} has no extensions.")
+            materialsList.append(('void', 'void', material.name))
+            continue
         if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
             albedo_index = material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseTexture']['index']
         albedo_uri = get_image_uri(albedo_index)
