@@ -2,7 +2,9 @@
 	"assetfiles": [
 		{"id": "hm", "file": "assets/models/uomo.gltf", "format":"GLTF"},
 
-		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"}
+		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
+
+		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"}
 	],
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
@@ -81,7 +83,11 @@
 		{"id": "build_tower_01-02", "VD": "VDtan", "model": "build_tower_01", "node": "build_tower_01", "meshId": 2, "asset": "village", "format": "ASSET"},
 		{"id": "build_tower_01-03", "VD": "VDtan", "model": "build_tower_01", "node": "build_tower_01", "meshId": 3, "asset": "village", "format": "ASSET"},
 		{"id": "pf_build_wall_panel_01-00", "VD": "VDtan", "model": "pf_build_wall_panel_01", "node": "pf_build_wall_panel_01", "meshId": 0, "asset": "village", "format": "ASSET"},
-		{"id": "pf_build_wall_corner_01-00", "VD": "VDtan", "model": "pf_build_wall_corner_01", "node": "pf_build_wall_corner_01", "meshId": 0, "asset": "village", "format": "ASSET"}
+		{"id": "pf_build_wall_corner_01-00", "VD": "VDtan", "model": "pf_build_wall_corner_01", "node": "pf_build_wall_corner_01", "meshId": 0, "asset": "village", "format": "ASSET"},
+
+		{"id": "terrain_far_01-00", "VD":  "VDtan", "model":  "terrain_far_01", "node":  "terrain_far_01", "meshId": 0, "asset":  "terrain", "format":  "ASSET"},
+		{"id": "terrain_near_01-00", "VD":  "VDtan", "model":  "terrain_near_01", "node":  "terrain_near_01", "meshId": 0, "asset":  "terrain", "format":  "ASSET"},
+		{"id": "terrain_near_01-01", "VD":  "VDtan", "model":  "terrain_near_01", "node":  "terrain_near_01", "meshId": 1, "asset":  "terrain", "format":  "ASSET"}
 	],
 
 	"textures": [
@@ -145,7 +151,14 @@
 		{"id": "prop_fence_02_o", "texture": "assets/textures/all_buildings/prop_fence_02_o.jpg", "format": "D"},
 		{"id": "wood_tiled_02_a", "texture": "assets/textures/all_buildings/wood_tiled_02_a.jpg", "format": "C"},
 		{"id": "wood_tiled_02_n", "texture": "assets/textures/all_buildings/wood_tiled_02_n.jpg", "format": "D"},
-		{"id": "wood_tiled_02_o", "texture": "assets/textures/all_buildings/wood_tiled_02_o.jpg", "format": "D"}
+		{"id": "wood_tiled_02_o", "texture": "assets/textures/all_buildings/wood_tiled_02_o.jpg", "format": "D"},
+
+		{"id":  "terrain_far_01_a2", "texture":  "assets/textures/terrain/terrain_far_01_a2.jpg", "format":  "D"},
+		{"id":  "terrain_01_n", "texture":  "assets/textures/terrain/terrain_01_n.jpg", "format":  "C"},
+		{"id":  "terrain_01_o", "texture":  "assets/textures/terrain/terrain_01_o.jpg", "format":  "C"},
+		{"id":  "terrain_far_01_sg", "texture":  "assets/textures/terrain/terrain_far_01_sg.jpg", "format":  "C"},
+		{"id":  "terrain_grass_01_a_darker", "texture":  "assets/textures/terrain/terrain_grass_01_a_darker.jpg", "format":  "C"},
+		{"id":  "terrain_grass_01_n", "texture":  "assets/textures/terrain/terrain_grass_01_n.jpg", "format":  "C"}
 	],
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
@@ -967,7 +980,17 @@
 					"quaternion": [-0.9890627, 0.0, 0.14749603, 0.0]},
 				{"id": "pf_build_wall_corner_01-08-00", "model": "pf_build_wall_corner_01-00", "texture": ["build_village_fence_01_a", "build_village_fence_01_n", "void", "void"],
 					"translate": [38.74, 5.11, -42.79],
-					"quaternion": [-0.6503003, 0.0, 0.759677231, 0.0]}
+					"quaternion": [-0.6503003, 0.0, 0.759677231, 0.0]},
+
+				{"id": "terrain_far_01-00", "model": "terrain_far_01-00", "texture": ["terrain_far_01_a2", "terrain_01_n", "void", "void"],
+					"translate": [286.0808, -0.1, -396.223]
+				},
+				{"id": "terrain_near_01-00", "model": "terrain_near_01-00", "texture": ["terrain_grass_01_a_darker", "terrain_grass_01_n", "void", "void"],
+					"translate": [286.0808, -0.1, -396.223]
+				},
+				{"id": "terrain_near_01-01", "model": "terrain_near_01-01", "texture": ["terrain_grass_01_a_darker", "terrain_grass_01_n", "void", "void"],
+					"translate": [286.0808, -0.1, -396.223]
+				}
 			]
 		}
 	]
