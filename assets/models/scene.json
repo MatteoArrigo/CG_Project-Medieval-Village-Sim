@@ -5,7 +5,9 @@
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 		{"id": "props_structural", "file": "assets/models/PropsStructural.gltf", "format":"GLTF"},
 
-		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"}
+		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
+
+		{"id":  "baseplate", "file":  "assets/models/Baseplate.gltf", "format":"GLTF"}
 	],
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
@@ -127,7 +129,9 @@
 		{"id": "prop_boardwalk_08-00", "VD": "VDtan", "model": "prop_boardwalk_08", "node": "prop_boardwalk_08", "meshId": 0, "asset": "props_structural", "format": "ASSET"},
 		{"id": "prop_boardwalk_09-00", "VD": "VDtan", "model": "prop_boardwalk_09", "node": "prop_boardwalk_09", "meshId": 0, "asset": "props_structural", "format": "ASSET"},
 		{"id": "prop_boardwalk_10-00", "VD": "VDtan", "model": "prop_boardwalk_10", "node": "prop_boardwalk_10", "meshId": 0, "asset": "props_structural", "format": "ASSET"},
-		{"id": "pf_wall_logs_04-00", "VD": "VDtan", "model": "pf_wall_logs_04", "node": "pf_wall_logs_04", "meshId": 0, "asset": "props_structural", "format": "ASSET"}
+		{"id": "pf_wall_logs_04-00", "VD": "VDtan", "model": "pf_wall_logs_04", "node": "pf_wall_logs_04", "meshId": 0, "asset": "props_structural", "format": "ASSET"},
+
+		{"id": "baseplate-00", "VD": "VDtan", "model": "Baseplate", "node": "Baseplate", "meshId": 0, "asset": "baseplate", "format": "ASSET"}
 	],
 
 	"textures": [
@@ -211,7 +215,9 @@
 		{"id": "prop_logpile_01_d", "texture": "assets/textures/props_structural/prop_logpile_01_d.jpg", "format": "D"},
 		{"id": "wood_tiled_02_a", "texture": "assets/textures/props_structural/wood_tiled_02_a.jpg", "format": "C"},
 		{"id": "wood_tiled_02_n", "texture": "assets/textures/props_structural/wood_tiled_02_n.jpg", "format": "D"},
-		{"id": "wood_tiled_02_o", "texture": "assets/textures/props_structural/wood_tiled_02_o.jpg", "format": "D"}
+		{"id": "wood_tiled_02_o", "texture": "assets/textures/props_structural/wood_tiled_02_o.jpg", "format": "D"},
+
+		{"id": "baseplate_a", "texture": "assets/textures/baseplate/baseplate_a.jpg", "format": "C"}
 	],
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
@@ -227,6 +233,10 @@
 			},
 			{"id": "terrain_near_01-01", "model": "terrain_near_01-01", "texture": ["terrain_grass_01_a"],
 				"translate": [286.0808, -0.1, -396.223]
+			},
+			{"id": "baseplate", "model": "baseplate-00", "texture": ["baseplate_a"],
+				"translate": [0, -1.7, 100],
+				"scale": [100, 1, 100]
 			}
 		]},
 		{"technique": "PBR", "elements":
