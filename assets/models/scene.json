@@ -138,7 +138,7 @@
 		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png",	   "format": "C"},
 		{"id": "pnois", "texture": "assets/textures/Perlin_noise.png", "format": "C"},
 		{"id": "main", "texture": "assets/textures/textures0.png", "format": "C"},
-		{"id": "skybox", "texture": "assets/textures/golden_gate_hills.jpg", "format": "C"},
+		{"id": "skybox", "texture": "assets/textures/skybox.jpg", "format": "C"},
 		{"id": "void", "texture": "assets/textures/void.png", "format": "C"},
 
 		{"id": "build_boat_01_a", "texture": "assets/textures/all_buildings/build_boat_01_a.jpg", "format": "C"},
