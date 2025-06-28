@@ -3155,27 +3155,35 @@ void Model::makeGLTFMesh(tinygltf::Model *M, const tinygltf::Primitive *Prm) {
 	const tinygltf::BufferView &bufferView = M->bufferViews[accessor.bufferView];
 	const tinygltf::Buffer &buffer = M->buffers[bufferView.buffer];
 	
-	switch(accessor.componentType) {
-		case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT:
-			{
-				const uint16_t *bufferIndex = reinterpret_cast<const uint16_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-				for(int i = 0; i < accessor.count; i++) {
-					indices.push_back(bufferIndex[i]);
-				}
-			}
-			break;
-		case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
-			{
-				const uint32_t *bufferIndex = reinterpret_cast<const uint32_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-				for(int i = 0; i < accessor.count; i++) {
-					indices.push_back(bufferIndex[i]);
-				}
-			}
-			break;
-		default:
-			std::cerr << "Index component type " << accessor.componentType << " not supported!" << std::endl;
-			throw std::runtime_error("Error loading GLTF component");
-	}			
+    switch(accessor.componentType) {
+        case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT:
+            {
+                const uint16_t *bufferIndex = reinterpret_cast<const uint16_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
+                for(int i = 0; i < accessor.count; i++) {
+                    indices.push_back(bufferIndex[i]);
+                }
+            }
+            break;
+        case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
+            {
+                const uint32_t *bufferIndex = reinterpret_cast<const uint32_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
+                for(int i = 0; i < accessor.count; i++) {
+                    indices.push_back(bufferIndex[i]);
+                }
+            }
+            break;
+        case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE:
+            {
+                const uint8_t *bufferIndex = reinterpret_cast<const uint8_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
+                for(int i = 0; i < accessor.count; i++) {
+                    indices.push_back(bufferIndex[i]);
+                }
+            }
+            break;
+        default:
+            std::cerr << "Index component type " << accessor.componentType << " not supported!" << std::endl;
+            throw std::runtime_error("Error loading GLTF component");
+    }
 }
 
 
