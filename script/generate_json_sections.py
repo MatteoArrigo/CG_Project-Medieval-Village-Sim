@@ -3,9 +3,9 @@ import os
 from pygltflib import GLTF2
 
 # Carica il file .gltf
-gltf = GLTF2().load("assets/models/PropsStructural.gltf")
-texDir = 'props_structural'
-assetName = 'props_structural'
+gltf = GLTF2().load("assets/models/Buildings.gltf")
+texDir = 'all_buildings'
+assetName = 'village'
 
 def getModels():
     models = []
@@ -142,112 +142,33 @@ def computeRotationFromNode(node):
     return rot
 
 def getElementsToRender():
-    nodeNames = [node.name for node in gltf.nodes]
-    toRenderTmp = {}
-    for node in gltf.nodes:
-        if node.translation:
-            children = [nodeNames[i] for i in node.children if 'collider' not in nodeNames[i]]
-            childrenIdx = [i for i in node.children if 'collider' not in nodeNames[i]]
-            if not children and not node.mesh:
-                continue
-
-            if node.name not in toRenderTmp:
-                toRenderTmp[node.name] = {'children': children, 'childrenNodes': childrenIdx}
-                toRenderTmp[node.name]['transf'] = []
-
-            childTranfs = []
-            for childIdx in childrenIdx:
-                tranfEntry = {}
-                childNode = gltf.nodes[childIdx]
-
-                trans = [0.0, 0.0, 0.0]  # Inizializza una lista di grandezza 3
-                if node.translation:
-                    trans = [x + y for x, y in zip(trans, node.translation)]
-                if childNode.translation:
-                    trans = [x + y for x, y in zip(trans, childNode.translation)]
-                # trans[0] *= -1
-                tranfEntry['translation'] = trans
-
-                rot = [0.0, 0.0, 0.0]  # Inizializza una lista di grandezza 3
-                if node.rotation:
-                    rot = [x + y for x, y in zip(rot, computeRotationFromNode(node))]
-                if childNode.rotation:
-                    rot = [x + y for x, y in zip(rot, computeRotationFromNode(childNode))]
-                tranfEntry['rotation'] = rot
-
-                scale = [1.0, 1.0, 1.0]  # Inizializza una lista di grandezza 3
-                if node.scale:
-                    scale = [x * y for x, y in zip(scale, node.scale)]
-                if childNode.scale:
-                    scale = [x * y for x, y in zip(scale, childNode.scale)]
-                tranfEntry['scale'] = node.scale
-
-                childTranfs.append(tranfEntry)
-
-            if node.mesh:
-                children.append(node.name)
-                childrenIdx.append(gltf.nodes.index(node))
-                tranfEntry = {
-                    'translation': node.translation if node.translation else [0.0, 0.0, 0.0],
-                    'rotation': computeRotationFromNode(node) if node.rotation else [0.0, 0.0, 0.0],
-                    'scale': node.scale if node.scale else [1.0, 1.0, 1.0]
-                }
-                childTranfs.append(tranfEntry)
-            toRenderTmp[node.name]['transf'].append(childTranfs)
-
-    usedIdsCount = {}
     toRender = []
     primitiveTextureMap = getTextureMap()
-    for groupName, groupData in toRenderTmp.items():
+    for node in gltf.nodes:
+        if node.mesh is None or node.translation is None:
+            continue
 
-        for childIdxLocal, meshName in enumerate(groupData["children"]):
-            if meshName[:-2] not in usedIdsCount:
-                usedIdsCount[meshName[:-2]] = 1
-                id = meshName
-            else:
-                child_suffix = usedIdsCount[meshName[:-2]]  # Prendi le ultime 2 cifre di `meshName` come intero
-                incremented_suffix = child_suffix + 1  # Incrementa il valore
-                id = f"{meshName[:-2]}{incremented_suffix:02}"  # Riforma il nome con il suffisso incrementato
-                usedIdsCount[meshName[:-2]] = child_suffix + 1
-            # print(id, meshName)
+        mesh = gltf.meshes[node.mesh]
+        for meshId, primitive in enumerate(mesh.primitives):
+            primitiveId = f'{mesh.name}-{meshId:02}'
 
-            primitives = [model for model in models
-                          if gltf.nodes[groupData['childrenNodes'][childIdxLocal]].mesh and
-                          model['model'] == gltf.meshes[gltf.nodes[groupData['childrenNodes'][childIdxLocal]].mesh].name]
-            if(len(primitives) == 0):
-                print(f"Warning: {meshName} not found in models")
-                continue
-
-            for i, transf in enumerate(groupData['transf']):
-                for idxPrimitive, primitiveEntry in enumerate(primitives):
-
-                    if primitiveEntry['id'] not in primitiveTextureMap:
-                        print(f"Warning: {primitiveEntry['id']} not found in primitiveTextureMap")
-                        continue
-
-                    entry = {
-                       'id': id+f'-{i:02}'+primitiveEntry['id'][-3:],
-                       'model': primitiveEntry['id'],
-                       'texture': [
-                           primitiveTextureMap[primitiveEntry['id']][0],
-                           primitiveTextureMap[primitiveEntry['id']][1],
-                           "void",
-                           "void"
-                       ]
-                    }
-                    if 'translation' in transf[childIdxLocal]:
-                        entry['translate'] = transf[childIdxLocal]["translation"]
-                    if 'rotation' in transf[childIdxLocal]:
-                        entry['eulerAngles'] = [
-                        # entry['quaternion'] = [
-                            transf[childIdxLocal]["rotation"][0],
-                            transf[childIdxLocal]["rotation"][1],
-                            transf[childIdxLocal]["rotation"][2],
-                            # transf["rotation"][3]
-                        ]
-                    if 'scale' in transf[childIdxLocal]:
-                        entry['scale'] = transf[childIdxLocal]["scale"]
-                    toRender.append(entry)
+            entry = {
+                'id': node.name,
+                'model': primitiveId,
+                'texture': [
+                    primitiveTextureMap[primitiveId][0],
+                    primitiveTextureMap[primitiveId][1],
+                    "void",
+                    "void"
+                ]
+            }
+            if node.translation:
+                entry['translate'] = [coord for coord in node.translation]
+            if node.rotation:
+                entry['eulerAngles'] = [x for x in computeRotationFromNode(node)]
+            if node.scale:
+                entry['scale'] = [coord for coord in node.scale]
+            toRender.append(entry)
 
     return toRender
 
@@ -270,7 +191,8 @@ with open(output_file, "w") as f:
     for section in [models, textures, toRender]:
         for entry in section:
             f.write(f'{entry},\n'.replace("'", '"')
-                    .replace('"quat', '\n  "quat')
+                    .replace('"eulerAngles', '\n  "eulerAngles')
+                    .replace('"quaternion', '\n  "quaternion')
                     .replace('"translate', '\n  "translate')
                     .replace('"scale', '\n  "scale'))
         f.write("\n\n")
