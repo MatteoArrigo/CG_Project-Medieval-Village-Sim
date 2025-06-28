@@ -198,6 +198,7 @@
 		{"id":  "terrain_01_o", "texture":  "assets/textures/terrain/terrain_01_o.jpg", "format":  "C"},
 		{"id":  "terrain_far_01_sg", "texture":  "assets/textures/terrain/terrain_far_01_sg.jpg", "format":  "C"},
 		{"id":  "terrain_grass_01_a_darker", "texture":  "assets/textures/terrain/terrain_grass_01_a_darker.jpg", "format":  "C"},
+		{"id":  "terrain_grass_01_a", "texture":  "assets/textures/terrain/terrain_grass_01_a.jpg", "format":  "C"},
 		{"id":  "terrain_grass_01_n", "texture":  "assets/textures/terrain/terrain_grass_01_n.jpg", "format":  "C"},
 
 		{"id": "prop_boardwalk_01_d", "texture": "assets/textures/props_structural/prop_boardwalk_01_d.jpg", "format": "D"},
@@ -219,6 +220,14 @@
 		]},
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
+		]},
+		{"technique": "TerrainTiled", "elements": [
+			{"id": "terrain_near_01-00", "model": "terrain_near_01-00", "texture": ["terrain_grass_01_a"],
+				"translate": [286.0808, -0.1, -396.223]
+			},
+			{"id": "terrain_near_01-01", "model": "terrain_near_01-01", "texture": ["terrain_grass_01_a"],
+				"translate": [286.0808, -0.1, -396.223]
+			}
 		]},
 		{"technique": "PBR", "elements":
 		[
@@ -1037,13 +1046,6 @@
 			{"id": "terrain_far_01-00", "model": "terrain_far_01-00", "texture": ["terrain_far_01_a2", "terrain_01_n", "void", "void"],
 				"translate": [286.0808, -0.1, -396.223]
 			},
-			{"id": "terrain_near_01-00", "model": "terrain_near_01-00", "texture": ["terrain_grass_01_a_darker", "terrain_grass_01_n", "void", "void"],
-				"translate": [286.0808, -0.1, -396.223]
-			},
-			{"id": "terrain_near_01-01", "model": "terrain_near_01-01", "texture": ["terrain_grass_01_a_darker", "terrain_grass_01_n", "void", "void"],
-				"translate": [286.0808, -0.1, -396.223]
-			},
-
 
 			{"id": "pf_fence_01_tripple-00-00", "model": "pf_fence_01_tripple-00", "texture": ["wood_tiled_02_a", "wood_tiled_02_n", "void", "void"],
 				"translate": [3.24, 5.36, -40.62], "eulerAngles": [0.6530558758142325, 92.67013405570067, -4.385705650370643],

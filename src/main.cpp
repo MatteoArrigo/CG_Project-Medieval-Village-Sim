@@ -66,7 +66,7 @@ class CGProject : public BaseProject {
 	// Here you list all the Vulkan objects you need:
 	
 	// Descriptor Layouts [what will be passed to the shaders]
-	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR, DSLglobal, DSLskyBox;
+	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR, DSLglobal, DSLskyBox, DSLterrainTiled;
 
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
@@ -74,7 +74,7 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDskyBox;
 	VertexDescriptor VDtan;
 	RenderPass RP;
-	Pipeline Pchar, PsimpObj, PskyBox, P_PBR;
+	Pipeline Pchar, PsimpObj, PskyBox, P_PBR, PterrainTiled;
 	//*DBG*/Pipeline PDebug;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -179,6 +179,11 @@ class CGProject : public BaseProject {
                     {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1}
 				  });
 
+		DSLterrainTiled.init(this, {
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
+					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+		});
+
 		VDchar.init(this, {
 				  {0, sizeof(VertexChar), VK_VERTEX_INPUT_RATE_VERTEX}
 				}, {
@@ -252,7 +257,9 @@ class CGProject : public BaseProject {
 
 		P_PBR.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR.frag.spv", {&DSLglobal, &DSLlocalPBR});
 
-		PRs.resize(4);
+		PterrainTiled.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/terrain_tiled.frag.spv", {&DSLglobal, &DSLterrainTiled});
+
+		PRs.resize(5);
 		PRs[0].init("CookTorranceChar", {
 							 {&Pchar, {//Pipeline and DSL for the first pass
 								 /*DSLglobal*/{},
@@ -288,6 +295,15 @@ class CGProject : public BaseProject {
 									 }
 									}}
 							  }, /*TotalNtextures*/4, &VDtan);
+
+		PRs[4].init("TerrainTiled", {
+							 {&PterrainTiled, {//Pipeline and DSL for the first pass
+							 	/*DSLglobal*/{},
+								 /*DSLterrainTiled*/{
+										/*t0*/{true,  0, {}}// index 0 of the "texture" field in the json file
+									 }
+									}}
+							  }, /*TotalNtextures*/1, &VDtan);
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 		
@@ -329,7 +345,8 @@ std::cout << "\nLoading the scene\n\n";
 		PsimpObj.create(&RP);
 		PskyBox.create(&RP);
 		P_PBR.create(&RP);
-		
+		PterrainTiled.create(&RP);
+
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
 	}
@@ -340,6 +357,7 @@ std::cout << "\nLoading the scene\n\n";
 		PsimpObj.cleanup();
 		PskyBox.cleanup();
 		P_PBR.cleanup();
+		PterrainTiled.cleanup();
 		RP.cleanup();
 
 		SC.pipelinesAndDescriptorSetsCleanup();
@@ -354,11 +372,13 @@ std::cout << "\nLoading the scene\n\n";
 		DSLlocalPBR.cleanup();
 		DSLskyBox.cleanup();
 		DSLglobal.cleanup();
+		DSLterrainTiled.cleanup();
 		
 		Pchar.destroy();	
 		PsimpObj.destroy();
 		PskyBox.destroy();		
 		P_PBR.destroy();		
+		PterrainTiled.destroy();
 
 		RP.destroy();
 
@@ -549,6 +569,15 @@ std::cout << "Playing anim: " << curAnim << "\n";
 			SC.TI[3].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
 		}
 
+		// TerrainTiled objects
+		for(instanceId = 0; instanceId < SC.TI[4].InstanceCount; instanceId++) {
+			ubos.mMat   = SC.TI[4].I[instanceId].Wm;
+			ubos.mvpMat = ViewPrj * ubos.mMat;
+			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+
+			SC.TI[4].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[4].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
+		}
 
 		// updates the FPS
 		static float elapsedT = 0.0f;
