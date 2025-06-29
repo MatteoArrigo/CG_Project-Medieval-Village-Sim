@@ -3,9 +3,9 @@ import os
 from pygltflib import GLTF2
 
 # Carica il file .gltf
-gltf = GLTF2().load("assets/models/Buildings.gltf")
-texDir = 'all_buildings'
-assetName = 'village'
+gltf = GLTF2().load("assets/models/Props.gltf")
+texDir = 'props'
+assetName = 'village_props'
 
 def getModels():
     models = []
@@ -66,15 +66,15 @@ def getMaterialsList():
             print(f"Warning: Material {material.name} has no extensions.")
             materialsList.append(('void', 'void', material.name))
             continue
-        if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
-            albedo_index = material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseTexture']['index']
-        albedo_uri = get_image_uri(albedo_index)
-        # print(f"  Albedo: {albedo_uri or '— nessuna'}")
+        # if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
+        #     albedo_index = material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseTexture']['index']
+        # albedo_uri = get_image_uri(albedo_index)
 
         # Normal Map
         normal_index = material.normalTexture.index if material.normalTexture else None
         normal_uri = get_image_uri(normal_index)
-        # print(f"  Normal map: {normal_uri or '— nessuna'}")
+
+        albedo_uri = normal_uri[:-5] + 'a' + normal_uri[-4:] if normal_uri else None
 
         materialsList.append((albedo_uri, normal_uri, material.name))
     return materialsList
@@ -145,7 +145,8 @@ def getElementsToRender():
     toRender = []
     primitiveTextureMap = getTextureMap()
     for node in gltf.nodes:
-        if node.mesh is None or node.translation is None:
+        if node.mesh is None:
+        # if node.mesh is None or node.translation is None:
             continue
 
         mesh = gltf.meshes[node.mesh]
