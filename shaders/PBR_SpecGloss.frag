@@ -8,16 +8,24 @@ layout(location = 3) in vec4 fragTan;
 
 layout(location = 0) out vec4 outColor;
 
+// Global UBO (set=0)
 layout(binding = 0, set = 0) uniform GlobalUniformBufferObject {
     vec3 lightDir;
     vec4 lightColor;
     vec3 eyePos;
 } gubo;
 
+// Textures (set=1)
 layout(binding = 1, set = 1) uniform sampler2D albedoMap;
 layout(binding = 2, set = 1) uniform sampler2D normalMap;
-layout(binding = 3, set = 1) uniform sampler2D metallicMap;
-layout(binding = 4, set = 1) uniform sampler2D roughnessMap;
+layout(binding = 3, set = 1) uniform sampler2D specGlossMap;
+
+// Material factors (set=2)
+layout(binding = 0, set = 2) uniform SpecularGlossinessUBO {
+    vec3 diffuseFactor;      // (RGB)
+    vec3 specularFactor;     // (RGB)
+    float glossinessFactor;  // scalar
+} matFactors;
 
 const float PI = 3.14159265359;
 
@@ -35,14 +43,9 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float DistributionGGX(vec3 N, vec3 H, float roughness) {
-    float a = roughness * roughness;
-    float a2 = a * a;
+float DistributionBlinnPhong(vec3 N, vec3 H, float glossiness) {
     float NdotH = max(dot(N, H), 0.0001f);
-    float NdotH2 = NdotH * NdotH;
-
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    return a2 / (PI * denom * denom);
+    return ((glossiness + 2.0) / (2.0 * PI)) * pow(NdotH, glossiness);
 }
 
 float GeometrySchlickGGX(float NdotV, float roughness) {
@@ -57,11 +60,6 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 }
 
 void main() {
-    vec3 albedo     = texture(albedoMap, fragUV).rgb; 
-    float metallic  = texture(metallicMap, fragUV).r;
-    float roughness = texture(roughnessMap, fragUV).r;
-
-
     vec3 N = normalize(fragNorm);
     vec3 T = normalize(fragTan.xyz);
     float w = fragTan.w;
@@ -73,30 +71,34 @@ void main() {
     vec3 H = normalize(V + L);
     vec3 radiance = gubo.lightColor.rgb;
 
+    // Texture sampling
+    vec4 texDiffuse  = texture(albedoMap, fragUV);
+    vec4 texSpecGloss = texture(specGlossMap, fragUV);
 
-    vec3 F0 = mix(vec3(0.04), albedo, metallic);
+    vec3 diffuseColor = texDiffuse.rgb * matFactors.diffuseFactor;
+    vec3 specularColor = texSpecGloss.rgb * matFactors.specularFactor;
+    float glossiness = texSpecGloss.a * matFactors.glossinessFactor;
 
-    float NDF = DistributionGGX(Nmap, H, roughness);
+    float roughness = 1.0 - glossiness;
+
+    // Specular BRDF
+    float NDF = DistributionBlinnPhong(Nmap, H, glossiness * 256.0); // scale gloss to exponent
     float G   = GeometrySmith(Nmap, V, L, roughness);
-    vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);
+    vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), specularColor);
 
     vec3 specular = (NDF * G * F) /
     max(4.0 * max(dot(Nmap, V), 0.0001f) * max(dot(Nmap, L), 0.0), 0.0001f);
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metallic;
 
     float NdotL = max(dot(Nmap, L), 0.0);
-    vec3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
+    vec3 Lo = (kD * diffuseColor / PI + specular) * radiance * NdotL;
 
-    vec3 ambient = vec3(0.015f) * albedo;
+    // Minimal ambient approximation
+    vec3 ambient = vec3(0.02) * diffuseColor;
 
     vec3 color = ambient + Lo;
 
-    outColor = vec4(color, 1.0);
-    //outColor = vec4(albedo * vec3(clamp(dot(N, L),0.0,1.0)) + vec3(pow(clamp(dot(N, H),0.0,1.0), 160.0)) + ambient, 1.0);
-    //outColor = vec4(albedo * vec3(clamp(dot(Nmap, L),0.0,1.0)) + vec3(pow(clamp(dot(Nmap, H),0.0,1.0), 160.0)) + ambient, 1.0);
-	//outColor = vec4((Nmap+1.0f)*0.5f, 1.0);
-	//outColor = vec4(texture(normalMap, fragUV).xyz, 1.0);
+    outColor = vec4(color, texDiffuse.a);
 }

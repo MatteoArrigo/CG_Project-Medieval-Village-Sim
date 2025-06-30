@@ -10,6 +10,10 @@ struct Instance {
 	DescriptorSet ***DS;
 	std::vector<DescriptorSetLayout *> **D;
 	int *NDs;
+
+    glm::vec3 diffuseFactor;
+    glm::vec3 specularFactor;
+    float glossinessFactor;
 	
 	glm::mat4 Wm;
 	TechniqueInstances *TIp;
@@ -261,6 +265,24 @@ std::cout << "#" << NTextures;
 std::cout << " " << is[j]["texture"][h] << "(" << TI[k].I[j].Tid[h] << ")";
 				}
 std::cout << "}\n";
+
+                //TODO: pensa se lasciare così o gestire in qualche altro modo con array o che so io...
+                // Check optional PBR SpecularGlossiness parameters
+                if (is[j].contains("diffuseFactor"))
+                    for (int d = 0; d < 3; ++d)
+                        TI[k].I[j].diffuseFactor[d] = is[j]["diffuseFactor"][d];
+                else
+                    TI[k].I[j].diffuseFactor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // Default diffuse factor
+                if (is[j].contains("specularFactor"))
+                    for (int d = 0; d < 3; ++d)
+                        TI[k].I[j].specularFactor[d] = is[j]["specularFactor"][d];
+                else
+                    TI[k].I[j].specularFactor = glm::vec3(1.0f, 1.0f, 1.0f); // Default specular factor
+                if (is[j].contains("glossinessFactor"))
+                    TI[k].I[j].glossinessFactor = is[j]["glossinessFactor"];
+                else
+                    TI[k].I[j].glossinessFactor = 0.5f; // Default glossiness factor
+
 				nlohmann::json TMjson = is[j]["transform"];
 				if(TMjson.is_null()) {
 std::cout << "Node has no transform: seek for translation, rotation and scaling\n";

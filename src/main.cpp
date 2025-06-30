@@ -58,6 +58,12 @@ struct skyBoxUniformBufferObject {
 };
 
 
+struct SpecularGlossinessUBO {
+    alignas(16) glm::vec3 diffuseFactor;      // (RGBA)
+    alignas(16) glm::vec3 specularFactor;     // (RGB)
+    alignas(4) float glossinessFactor;  // scalar
+} ;
+
 
 
 // MAIN ! 
@@ -66,7 +72,8 @@ class CGProject : public BaseProject {
 	// Here you list all the Vulkan objects you need:
 	
 	// Descriptor Layouts [what will be passed to the shaders]
-	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR, DSLglobal, DSLskyBox, DSLterrainTiled;
+	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR,
+        DSLglobal, DSLskyBox, DSLterrainTiled, DSLspecGlossFactors;
 
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
@@ -74,7 +81,7 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDskyBox;
 	VertexDescriptor VDtan;
 	RenderPass RP;
-	Pipeline Pchar, PsimpObj, PskyBox, P_PBR, PterrainTiled;
+	Pipeline Pchar, PsimpObj, PskyBox, P_PBR, PterrainTiled, P_PBR_SpecGloss;
 	//*DBG*/Pipeline PDebug;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -110,8 +117,8 @@ class CGProject : public BaseProject {
 	// Here you set the main application parameters
 	void setWindowParameters() {
 		// window size, titile and initial background
-		windowWidth = 800;
-		windowHeight = 600;
+		windowWidth = 1000;
+		windowHeight = 800;
 		windowTitle = "CGProject - Medieval Village Sim";
     	windowResizable = GLFW_TRUE;
 		
@@ -167,22 +174,26 @@ class CGProject : public BaseProject {
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
 		  });
 
+        DSLterrainTiled.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+        });
+
 		DSLlocalPBR.init(this, {
-					// this array contains the binding:
-					// first  element : the binding number
-					// second element : the type of element (buffer or texture)
-					// third  element : the pipeline stage where it will be used
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
 					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
 					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
                     {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1}
 				  });
-
-		DSLterrainTiled.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
-		});
+        
+        /* This is for the PBR with specular glossines  -- SET 1
+         *  UniformBufferObject from SimplePosNormUVTan.vert
+         *  albedoMap, normalMap, specGlossMap, SpecularGlossinessUBO from PBR_SpecGloss.frag
+        */
+        DSLspecGlossFactors.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SpecularGlossinessUBO), 1},
+        });
 
 		VDchar.init(this, {
 				  {0, sizeof(VertexChar), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -254,12 +265,13 @@ class CGProject : public BaseProject {
 		PskyBox.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
 		PskyBox.setCullMode(VK_CULL_MODE_BACK_BIT);
 		PskyBox.setPolygonMode(VK_POLYGON_MODE_FILL);
+		
+        PterrainTiled.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/terrain_tiled.frag.spv", {&DSLglobal, &DSLterrainTiled});
 
 		P_PBR.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR.frag.spv", {&DSLglobal, &DSLlocalPBR});
+		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLspecGlossFactors});
 
-		PterrainTiled.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/terrain_tiled.frag.spv", {&DSLglobal, &DSLterrainTiled});
-
-		PRs.resize(5);
+		PRs.resize(6);
 		PRs[0].init("CookTorranceChar", {
 							 {&Pchar, {//Pipeline and DSL for the first pass
 								 /*DSLglobal*/{},
@@ -284,54 +296,60 @@ class CGProject : public BaseProject {
 									 }
 									}}
 							  }, /*TotalNtextures*/1, &VDskyBox);
-		PRs[3].init("PBR", {
+        PRs[3].init("TerrainTiled", {
+                {&PterrainTiled, {//Pipeline and DSL for the first pass
+                        /*DSLglobal*/{},
+                        /*DSLterrainTiled*/{
+                                             /*t0*/{true,  0, {}}// index 0 of the "texture" field in the json file
+                                     }
+                }}
+        }, /*TotalNtextures*/1, &VDtan);
+		PRs[4].init("PBR", {
 							 {&P_PBR, {//Pipeline and DSL for the first pass
 								 /*DSLglobal*/{},
 								 /*DSLlocalPBR*/{
-										/*t0*/{true,  0, {}},// index 0 of the "texture" field in the json file
-										/*t1*/{true,  1, {}},// index 1 of the "texture" field in the json file
-										/*t2*/{true,  2, {}},// index 2 of the "texture" field in the json file
-										/*t3*/{true,  3, {}}// index 3 of the "texture" field in the json file
+										/*t0*/{true,  0, {}},
+										/*t1*/{true,  1, {}},
+										/*t2*/{true,  2, {}},
+										/*t3*/{true,  3, {}}
 									 }
 									}}
 							  }, /*TotalNtextures*/4, &VDtan);
-
-		PRs[4].init("TerrainTiled", {
-							 {&PterrainTiled, {//Pipeline and DSL for the first pass
-							 	/*DSLglobal*/{},
-								 /*DSLterrainTiled*/{
-										/*t0*/{true,  0, {}}// index 0 of the "texture" field in the json file
-									 }
+        PRs[5].init("PBR_sg", {
+							 {&P_PBR_SpecGloss, {//Pipeline and DSL for the first pass
+								 {},    /*DSLglobal*/
+								 {      /*DSLlocalPBR*/
+										{true,  0, {}},
+										{true,  1, {}},
+										{true,  2, {}},
+									 },
+                                 {}   /*DSLspecGlossFactors*/
 									}}
-							  }, /*TotalNtextures*/1, &VDtan);
+							  }, 3, &VDtan);
 
-		// Models, textures and Descriptors (values assigned to the uniforms)
-		
 		// sets the size of the Descriptor Set Pool
 		DPSZs.uniformBlocksInPool = 100;
 		DPSZs.texturesInPool = 100;
 		DPSZs.setsInPool = 100;
 		
-std::cout << "\nLoading the scene\n\n";
+        std::cout << "\nLoading the scene\n\n";
 		if(SC.init(this, /*Npasses*/1, VDRs, PRs, "assets/models/scene.json") != 0) {
 			std::cout << "ERROR LOADING THE SCENE\n";
 			exit(0);
 		}
+
 		// initializes animations
 		for(int ian = 0; ian < N_ANIMATIONS; ian++) {
 			Anim[ian].init(*SC.As[ian]);
 		}
-		AB.init({{0,32,0.0f,0}, {0,16,0.0f,1}, {0,263,0.0f,2}, {0,83,0.0f,3}, {0,16,0.0f,4}});
-		//AB.init({{0,31,0.0f}});
+		AB.init({{0,32,0.0f,0}});
 		SKA.init(Anim, N_ANIMATIONS, "Armature|mixamo.com|Layer0", 0);
 		
-		// initializes the textual output
-		txt.init(this, windowWidth, windowHeight);
-
 		// submits the main command buffer
 		submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
 
-		// Prepares for showing the FPS count
+		// initializes the textual output and Prepares for showing the FPS count
+		txt.init(this, windowWidth, windowHeight);
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
 	}
 	
@@ -344,8 +362,9 @@ std::cout << "\nLoading the scene\n\n";
 		Pchar.create(&RP);
 		PsimpObj.create(&RP);
 		PskyBox.create(&RP);
-		P_PBR.create(&RP);
 		PterrainTiled.create(&RP);
+		P_PBR.create(&RP);
+        P_PBR_SpecGloss.create(&RP);
 
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
@@ -356,8 +375,9 @@ std::cout << "\nLoading the scene\n\n";
 		Pchar.cleanup();
 		PsimpObj.cleanup();
 		PskyBox.cleanup();
-		P_PBR.cleanup();
 		PterrainTiled.cleanup();
+		P_PBR.cleanup();
+        P_PBR_SpecGloss.cleanup();
 		RP.cleanup();
 
 		SC.pipelinesAndDescriptorSetsCleanup();
@@ -370,14 +390,16 @@ std::cout << "\nLoading the scene\n\n";
 		DSLlocalChar.cleanup();
 		DSLlocalSimp.cleanup();
 		DSLlocalPBR.cleanup();
+        DSLspecGlossFactors.cleanup();
 		DSLskyBox.cleanup();
-		DSLglobal.cleanup();
 		DSLterrainTiled.cleanup();
+		DSLglobal.cleanup();
 		
 		Pchar.destroy();	
 		PsimpObj.destroy();
 		PskyBox.destroy();		
 		P_PBR.destroy();		
+        P_PBR_SpecGloss.destroy();
 		PterrainTiled.destroy();
 
 		RP.destroy();
@@ -385,8 +407,8 @@ std::cout << "\nLoading the scene\n\n";
 		SC.localCleanup();	
 		txt.localCleanup();
 
-		for(int ian = 0; ian < N_ANIMATIONS; ian++) {
-			Anim[ian].cleanup();
+		for(auto & ian : Anim) {
+			ian.cleanup();
 		}
 	}
 	
@@ -396,23 +418,19 @@ std::cout << "\nLoading the scene\n\n";
 	static void populateCommandBufferAccess(VkCommandBuffer commandBuffer, int currentImage, void *Params) {
 		// Simple trick to avoid having always 'T->'
 		// in che code that populates the command buffer!
-//std::cout << "Populating command buffer for " << currentImage << "\n";
+    std::cout << "Populating command buffer for " << currentImage << "\n";
 		CGProject *T = (CGProject *)Params;
 		T->populateCommandBuffer(commandBuffer, currentImage);
 	}
-	// This is the real place where the Command Buffer is written
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
-		
+	// This is the real place where the Command Buffer is written
 		// begin standard pass
 		RP.begin(commandBuffer, currentImage);
-
 		SC.populateCommandBuffer(commandBuffer, 0, currentImage);
-
 		RP.end(commandBuffer);
 	}
 
-	// Here is where you update the uniforms.
-	// Very likely this will be where you will be writing the logic of your application.
+	// Here is where you update the uniforms, where logic of application is.
 	void updateUniformBuffer(uint32_t currentImage) {
 		static bool debounce = false;
 		static int curDebounce = 0;
@@ -421,7 +439,6 @@ std::cout << "\nLoading the scene\n\n";
 		if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
-
 
 		if(glfwGetKey(window, GLFW_KEY_1)) {
 			if(!debounce) {
@@ -457,7 +474,7 @@ std::cout << "\nLoading the scene\n\n";
 				curDebounce = GLFW_KEY_P;
 
 				debug1.z = (float)(((int)debug1.z + 1) % 65);
-//            std::cout << "Showing bone index: " << debug1.z << "\n";
+            std::cout << "Showing bone index: " << debug1.z << "\n";
 			}
 		} else {
 			if((curDebounce == GLFW_KEY_P) && debounce) {
@@ -472,7 +489,7 @@ std::cout << "\nLoading the scene\n\n";
 				curDebounce = GLFW_KEY_O;
 
 				debug1.z = (float)(((int)debug1.z + 64) % 65);
-std::cout << "Showing bone index: " << debug1.z << "\n";
+        std::cout << "Showing bone index: " << debug1.z << "\n";
 			}
 		} else {
 			if((curDebounce == GLFW_KEY_O) && debounce) {
@@ -489,7 +506,7 @@ std::cout << "Showing bone index: " << debug1.z << "\n";
 
 				curAnim = (curAnim + 1) % 5;
 				AB.Start(curAnim, 0.5);
-std::cout << "Playing anim: " << curAnim << "\n";
+        std::cout << "Playing anim: " << curAnim << "\n";
 			}
 		} else {
 			if((curDebounce == GLFW_KEY_SPACE) && debounce) {
@@ -522,8 +539,6 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		SKA.Sample(AB);
 		std::vector<glm::mat4> *TMsp = SKA.getTransformMatrices();
 		
-//printMat4("TF[55]", (*TMsp)[55]);
-		
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) * 
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
@@ -535,8 +550,6 @@ std::cout << "Playing anim: " << curAnim << "\n";
 				uboc.mMat[im]   = AdaptMat * (*TMsp)[im];
 				uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
 				uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
-//std::cout << im << "\t";
-//printMat4("mMat", ubo.mMat[im]);
 			}
 
 			SC.TI[0].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
@@ -559,7 +572,7 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		sbubo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
 		SC.TI[2].I[0].DS[0][0]->map(currentImage, &sbubo, 0);
 
-		// PBR objects
+		// TerrainTiled objects
 		for(instanceId = 0; instanceId < SC.TI[3].InstanceCount; instanceId++) {
 			ubos.mMat   = SC.TI[3].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
@@ -569,7 +582,7 @@ std::cout << "Playing anim: " << curAnim << "\n";
 			SC.TI[3].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
 		}
 
-		// TerrainTiled objects
+        // PBR objects
 		for(instanceId = 0; instanceId < SC.TI[4].InstanceCount; instanceId++) {
 			ubos.mMat   = SC.TI[4].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
@@ -577,6 +590,22 @@ std::cout << "Playing anim: " << curAnim << "\n";
 
 			SC.TI[4].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
 			SC.TI[4].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
+		}
+        
+        // PBR_SpecGloss objects
+        SpecularGlossinessUBO specGlossUbo{};
+		for(instanceId = 0; instanceId < SC.TI[5].InstanceCount; instanceId++) {
+			ubos.mMat   = SC.TI[5].I[instanceId].Wm;
+			ubos.mvpMat = ViewPrj * ubos.mMat;
+			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+            
+            specGlossUbo.diffuseFactor = SC.TI[5].I[instanceId].diffuseFactor;
+            specGlossUbo.specularFactor = SC.TI[5].I[instanceId].specularFactor;
+            specGlossUbo.glossinessFactor = SC.TI[5].I[instanceId].glossinessFactor;
+
+			SC.TI[5].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[5].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
+			SC.TI[5].I[instanceId].DS[0][2]->map(currentImage, &specGlossUbo, 0); // Set 2
 		}
 
 		// updates the FPS
