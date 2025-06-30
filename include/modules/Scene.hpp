@@ -14,6 +14,7 @@ struct Instance {
     glm::vec3 diffuseFactor;
     glm::vec3 specularFactor;
     float glossinessFactor;
+    float aoFactor;
 	
 	glm::mat4 Wm;
 	TechniqueInstances *TIp;
@@ -282,6 +283,10 @@ std::cout << "}\n";
                     TI[k].I[j].glossinessFactor = is[j]["glossinessFactor"];
                 else
                     TI[k].I[j].glossinessFactor = 0.5f; // Default glossiness factor
+                if (is[j].contains("aoFactor"))
+                    TI[k].I[j].aoFactor = is[j]["aoFactor"];
+                else
+                    TI[k].I[j].aoFactor = 1.0f; // Default ambient occlusion factor
 
 				nlohmann::json TMjson = is[j]["transform"];
 				if(TMjson.is_null()) {

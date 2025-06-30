@@ -19,12 +19,14 @@ layout(binding = 0, set = 0) uniform GlobalUniformBufferObject {
 layout(binding = 1, set = 1) uniform sampler2D albedoMap;
 layout(binding = 2, set = 1) uniform sampler2D normalMap;
 layout(binding = 3, set = 1) uniform sampler2D specGlossMap;
+layout(binding = 4, set = 1) uniform sampler2D aoMap;  // ambient occlusion map
 
 // Material factors (set=2)
-layout(binding = 0, set = 2) uniform SpecularGlossinessUBO {
+layout(binding = 0, set = 2) uniform SgAoMaterialFactors {
     vec3 diffuseFactor;      // (RGB)
     vec3 specularFactor;     // (RGB)
     float glossinessFactor;  // scalar
+    float aoFactor;          // scalar ambient occlusion factor
 } matFactors;
 
 const float PI = 3.14159265359;
@@ -74,7 +76,9 @@ void main() {
     // Texture sampling
     vec4 texDiffuse  = texture(albedoMap, fragUV);
     vec4 texSpecGloss = texture(specGlossMap, fragUV);
+    float ao = texture(aoMap, fragUV).r;  // any of the 3 values (RGB) is ok
 
+    // Apply Specular/Glossiness factors to diffuse color (albedo)
     vec3 diffuseColor = texDiffuse.rgb * matFactors.diffuseFactor;
     vec3 specularColor = texSpecGloss.rgb * matFactors.specularFactor;
     float glossiness = texSpecGloss.a * matFactors.glossinessFactor;
@@ -96,7 +100,7 @@ void main() {
     vec3 Lo = (kD * diffuseColor / PI + specular) * radiance * NdotL;
 
     // Minimal ambient approximation
-    vec3 ambient = vec3(0.02) * diffuseColor;
+    vec3 ambient = matFactors.aoFactor * ao * diffuseColor;
 
     vec3 color = ambient + Lo;
 

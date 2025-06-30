@@ -58,10 +58,11 @@ struct skyBoxUniformBufferObject {
 };
 
 
-struct SpecularGlossinessUBO {
+struct SgAoMaterialFactorsUBO {
     alignas(16) glm::vec3 diffuseFactor;      // (RGBA)
     alignas(16) glm::vec3 specularFactor;     // (RGB)
     alignas(4) float glossinessFactor;  // scalar
+    alignas(4) float aoFactor; // scalar
 } ;
 
 
@@ -73,7 +74,7 @@ class CGProject : public BaseProject {
 	
 	// Descriptor Layouts [what will be passed to the shaders]
 	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR,
-        DSLglobal, DSLskyBox, DSLterrainTiled, DSLspecGlossFactors;
+        DSLglobal, DSLskyBox, DSLterrainTiled, DSLsgAoFactors;
 
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
@@ -189,10 +190,10 @@ class CGProject : public BaseProject {
         
         /* This is for the PBR with specular glossines  -- SET 1
          *  UniformBufferObject from SimplePosNormUVTan.vert
-         *  albedoMap, normalMap, specGlossMap, SpecularGlossinessUBO from PBR_SpecGloss.frag
+         *  albedoMap, normalMap, specGlossMap, SgAoMaterialFactorsUBO from PBR_SpecGloss.frag
         */
-        DSLspecGlossFactors.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SpecularGlossinessUBO), 1},
+        DSLsgAoFactors.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SgAoMaterialFactorsUBO), 1},
         });
 
 		VDchar.init(this, {
@@ -269,7 +270,7 @@ class CGProject : public BaseProject {
         PterrainTiled.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/terrain_tiled.frag.spv", {&DSLglobal, &DSLterrainTiled});
 
 		P_PBR.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR.frag.spv", {&DSLglobal, &DSLlocalPBR});
-		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLspecGlossFactors});
+		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
 
 		PRs.resize(6);
 		PRs[0].init("CookTorranceChar", {
@@ -319,13 +320,14 @@ class CGProject : public BaseProject {
 							 {&P_PBR_SpecGloss, {//Pipeline and DSL for the first pass
 								 {},    /*DSLglobal*/
 								 {      /*DSLlocalPBR*/
-										{true,  0, {}},
-										{true,  1, {}},
-										{true,  2, {}},
+										{true,  0, {}},     // albedo
+										{true,  1, {}},     // normal
+										{true,  2, {}},     // specular / glossiness
+										{true,  3, {}},     // ambient occlusion
 									 },
-                                 {}   /*DSLspecGlossFactors*/
+                                 {}   /*DSLsgAoFactors*/
 									}}
-							  }, 3, &VDtan);
+							  }, 4, &VDtan);
 
 		// sets the size of the Descriptor Set Pool
 		DPSZs.uniformBlocksInPool = 100;
@@ -390,7 +392,7 @@ class CGProject : public BaseProject {
 		DSLlocalChar.cleanup();
 		DSLlocalSimp.cleanup();
 		DSLlocalPBR.cleanup();
-        DSLspecGlossFactors.cleanup();
+        DSLsgAoFactors.cleanup();
 		DSLskyBox.cleanup();
 		DSLterrainTiled.cleanup();
 		DSLglobal.cleanup();
@@ -593,19 +595,20 @@ class CGProject : public BaseProject {
 		}
         
         // PBR_SpecGloss objects
-        SpecularGlossinessUBO specGlossUbo{};
+        SgAoMaterialFactorsUBO sgAoUbo{};
 		for(instanceId = 0; instanceId < SC.TI[5].InstanceCount; instanceId++) {
 			ubos.mMat   = SC.TI[5].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
 			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
             
-            specGlossUbo.diffuseFactor = SC.TI[5].I[instanceId].diffuseFactor;
-            specGlossUbo.specularFactor = SC.TI[5].I[instanceId].specularFactor;
-            specGlossUbo.glossinessFactor = SC.TI[5].I[instanceId].glossinessFactor;
+            sgAoUbo.diffuseFactor = SC.TI[5].I[instanceId].diffuseFactor;
+            sgAoUbo.specularFactor = SC.TI[5].I[instanceId].specularFactor;
+            sgAoUbo.glossinessFactor = SC.TI[5].I[instanceId].glossinessFactor;
+            sgAoUbo.aoFactor = SC.TI[5].I[instanceId].aoFactor;
 
 			SC.TI[5].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
 			SC.TI[5].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
-			SC.TI[5].I[instanceId].DS[0][2]->map(currentImage, &specGlossUbo, 0); // Set 2
+			SC.TI[5].I[instanceId].DS[0][2]->map(currentImage, &sgAoUbo, 0); // Set 2
 		}
 
 		// updates the FPS
