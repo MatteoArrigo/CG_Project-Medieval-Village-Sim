@@ -3,21 +3,16 @@
 		{"id": "hm", "file": "assets/models/uomo.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
+
 		{"id": "village_props", "file": "assets/models/Props.gltf", "format":"GLTF"},
 		{"id": "props_detail", "file":  "assets/models/PropsDetails.gltf", "format":"GLTF"},
 
-		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
-		{"id":  "baseplate", "file":  "assets/models/Baseplate.gltf", "format":"GLTF"}
+		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"}
 	],
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
 		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
 		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
-
-		{"id": "baseplate-00", "VD": "VDtan", "model": "Baseplate", "node": "Baseplate", "meshId": 0, "asset": "baseplate", "format": "ASSET"},
-		{"id": "terrain_far_01-00", "VD":  "VDtan", "model":  "terrain_far_01", "node":  "terrain_far_01", "meshId": 0, "asset":  "terrain", "format":  "ASSET"},
-		{"id": "terrain_near_01-00", "VD":  "VDtan", "model":  "terrain_near_01", "node":  "terrain_near_01", "meshId": 0, "asset":  "terrain", "format":  "ASSET"},
-		{"id": "terrain_near_01-01", "VD":  "VDtan", "model":  "terrain_near_01", "node":  "terrain_near_01", "meshId": 1, "asset":  "terrain", "format":  "ASSET"},
 
 		{"id": "build_boat_01-00", "VD": "VDtan", "model": "build_boat_01", "node": "build_boat_01", "meshId": 0, "asset": "village", "format": "ASSET"},
 		{"id": "build_boat_dragonhead_01-00", "VD": "VDtan", "model": "build_boat_dragonhead_01", "node": "build_boat_dragonhead_01", "meshId": 0, "asset": "village", "format": "ASSET"},
@@ -339,16 +334,22 @@
 		{"id": "skybox", "texture": "assets/textures/skybox.jpg", "format": "C"},
 		{"id": "void", "texture": "assets/textures/void.png", "format": "C"},
 		{"id": "white", "texture": "assets/textures/white.png", "format": "C"},
-		{"id": "all1s", "texture": "assets/textures/all1s.png", "format": "C"},
 
-		{"id":  "terrain_far_01_a2", "texture":  "assets/textures/terrain/terrain_far_01_a2.jpg", "format":  "D"},
-		{"id":  "terrain_01_n", "texture":  "assets/textures/terrain/terrain_01_n.jpg", "format":  "C"},
-		{"id":  "terrain_01_o", "texture":  "assets/textures/terrain/terrain_01_o.jpg", "format":  "C"},
-		{"id":  "terrain_far_01_sg", "texture":  "assets/textures/terrain/terrain_far_01_sg.jpg", "format":  "C"},
-		{"id":  "terrain_grass_01_a_darker", "texture":  "assets/textures/terrain/terrain_grass_01_a_darker.jpg", "format":  "C"},
-		{"id":  "terrain_grass_01_a", "texture":  "assets/textures/terrain/terrain_grass_01_a.jpg", "format":  "C"},
-		{"id":  "terrain_grass_01_n", "texture":  "assets/textures/terrain/terrain_grass_01_n.jpg", "format":  "C"},
-		{"id": "baseplate_a", "texture": "assets/textures/baseplate/baseplate_a.jpg", "format": "C"},
+		{"id": "terrain_01_m", "texture": "assets/textures/terrain/terrain_01_m.png", "format": "D"},
+		{"id": "terrain_01_n", "texture": "assets/textures/terrain/terrain_01_n.png", "format": "D"},
+		{"id": "terrain_01_o", "texture": "assets/textures/terrain/terrain_01_o.png", "format": "D"},
+		{"id": "terrain_01_o_highpassed", "texture": "assets/textures/terrain/terrain_01_o_highpassed.png", "format": "D"},
+		{"id": "terrain_far_01_a2", "texture": "assets/textures/terrain/terrain_far_01_a2.png", "format": "D"},
+		{"id": "terrain_far_01_sg", "texture": "assets/textures/terrain/terrain_far_01_sg.png", "format": "D"},
+		{"id": "terrain_grass_01_a", "texture": "assets/textures/terrain/terrain_grass_01_a.png", "format": "C"},
+		{"id": "terrain_grass_01_n", "texture": "assets/textures/terrain/terrain_grass_01_n.png", "format": "D"},
+		{"id": "terrain_grass_01_sg", "texture": "assets/textures/terrain/terrain_grass_01_sg.png", "format": "D"},
+		{"id": "terrain_mudslide_01_a", "texture": "assets/textures/terrain/terrain_mudslide_01_a.png", "format": "C"},
+		{"id": "terrain_mudslide_01_n", "texture": "assets/textures/terrain/terrain_mudslide_01_n.png", "format": "D"},
+		{"id": "terrain_mudslide_01_sg", "texture": "assets/textures/terrain/terrain_mudslide_01_sg.png", "format": "D"},
+		{"id": "terrain_wetmud_01_a", "texture": "assets/textures/terrain/terrain_wetmud_01_a.png", "format": "C"},
+		{"id": "terrain_wetmud_01_n", "texture": "assets/textures/terrain/terrain_wetmud_01_n.png", "format": "D"},
+		{"id": "terrain_wetmud_01_sg", "texture": "assets/textures/terrain/terrain_wetmud_01_sg.png", "format": "D"},
 
 		{"id": "build_boat_01_a", "texture": "assets/textures/all_buildings/build_boat_01_a.png", "format": "C"},
 		{"id": "build_boat_01_n", "texture": "assets/textures/all_buildings/build_boat_01_n.png", "format": "D"},
@@ -455,24 +456,11 @@
 		{"technique": "CookTorranceChar", "elements": [
 		]},
 		{"technique": "CookTorranceNoiseSimp", "elements": [
-
-
-
 		]},
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
 		]},
 		{"technique": "TerrainTiled", "elements": [
-			{"id": "terrain_near_01-00", "model": "terrain_near_01-00", "texture": ["terrain_grass_01_a"],
-				"translate": [286.0808, -0.1, -396.223]
-			},
-			{"id": "terrain_near_01-01", "model": "terrain_near_01-01", "texture": ["terrain_grass_01_a"],
-				"translate": [286.0808, -0.1, -396.223]
-			},
-			{"id": "baseplate", "model": "baseplate-00", "texture": ["baseplate_a"],
-				"translate": [0, -1.7, 100],
-				"scale": [100, 1, 100]
-			}
 		]},
 
 		{"technique": "PBR_sg", "elements":  [
@@ -703,11 +691,11 @@
 				"translate": [-54.150001525878906, 6.429999828338623, -46.959999084472656],
 				"eulerAngles": [0.0, 75.56482388808425, 0.0],
 				"diffuseFactor": [0.623193741, 0.623193741, 0.623193741], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.03200000151991844, "aoFactor": 0.25},
-			{"id": "build_crane_01-01.00", "model": "build_crane_01-01", "texture": ["all1s", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01-01.00", "model": "build_crane_01-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [-54.150001525878906, 6.429999828338623, -46.959999084472656],
 				"eulerAngles": [0.0, 75.56482388808425, 0.0],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
-			{"id": "build_crane_01_metalpiece-00.00", "model": "build_crane_01_metalpiece-00", "texture": ["all1s", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01_metalpiece-00.00", "model": "build_crane_01_metalpiece-00", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [-56.544639587402344, 11.029541969299316, -47.63127899169922],
 				"eulerAngles": [0.0, -0.0, -16.662660505083345],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
@@ -715,18 +703,18 @@
 				"translate": [-58.373558044433594, 11.724719047546387, -48.053470611572266],
 				"eulerAngles": [0, 76, 10],
 				"diffuseFactor": [0.623193741, 0.623193741, 0.623193741], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.03200000151991844, "aoFactor": 0.25},
-			{"id": "build_crane_01_wheel-01.00", "model": "build_crane_01_wheel-01", "texture": ["all1s", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01_wheel-01.00", "model": "build_crane_01_wheel-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [-58.373558044433594, 11.724719047546387, -48.053470611572266],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
 			{"id": "build_crane_01-00.00", "model": "build_crane_01-00", "texture": ["build_crane_01_a", "build_crane_01_n", "void", "build_crane_01_o"],
 				"translate": [82.394287109375, 5.09999942779541, 0.012958034873008728],
 				"eulerAngles": [0.0, -79.89368375836865, 0.0],
 				"diffuseFactor": [0.623193741, 0.623193741, 0.623193741], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.03200000151991844, "aoFactor": 0.25},
-			{"id": "build_crane_01-01.00", "model": "build_crane_01-01", "texture": ["all1s", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01-01.00", "model": "build_crane_01-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [82.394287109375, 5.09999942779541, 0.012958034873008728],
 				"eulerAngles": [0.0, -79.89368375836865, 0.0],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
-			{"id": "build_crane_01_metalpiece-00.00", "model": "build_crane_01_metalpiece-00", "texture": ["all1s", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01_metalpiece-00.00", "model": "build_crane_01_metalpiece-00", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [84.85140991210938, 9.699541091918945, -0.37102389335632324],
 				"eulerAngles": [0.0, -79.89368375836865, 0.0],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
@@ -734,7 +722,7 @@
 				"translate": [86.69046783447266, 10.3947172164917, -0.7466176152229309],
 				"eulerAngles": [0.0, -79.89368375836865, 0.0],
 				"diffuseFactor": [0.623193741, 0.623193741, 0.623193741], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.03200000151991844, "aoFactor": 0.25},
-			{"id": "build_crane_01_wheel-01.00", "model": "build_crane_01_wheel-01", "texture": ["all1s", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01_wheel-01.00", "model": "build_crane_01_wheel-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [86.69046783447266, 10.3947172164917, -0.7466176152229309],
 				"eulerAngles": [0.0, -79.89368375836865, 0.0],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
@@ -742,11 +730,11 @@
 				"translate": [57.55998229980469, 4.431999206542969, 30.339996337890625],
 				"eulerAngles": [-0.49970789916543484, 136.43743864995983, 1.288569040489071],
 				"diffuseFactor": [0.623193741, 0.623193741, 0.623193741], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.03200000151991844, "aoFactor": 0.25},
-			{"id": "build_crane_01-01.00", "model": "build_crane_01-01", "texture": ["all1s", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01-01.00", "model": "build_crane_01-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [57.55998229980469, 4.431999206542969, 30.339996337890625],
 				"eulerAngles": [-0.49970789916543484, 136.43743864995983, 1.288569040489071],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
-			{"id": "build_crane_01_metalpiece-00.00", "model": "build_crane_01_metalpiece-00", "texture": ["all1s", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01_metalpiece-00.00", "model": "build_crane_01_metalpiece-00", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [55.855018615722656, 9.009718894958496, 32.20500946044922],
 				"eulerAngles": [-0.49970789916543484, 136.43743864995983, 1.288569040489071],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
@@ -754,7 +742,7 @@
 				"translate": [54.602909088134766, 9.687273025512695, 33.61199188232422],
 				"eulerAngles": [-0.49970789916543484, 136.43743864995983, 1.288569040489071],
 				"diffuseFactor": [0.623193741, 0.623193741, 0.623193741], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.03200000151991844, "aoFactor": 0.25},
-			{"id": "build_crane_01_wheel-01.00", "model": "build_crane_01_wheel-01", "texture": ["all1s", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01_wheel-01.00", "model": "build_crane_01_wheel-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [54.602909088134766, 9.687273025512695, 33.61199188232422],
 				"eulerAngles": [-0.49970789916543484, 136.43743864995983, 1.288569040489071],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
