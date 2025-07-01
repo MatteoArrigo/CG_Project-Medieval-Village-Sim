@@ -689,6 +689,7 @@
 				"diffuseFactor": [0.623193741, 0.623193741, 0.623193741], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.03200000151991844, "aoFactor": 0.25},
 			{"id": "build_crane_01_wheel-01.00", "model": "build_crane_01_wheel-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [-58.373558044433594, 11.724719047546387, -48.053470611572266],
+				"eulerAngles": [0, 76, 10],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0},
 			{"id": "build_crane_01-00.00", "model": "build_crane_01-00", "texture": ["build_crane_01_a", "build_crane_01_n", "void", "build_crane_01_o"],
 				"translate": [82.394287109375, 5.09999942779541, 0.012958034873008728],
