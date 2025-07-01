@@ -2,8 +2,8 @@
 #include <sstream>
 
 #include <json.hpp>
-#include <btBulletDynamicsCommon.h>
 
+#include "PhysicsManager.hpp"
 #include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
 #include "modules/Scene.hpp"
@@ -85,6 +85,9 @@ class CGProject : public BaseProject {
 	//*DBG*/Model MS;
 	//*DBG*/DescriptorSet SSD;
 
+	// PhysicsManager for collision detection
+	PhysicsManager PhysicsMgr;
+
 	// To support animation
 	#define N_ANIMATIONS 1
 
@@ -105,23 +108,8 @@ class CGProject : public BaseProject {
 	float Yaw = glm::radians(0.0f);
 	float Pitch = glm::radians(0.0f);
 	float Roll = glm::radians(0.0f);
-	
+
 	glm::vec4 debug1 = glm::vec4(0);
-
-	// Bullet physics members
-	btBroadphaseInterface* broadphase = nullptr;
-	btDefaultCollisionConfiguration* collisionConfig = nullptr;
-	btCollisionDispatcher* dispatcher = nullptr;
-	btSequentialImpulseConstraintSolver* solver = nullptr;
-	btDiscreteDynamicsWorld* dynamicsWorld = nullptr;
-
-	btRigidBody* playerBody = nullptr;
-	btCollisionShape* playerShape = nullptr;
-	btDefaultMotionState* playerMotion = nullptr;
-
-	btRigidBody* terrainBody = nullptr;
-	btCollisionShape* terrainShape = nullptr;
-	btTriangleMesh* terrainTriMesh = nullptr;
 
 	// Here you set the main application parameters
 	void setWindowParameters() {
@@ -130,7 +118,7 @@ class CGProject : public BaseProject {
 		windowHeight = 600;
 		windowTitle = "CGProject - Medieval Village Sim";
     	windowResizable = GLFW_TRUE;
-		
+
 		// Initial aspect ratio
 		Ar = 4.0f / 3.0f;
 	}
@@ -147,7 +135,7 @@ class CGProject : public BaseProject {
 		txt.resizeScreen(w, h);
 	}
 	
-	// Here you load and setup all your Vulkan Models and Texutures.
+	// Here you load and setup all your Vulkan Models, Texutures and Physics manger.
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
@@ -350,56 +338,11 @@ std::cout << "\nLoading the scene\n\n";
 		// Prepares for showing the FPS count
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
 
-		// === Bullet Physics Initialization ===
-		broadphase = new btDbvtBroadphase();
-		collisionConfig = new btDefaultCollisionConfiguration();
-		dispatcher = new btCollisionDispatcher(collisionConfig);
-		solver = new btSequentialImpulseConstraintSolver();
+		// Initialize PhysicsManager
+		if(!PhysicsMgr.initialize()) {
+			exit(0);
+		}
 
-		dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
-		dynamicsWorld->setGravity(btVector3(0, -9.81f, 0));
-
-		// === Terrain mesh collider from Scene ===
-		btTriangleMesh* terrainTriMesh = new btTriangleMesh();
-
-		float size = 500.0f;  // mezzo lato => piano di 1000x1000
-
-		btVector3 A(-size, 0, -size);
-		btVector3 B(+size, 0, -size);
-		btVector3 C(+size, 0, +size);
-		btVector3 D(-size, 0, +size);
-
-		// Triangolo 1: A-B-C
-		terrainTriMesh->addTriangle(A, B, C);
-
-		// Triangolo 2: A-C-D
-		terrainTriMesh->addTriangle(A, C, D);
-
-		terrainShape = new btBvhTriangleMeshShape(terrainTriMesh, true);
-		btDefaultMotionState* terrainMotion = new btDefaultMotionState(btTransform::getIdentity());
-
-		btRigidBody::btRigidBodyConstructionInfo terrainInfo(0.0f, terrainMotion, terrainShape);
-		terrainBody = new btRigidBody(terrainInfo);
-		dynamicsWorld->addRigidBody(terrainBody);
-
-		// === Player capsule collider ===
-		float capsuleRadius = 0.3f;
-		float capsuleHeight = 1.6f;
-		playerShape = new btCapsuleShape(capsuleRadius, capsuleHeight);
-
-		btTransform startTransform;
-		startTransform.setIdentity();
-		startTransform.setOrigin(btVector3(Pos.x, Pos.y + 5.0f, Pos.z));
-
-		playerMotion = new btDefaultMotionState(startTransform);
-		btScalar mass = 80.0f;
-		btVector3 inertia(0, 0, 0);
-		playerShape->calculateLocalInertia(mass, inertia);
-
-		btRigidBody::btRigidBodyConstructionInfo playerInfo(mass, playerMotion, playerShape, inertia);
-		playerBody = new btRigidBody(playerInfo);
-		playerBody->setActivationState(DISABLE_DEACTIVATION);
-		dynamicsWorld->addRigidBody(playerBody);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -455,24 +398,6 @@ std::cout << "\nLoading the scene\n\n";
 		for(int ian = 0; ian < N_ANIMATIONS; ian++) {
 			Anim[ian].cleanup();
 		}
-
-		// === Bullet Cleanup ===
-		dynamicsWorld->removeRigidBody(playerBody);
-		delete playerBody->getMotionState();
-		delete playerBody;
-		delete playerShape;
-
-		dynamicsWorld->removeRigidBody(terrainBody);
-		delete terrainBody->getMotionState();
-		delete terrainBody;
-		delete terrainShape;
-		delete terrainTriMesh;
-
-		delete dynamicsWorld;
-		delete solver;
-		delete dispatcher;
-		delete collisionConfig;
-		delete broadphase;
 	}
 	
 	// Here it is the creation of the command buffer:
@@ -686,13 +611,16 @@ std::cout << "Playing anim: " << curAnim << "\n";
 	}
 	
 	float GameLogic() {
+		// Retrieve configs from PhysicsManger.hpp
+		PlayerConfig physicsConfig;
+
 		// Parameters
 		// Camera FOV-y, Near Plane and Far Plane
 		const float FOVy = glm::radians(45.0f);
 		const float nearPlane = 0.1f;
 		const float farPlane = 500.f;
 		// Player starting point
-		const glm::vec3 StartingPosition = glm::vec3(0.0, 0.0, 5);
+		const glm::vec3 StartingPosition = physicsConfig.startPosition;
 		// Camera target height and distance
 		static float camHeight = 1.5;
 		static float camDist = 5;
@@ -701,13 +629,15 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		const float maxPitch = glm::radians(60.0f);
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
-		const float MOVE_SPEED_BASE = 8.0f;
-		const float MOVE_SPEED_RUN = 12.0f;
-		const float JUMP_FORCE = 500.0f;
+		const float MOVE_SPEED_BASE = physicsConfig.moveSpeed;
+		const float MOVE_SPEED_RUN = physicsConfig.runSpeed;
+		const float JUMP_FORCE = physicsConfig.jumpForce;
 		const float MAX_CAM_DIST = 7.5;
 		const float MIN_CAM_DIST = 1.5;
 
 		// Integration with the timers and the controllers
+		// TODO: Detect running by pressing SHIFT key (currently hardcoded as walking all the time)
+		// TODO: Detect jump by pressing SPACE key
 		float deltaT;
 		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 		bool fire = false;
@@ -715,19 +645,10 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		float MOVE_SPEED = fire ? MOVE_SPEED_RUN : MOVE_SPEED_BASE;
 
 		// Step the physics simulation
-		dynamicsWorld->stepSimulation(deltaT, 10);
+		PhysicsMgr.update(deltaT);
 
 		// Get current player position from physics body
-		btTransform playerTransform;
-		playerBody->getMotionState()->getWorldTransform(playerTransform);
-		btVector3 playerPos = playerTransform.getOrigin();
-
-		// Convert to glm::vec3
-		glm::vec3 Pos = glm::vec3(playerPos.getX(), playerPos.getY(), playerPos.getZ());
-
-		// Store old position for velocity calculation
-		static glm::vec3 oldPos = Pos;
-		static int currRunState = 1;
+		glm::vec3 Pos = PhysicsMgr.getPlayerPosition();
 
 		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
 
@@ -751,40 +672,7 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		glm::vec3 moveDir = MOVE_SPEED * m.x * ux - MOVE_SPEED * m.z * uz;
 
 		// Apply movement force to physics body
-		if (glm::length(moveDir) > 0.001f) {
-			// Get current velocity
-			btVector3 currentVel = playerBody->getLinearVelocity();
-
-			// Apply horizontal movement while preserving vertical velocity
-			btVector3 desiredVel(moveDir.x, currentVel.getY(), moveDir.z);
-
-			// Smooth movement by interpolating between current and desired velocity
-			btVector3 newVel = currentVel.lerp(desiredVel, deltaT * 10.0f);
-			playerBody->setLinearVelocity(newVel);
-
-			// Activate the body to ensure it doesn't go to sleep
-			playerBody->activate(true);
-		} else {
-			// Apply some damping when not moving
-			btVector3 currentVel = playerBody->getLinearVelocity();
-			btVector3 dampedVel(currentVel.getX() * 0.8f, currentVel.getY(), currentVel.getZ() * 0.8f);
-			playerBody->setLinearVelocity(dampedVel);
-		}
-
-		// Jump mechanics (using m.y for jump input)
-		static bool jumpPressed = false;
-		if (m.y > 0.5f && !jumpPressed) {
-			// Check if player is on ground (simple ground check)
-			btVector3 currentVel = playerBody->getLinearVelocity();
-			if (abs(currentVel.getY()) < 0.1f) { // Rough ground check
-				// Apply jump impulse
-				playerBody->applyCentralImpulse(btVector3(0, JUMP_FORCE, 0));
-				playerBody->activate(true);
-			}
-			jumpPressed = true;
-		} else if (m.y <= 0.5f) {
-			jumpPressed = false;
-		}
+		PhysicsMgr.movePlayer(moveDir, fire);
 
 		// Camera height adjustment
 		camHeight += MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
@@ -824,29 +712,9 @@ std::cout << "Playing anim: " << curAnim << "\n";
 
 		ViewPrj = Prj * View;
 
-		// Calculate velocity for animation state
-		float vel = length(Pos - oldPos) / deltaT;
-		oldPos = Pos;
-
-		// Update animation state based on velocity
-		if(vel < 0.2) {
-			if(currRunState != 1) {
-				currRunState = 1; // Idle
-			}
-		} else if(vel < 3.5) {
-			if(currRunState != 2) {
-				currRunState = 2; // Walk
-			}
-		} else {
-			if(currRunState != 3) {
-				currRunState = 3; // Run
-			}
-		}
-
 		return deltaT;
 	}
 };
-
 
 // This is the main: probably you do not need to touch this!
 int main() {
