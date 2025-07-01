@@ -1,548 +1,609 @@
 {
-  "asset": {
-    "generator": "UnityGLTF",
-    "version": "2.0"
-  },
-  "extensionsUsed": [
-    "KHR_texture_transform",
-    "KHR_materials_pbrSpecularGlossiness"
-  ],
-  "scene": 0,
-  "scenes": [
-    {
-      "nodes": [
-        0
-      ],
-      "name": "Terrain"
-    }
-  ],
-  "accessors": [
-    {
-      "bufferView": 0,
-      "componentType": 5126,
-      "count": 7063,
-      "type": "VEC3",
-      "max": [
-        6.7536312547304618E-17,
-        110.44135284423828,
-        485.7484130859375
-      ],
-      "min": [
-        -500.05081176757813,
-        -6.5967798233032227,
-        8.9490750354299757E-15
-      ]
-    },
-    {
-      "bufferView": 1,
-      "componentType": 5126,
-      "count": 7063,
-      "type": "VEC3",
-      "max": [
-        1.0,
-        0.99999988079071045,
-        0.97015058994293213
-      ],
-      "min": [
-        -0.9455798864364624,
-        0.0,
-        -0.93296504020690918
-      ]
-    },
-    {
-      "bufferView": 2,
-      "componentType": 5126,
-      "count": 7063,
-      "type": "VEC4",
-      "max": [
-        1.0,
-        1.0,
-        0.5674934983253479,
-        1.0
-      ],
-      "min": [
-        0.0,
-        -0.90355980396270752,
-        -0.46076381206512451,
-        1.0
-      ]
-    },
-    {
-      "bufferView": 3,
-      "componentType": 5126,
-      "count": 7063,
-      "type": "VEC2",
-      "max": [
-        1.0000001192092896,
-        0.97139662504196167
-      ],
-      "min": [
-        1.5497207641601563E-06,
-        -1.1920928955078125E-07
-      ]
-    },
-    {
-      "bufferView": 4,
-      "componentType": 5126,
-      "count": 7063,
-      "type": "VEC2",
-      "max": [
-        1.0,
-        0.97139674425125122
-      ],
-      "min": [
-        1.6093254089355469E-06,
-        2.384185791015625E-07
-      ]
-    },
-    {
-      "bufferView": 5,
-      "componentType": 5123,
-      "count": 41115,
-      "type": "SCALAR",
-      "max": [
-        7062.0
-      ],
-      "min": [
-        0.0
-      ]
-    },
-    {
-      "bufferView": 6,
-      "componentType": 5126,
-      "count": 6699,
-      "type": "VEC3",
-      "max": [
-        -169.30880737304688,
-        10.069159507751465,
-        474.49752807617188
-      ],
-      "min": [
-        -356.33596801757813,
-        -2.2278835773468018,
-        344.52371215820313
-      ]
-    },
-    {
-      "bufferView": 7,
-      "componentType": 5126,
-      "count": 6699,
-      "type": "VEC3",
-      "max": [
-        0.9933580756187439,
-        1.0,
-        0.89189738035202026
-      ],
-      "min": [
-        -0.93359231948852539,
-        0.11087887734174728,
-        -0.88932758569717407
-      ]
-    },
-    {
-      "bufferView": 8,
-      "componentType": 5126,
-      "count": 6699,
-      "type": "VEC4",
-      "max": [
-        1.0,
-        0.93453055620193481,
-        0.99538940191268921,
-        1.0
-      ],
-      "min": [
-        0.015222593210637569,
-        -0.993807852268219,
-        -0.44888478517532349,
-        -1.0
-      ]
-    },
-    {
-      "bufferView": 9,
-      "componentType": 5126,
-      "count": 6699,
-      "type": "VEC2",
-      "max": [
-        0.66141736507415771,
-        0.948897123336792
-      ],
-      "min": [
-        0.28740161657333374,
-        0.68897628784179688
-      ]
-    },
-    {
-      "bufferView": 10,
-      "componentType": 5126,
-      "count": 6699,
-      "type": "VEC2",
-      "max": [
-        0.69425255060195923,
-        0.99900197982788086
-      ],
-      "min": [
-        0.0006936192512512207,
-        0.00099813938140869141
-      ]
-    },
-    {
-      "bufferView": 11,
-      "componentType": 5123,
-      "count": 24795,
-      "type": "SCALAR",
-      "max": [
-        4259.0
-      ],
-      "min": [
-        0.0
-      ]
-    },
-    {
-      "bufferView": 12,
-      "componentType": 5123,
-      "count": 14625,
-      "type": "SCALAR",
-      "max": [
-        6698.0
-      ],
-      "min": [
-        0.0
-      ]
-    }
-  ],
-  "buffers": [
-    {
-      "uri": "Terrain.bin",
-      "byteLength": 931748
-    }
-  ],
-  "bufferViews": [
-    {
-      "buffer": 0,
-      "byteLength": 84756,
-      "byteStride": 12,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 84756,
-      "byteLength": 84756,
-      "byteStride": 12,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 169512,
-      "byteLength": 113008,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 282520,
-      "byteLength": 56504,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 339024,
-      "byteLength": 56504,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 395528,
-      "byteLength": 82232,
-      "target": 34963
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 477760,
-      "byteLength": 80388,
-      "byteStride": 12,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 558148,
-      "byteLength": 80388,
-      "byteStride": 12,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 638536,
-      "byteLength": 107184,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 745720,
-      "byteLength": 53592,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 799312,
-      "byteLength": 53592,
-      "target": 34962
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 852904,
-      "byteLength": 49592,
-      "target": 34963
-    },
-    {
-      "buffer": 0,
-      "byteOffset": 902496,
-      "byteLength": 29252,
-      "target": 34963
-    }
-  ],
-  "images": [
-    {
-      "uri": "terrain_01_n.jpg",
-      "name": "terrain_01_n"
-    },
-    {
-      "uri": "terrain_01_o.jpg",
-      "name": "terrain_01_o"
-    },
-    {
-      "uri": "terrain_far_01_a2.jpg",
-      "name": "terrain_far_01_a2"
-    },
-    {
-      "uri": "terrain_far_01_sg.jpg",
-      "name": "terrain_far_01_sg"
-    }
-  ],
-  "materials": [
-    {
-      "normalTexture": {
-        "index": 0,
-        "extensions": {
-          "KHR_texture_transform": {
-            "texCoord": 0
-          }
-        }
-      },
-      "occlusionTexture": {
-        "strength": 0.718999981880188,
-        "index": 1,
-        "extensions": {
-          "KHR_texture_transform": {
-            "texCoord": 0
-          }
-        }
-      },
-      "name": "mat_terrain_far_01",
-      "extensions": {
-        "KHR_materials_pbrSpecularGlossiness": {
-          "diffuseFactor": [
-            0.5299,
-            0.5299,
-            0.5299,
-            1.0
-          ],
-          "diffuseTexture": {
-            "index": 2
-          },
-          "specularFactor": [
-            1.0,
-            1.0,
-            1.0
-          ],
-          "glossinessFactor": 1.0,
-          "specularGlossinessTexture": {
-            "index": 3
-          }
-        }
-      }
-    },
-    {
-      "alphaMode": "MASK",
-      "name": "mat_terrain_near_01"
-    },
-    {
-      "alphaMode": "MASK",
-      "name": "mat_terrain_near_02"
-    }
-  ],
-  "meshes": [
-    {
-      "primitives": [
-        {
-          "attributes": {
-            "POSITION": 0,
-            "NORMAL": 1,
-            "TANGENT": 2,
-            "TEXCOORD_0": 3,
-            "TEXCOORD_1": 4
-          },
-          "indices": 5,
-          "material": 0
-        }
-      ],
-      "name": "terrain_far_01"
-    },
-    {
-      "primitives": [
-        {
-          "attributes": {
-            "POSITION": 6,
-            "NORMAL": 7,
-            "TANGENT": 8,
-            "TEXCOORD_0": 9,
-            "TEXCOORD_1": 10
-          },
-          "indices": 11,
-          "material": 1
-        },
-        {
-          "attributes": {
-            "POSITION": 6,
-            "NORMAL": 7,
-            "TANGENT": 8,
-            "TEXCOORD_0": 9,
-            "TEXCOORD_1": 10
-          },
-          "indices": 12,
-          "material": 2
-        }
-      ],
-      "name": "terrain_near_01"
-    }
-  ],
-  "nodes": [
-    {
-      "children": [
-        1,
-        3,
-        5
-      ],
-      "translation": [
-        -6.7292,
-        17.649,
-        -35.163
-      ],
-      "name": "Terrain"
-    },
-    {
-      "children": [
-        2
-      ],
-      "rotation": [
-        1.42044854E-07,
-        -0.6596302,
-        4.47034836E-08,
-        0.751590431
-      ],
-      "scale": [
-        0.919999957,
-        0.92,
-        0.92
-      ],
-      "translation": [
-        622.11,
-        -31.7,
-        408.305847
-      ],
-      "name": "terrain_01"
-    },
-    {
-      "mesh": 0,
-      "rotation": [
-        -0.00032785238,
-        0.000962883467,
-        0.002497423,
-        0.999996364
-      ],
-      "name": "terrain_far_01"
-    },
-    {
-      "children": [
-        4
-      ],
-      "rotation": [
-        1.42606007E-08,
-        0.8359626,
-        1.10390994E-08,
-        0.5487865
-      ],
-      "scale": [
-        0.6941999,
-        0.5,
-        0.694200039
-      ],
-      "translation": [
-        -466.7,
-        -23.0,
-        118.8
-      ],
-      "name": "terrain_01"
-    },
-    {
-      "mesh": 0,
-      "rotation": [
-        -0.000544987444,
-        0.0009628828,
-        -0.00245918659,
-        0.999996364
-      ],
-      "translation": [
-        -2.01167859E-06,
-        7.789245E-14,
-        4.46630054E-07
-      ],
-      "name": "terrain_far_01"
-    },
-    {
-      "children": [
-        6,
-        7
-      ],
-      "translation": [
-        292.81,
-        -17.64926,
-        -361.06
-      ],
-      "name": "terrain_01"
-    },
-    {
-      "mesh": 0,
-      "name": "terrain_far_01"
-    },
-    {
-      "mesh": 1,
-      "name": "terrain_near_01"
-    }
-  ],
-  "samplers": [
-    {
-      "minFilter": 9987
-    }
-  ],
-  "textures": [
-    {
-      "sampler": 0,
-      "source": 0,
-      "name": "terrain_01_n"
-    },
-    {
-      "sampler": 0,
-      "source": 1,
-      "name": "terrain_01_o"
-    },
-    {
-      "sampler": 0,
-      "source": 2,
-      "name": "terrain_far_01_a2"
-    },
-    {
-      "sampler": 0,
-      "source": 3,
-      "name": "terrain_far_01_sg"
-    }
-  ]
+	"asset":{
+		"generator":"Khronos glTF Blender I/O v4.4.56",
+		"version":"2.0"
+	},
+	"extensionsUsed":[
+		"KHR_materials_specular",
+		"KHR_materials_ior",
+		"KHR_texture_transform"
+	],
+	"extensionsRequired":[
+		"KHR_texture_transform"
+	],
+	"scene":0,
+	"scenes":[
+		{
+			"name":"Scene",
+			"nodes":[
+				0,
+				1,
+				2,
+				3,
+				4
+			]
+		}
+	],
+	"nodes":[
+		{
+			"mesh":0,
+			"name":"terrain_far_01",
+			"rotation":[
+				-0.0018936449196189642,
+				-0.6589041352272034,
+				0.001660822657868266,
+				0.7522227168083191
+			],
+			"scale":[
+				0.9200002551078796,
+				0.9199999570846558,
+				0.9200003147125244
+			],
+			"translation":[
+				596.986572265625,
+				-14.051000595092773,
+				405.6328430175781
+			]
+		},
+		{
+			"mesh":0,
+			"name":"terrain_far_01.001",
+			"rotation":[
+				-0.0022871342953294516,
+				0.8364859819412231,
+				-0.0014578797854483128,
+				0.5479815602302551
+			],
+			"scale":[
+				0.6941959857940674,
+				0.500005841255188,
+				0.6941999793052673
+			],
+			"translation":[
+				-473.42919921875,
+				-5.35099983215332,
+				83.63700866699219
+			]
+		},
+		{
+			"mesh":0,
+			"name":"terrain_far_01.002",
+			"translation":[
+				286.080810546875,
+				-0.0002593994140625,
+				-396.2229919433594
+			]
+		},
+		{
+			"mesh":1,
+			"name":"terrain_near_01",
+			"translation":[
+				286.080810546875,
+				-0.0002593994140625,
+				-396.2229919433594
+			]
+		},
+		{
+			"mesh":2,
+			"name":"Baseplate",
+			"scale":[
+				100,
+				1,
+				100
+			],
+			"translation":[
+				0,
+				-1.7000000476837158,
+				100
+			]
+		}
+	],
+	"materials":[
+		{
+			"extensions":{
+				"KHR_materials_specular":{
+					"specularFactor":0,
+					"specularColorTexture":{
+						"index":0
+					}
+				},
+				"KHR_materials_ior":{
+					"ior":1000
+				}
+			},
+			"name":"mat_terrain_far_01.001",
+			"normalTexture":{
+				"index":1
+			},
+			"occlusionTexture":{
+				"index":2,
+				"strength":0.718999981880188
+			},
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.5299000144004822,
+					0.5299000144004822,
+					0.5299000144004822,
+					1
+				],
+				"baseColorTexture":{
+					"index":3
+				},
+				"metallicFactor":0
+			}
+		},
+		{
+			"name":"mat_terrain_near_01.001"
+		},
+		{
+			"name":"mat_terrain_near_02.001"
+		},
+		{
+			"name":"baseplate.001",
+			"pbrMetallicRoughness":{
+				"baseColorFactor":[
+					0.9786729216575623,
+					0.8776296377182007,
+					0.6534194946289062,
+					1
+				],
+				"baseColorTexture":{
+					"extensions":{
+						"KHR_texture_transform":{
+							"offset":[
+								0.10000000149011612,
+								-79.30000001192093
+							],
+							"scale":[
+								80,
+								80
+							]
+						}
+					},
+					"index":4
+				}
+			}
+		}
+	],
+	"meshes":[
+		{
+			"name":"terrain_far_01.001",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":0,
+						"NORMAL":1,
+						"TEXCOORD_0":2,
+						"TEXCOORD_1":3,
+						"TANGENT":4
+					},
+					"indices":5,
+					"material":0
+				}
+			]
+		},
+		{
+			"name":"terrain_near_01.001",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":6,
+						"NORMAL":7,
+						"TEXCOORD_0":8,
+						"TEXCOORD_1":9,
+						"TANGENT":10
+					},
+					"indices":11,
+					"material":1
+				},
+				{
+					"attributes":{
+						"POSITION":12,
+						"NORMAL":13,
+						"TEXCOORD_0":14,
+						"TEXCOORD_1":15,
+						"TANGENT":16
+					},
+					"indices":17,
+					"material":2
+				}
+			]
+		},
+		{
+			"name":"Baseplate.001",
+			"primitives":[
+				{
+					"attributes":{
+						"POSITION":18,
+						"NORMAL":19,
+						"TEXCOORD_0":20,
+						"TANGENT":21
+					},
+					"indices":22,
+					"material":3
+				}
+			]
+		}
+	],
+	"textures":[
+		{
+			"sampler":0,
+			"source":0
+		},
+		{
+			"sampler":0,
+			"source":1
+		},
+		{
+			"sampler":0,
+			"source":2
+		},
+		{
+			"sampler":0,
+			"source":3
+		},
+		{
+			"sampler":0,
+			"source":4
+		}
+	],
+	"images":[
+		{
+			"mimeType":"image/jpeg",
+			"name":"terrain_far_01_sg",
+			"uri":"terrain_far_01_sg.jpg"
+		},
+		{
+			"mimeType":"image/jpeg",
+			"name":"terrain_01_n",
+			"uri":"terrain_01_n.jpg"
+		},
+		{
+			"mimeType":"image/jpeg",
+			"name":"terrain_01_o",
+			"uri":"terrain_01_o.jpg"
+		},
+		{
+			"mimeType":"image/jpeg",
+			"name":"terrain_far_01_a2",
+			"uri":"terrain_far_01_a2.jpg"
+		},
+		{
+			"mimeType":"image/jpeg",
+			"name":"terrain_grass_01_a",
+			"uri":"terrain_grass_01_a.jpg"
+		}
+	],
+	"accessors":[
+		{
+			"bufferView":0,
+			"componentType":5126,
+			"count":7117,
+			"max":[
+				6.753631254730462e-17,
+				110.44135284423828,
+				485.7484130859375
+			],
+			"min":[
+				-500.0508117675781,
+				-6.596779823303223,
+				8.949075035429976e-15
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":1,
+			"componentType":5126,
+			"count":7117,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":2,
+			"componentType":5126,
+			"count":7117,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":3,
+			"componentType":5126,
+			"count":7117,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":4,
+			"componentType":5126,
+			"count":7117,
+			"type":"VEC4"
+		},
+		{
+			"bufferView":5,
+			"componentType":5123,
+			"count":41115,
+			"type":"SCALAR"
+		},
+		{
+			"bufferView":6,
+			"componentType":5126,
+			"count":4275,
+			"max":[
+				-179.1483154296875,
+				10.069159507751465,
+				474.4975280761719
+			],
+			"min":[
+				-356.3359680175781,
+				-2.2278835773468018,
+				356.3347473144531
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":7,
+			"componentType":5126,
+			"count":4275,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":8,
+			"componentType":5126,
+			"count":4275,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":9,
+			"componentType":5126,
+			"count":4275,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":10,
+			"componentType":5126,
+			"count":4275,
+			"type":"VEC4"
+		},
+		{
+			"bufferView":11,
+			"componentType":5123,
+			"count":24795,
+			"type":"SCALAR"
+		},
+		{
+			"bufferView":12,
+			"componentType":5126,
+			"count":2562,
+			"max":[
+				-169.30880737304688,
+				9.415717124938965,
+				419.3348693847656
+			],
+			"min":[
+				-346.4924011230469,
+				3.9731338024139404,
+				344.5237121582031
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":13,
+			"componentType":5126,
+			"count":2562,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":14,
+			"componentType":5126,
+			"count":2562,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":15,
+			"componentType":5126,
+			"count":2562,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":16,
+			"componentType":5126,
+			"count":2562,
+			"type":"VEC4"
+		},
+		{
+			"bufferView":17,
+			"componentType":5123,
+			"count":14625,
+			"type":"SCALAR"
+		},
+		{
+			"bufferView":18,
+			"componentType":5126,
+			"count":121,
+			"max":[
+				5,
+				1.1102230246251565e-16,
+				5
+			],
+			"min":[
+				-5,
+				-1.1102230246251565e-16,
+				-5
+			],
+			"type":"VEC3"
+		},
+		{
+			"bufferView":19,
+			"componentType":5126,
+			"count":121,
+			"type":"VEC3"
+		},
+		{
+			"bufferView":20,
+			"componentType":5126,
+			"count":121,
+			"type":"VEC2"
+		},
+		{
+			"bufferView":21,
+			"componentType":5126,
+			"count":121,
+			"type":"VEC4"
+		},
+		{
+			"bufferView":22,
+			"componentType":5123,
+			"count":600,
+			"type":"SCALAR"
+		}
+	],
+	"bufferViews":[
+		{
+			"buffer":0,
+			"byteLength":85404,
+			"byteOffset":0,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":85404,
+			"byteOffset":85404,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":56936,
+			"byteOffset":170808,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":56936,
+			"byteOffset":227744,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":113872,
+			"byteOffset":284680,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":82230,
+			"byteOffset":398552,
+			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":51300,
+			"byteOffset":480784,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":51300,
+			"byteOffset":532084,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":34200,
+			"byteOffset":583384,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":34200,
+			"byteOffset":617584,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":68400,
+			"byteOffset":651784,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":49590,
+			"byteOffset":720184,
+			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":30744,
+			"byteOffset":769776,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":30744,
+			"byteOffset":800520,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":20496,
+			"byteOffset":831264,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":20496,
+			"byteOffset":851760,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":40992,
+			"byteOffset":872256,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":29250,
+			"byteOffset":913248,
+			"target":34963
+		},
+		{
+			"buffer":0,
+			"byteLength":1452,
+			"byteOffset":942500,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":1452,
+			"byteOffset":943952,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":968,
+			"byteOffset":945404,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":1936,
+			"byteOffset":946372,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":1200,
+			"byteOffset":948308,
+			"target":34963
+		}
+	],
+	"samplers":[
+		{
+			"magFilter":9729,
+			"minFilter":9987
+		}
+	],
+	"buffers":[
+		{
+			"byteLength":949508,
+			"uri":"Terrain.bin"
+		}
+	]
 }

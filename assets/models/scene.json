@@ -14,6 +14,12 @@
 		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
 		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
 
+		{"id": "terrain_far_01-00", "VD": "VDtan", "model": "terrain_far_01.001", "node": "terrain_far_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
+		{"id": "terrain_near_01-00", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
+		{"id": "terrain_near_01-01", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 1, "asset": "terrain", "format": "ASSET"},
+		{"id": "Baseplate-00", "VD": "VDtan", "model": "Baseplate.001", "node": "Baseplate.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
+
+
 		{"id": "build_boat_01-00", "VD": "VDtan", "model": "build_boat_01", "node": "build_boat_01", "meshId": 0, "asset": "village", "format": "ASSET"},
 		{"id": "build_boat_dragonhead_01-00", "VD": "VDtan", "model": "build_boat_dragonhead_01", "node": "build_boat_dragonhead_01", "meshId": 0, "asset": "village", "format": "ASSET"},
 		{"id": "build_boat_dragonhead_02-00", "VD": "VDtan", "model": "build_boat_dragonhead_02", "node": "build_boat_dragonhead_02", "meshId": 0, "asset": "village", "format": "ASSET"},
@@ -335,6 +341,22 @@
 		{"id": "void", "texture": "assets/textures/void.png", "format": "C"},
 		{"id": "white", "texture": "assets/textures/white.png", "format": "C"},
 
+		{"id": "terrain_01_m", "texture": "assets/textures/terrain/terrain_01_m.png", "format": "D"},
+		{"id": "terrain_01_n", "texture": "assets/textures/terrain/terrain_01_n.png", "format": "D"},
+		{"id": "terrain_01_o", "texture": "assets/textures/terrain/terrain_01_o.png", "format": "D"},
+		{"id": "terrain_01_o_highpassed", "texture": "assets/textures/terrain/terrain_01_o_highpassed.png", "format": "D"},
+		{"id": "terrain_far_01_a2", "texture": "assets/textures/terrain/terrain_far_01_a2.png", "format": "D"},
+		{"id": "terrain_far_01_sg", "texture": "assets/textures/terrain/terrain_far_01_sg.png", "format": "D"},
+		{"id": "terrain_grass_01_a", "texture": "assets/textures/terrain/terrain_grass_01_a.png", "format": "C"},
+		{"id": "terrain_grass_01_n", "texture": "assets/textures/terrain/terrain_grass_01_n.png", "format": "D"},
+		{"id": "terrain_grass_01_sg", "texture": "assets/textures/terrain/terrain_grass_01_sg.png", "format": "D"},
+		{"id": "terrain_mudslide_01_a", "texture": "assets/textures/terrain/terrain_mudslide_01_a.png", "format": "C"},
+		{"id": "terrain_mudslide_01_n", "texture": "assets/textures/terrain/terrain_mudslide_01_n.png", "format": "D"},
+		{"id": "terrain_mudslide_01_sg", "texture": "assets/textures/terrain/terrain_mudslide_01_sg.png", "format": "D"},
+		{"id": "terrain_wetmud_01_a", "texture": "assets/textures/terrain/terrain_wetmud_01_a.png", "format": "C"},
+		{"id": "terrain_wetmud_01_n", "texture": "assets/textures/terrain/terrain_wetmud_01_n.png", "format": "D"},
+		{"id": "terrain_wetmud_01_sg", "texture": "assets/textures/terrain/terrain_wetmud_01_sg.png", "format": "D"},
+
 		{"id": "build_boat_01_a", "texture": "assets/textures/all_buildings/build_boat_01_a.png", "format": "C"},
 		{"id": "build_boat_01_n", "texture": "assets/textures/all_buildings/build_boat_01_n.png", "format": "D"},
 		{"id": "build_boat_01_o", "texture": "assets/textures/all_buildings/build_boat_01_o.png", "format": "D"},
@@ -445,9 +467,32 @@
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
 		]},
 		{"technique": "TerrainTiled", "elements": [
+
+			{"id": "terrain_near_01-00.00", "model": "terrain_near_01-00", "texture": ["terrain_grass_01_a"],
+				"translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] },
+			{"id": "terrain_near_01-01.00", "model": "terrain_near_01-01", "texture": ["terrain_grass_01_a"],
+				"translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] },
+			{"id": "Baseplate-00.00", "model": "Baseplate-00", "texture": ["terrain_wetmud_01_a"],
+				"translate": [0.0, -1.7000000476837158, 100.0],
+				"scale": [100.0, 1.0, 100.0]}
 		]},
 
 		{"technique": "PBR_sg", "elements":  [
+
+			{"id": "terrain_far_01-00.00", "model": "terrain_far_01-00", "texture": ["terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg", "terrain_01_o"],
+				"translate": [596.986572265625, -14.051000595092773, 405.6328430175781],
+				"eulerAngles": [-0.03782941734244376, -82.43292172314469, 0.28614077587168324],
+				"scale": [0.9200002551078796, 0.9199999570846558, 0.9200003147125244],
+				"diffuseFactor": [0.5299,0.5299,0.5299], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.718999981880188},
+			{"id": "terrain_far_01-00.01", "model": "terrain_far_01-00", "texture": ["terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg", "terrain_01_o"],
+				"translate": [-473.42919921875, -5.35099983215332, 83.63700866699219],
+				"eulerAngles": [-0.0038745600549622023, 113.54241236271713, -0.3107792368361189],
+				"scale": [0.6941959857940674, 0.500005841255188, 0.6941999793052673],
+				"diffuseFactor": [0.5299,0.5299,0.5299], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.718999981880188},
+			{"id": "terrain_far_01-00.02", "model": "terrain_far_01-00", "texture": ["terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg", "terrain_01_o"],
+				"translate": [286.080810546875, -0.0002593994140625, -396.2229919433594],
+				"diffuseFactor": [0.5299,0.5299,0.5299], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.718999981880188},
+
 
 			{"id": "build_boat_01-00.00", "model": "build_boat_01-00", "texture": ["build_boat_01_a", "build_boat_01_n", "build_boat_01_sg", "build_boat_01_o"],
 				"translate": [73.84013366699219, 2.2529194355010986, 33.53003692626953],
