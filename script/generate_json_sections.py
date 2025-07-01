@@ -7,6 +7,7 @@ import re
 gltf = GLTF2().load("assets/models/Props.gltf")
 texDir = 'props'
 assetName = 'village_props'
+meshRegex = '.*skull.+'
 
 def getModels():
     models = []
@@ -84,9 +85,10 @@ def getMaterialsList():
         if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness']:
             entry['albedo'] = get_texture_name(material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseTexture']['index'])
         else:
-            entry['albedo'] = 'all1s'  # Default texture if no diffuse texture is provided
+            entry['albedo'] = 'white'  # Default texture if no diffuse texture is provided
             print(f"Warning: Material {material.name} does not have a diffuse texture in KHR_materials_pbrSpecularGlossiness")
-        # This way, the constant value of diffuseFactor is taken (multiplied by 1)
+        # This way, the constant value of diffuseFactor is taken by diffuseFactor
+            # In particular, diffuse factore represents a fraction of 255 (still float in 0.0-1.0)
 
         entry['normal'] = get_texture_name(material.normalTexture.index) if material.normalTexture else 'void'
         entry['ao'] = get_texture_name(material.occlusionTexture.index) if material.occlusionTexture else 'void'
@@ -150,6 +152,20 @@ def getElementsToRender(meshNameRegex = None):
             if primitiveId not in usedIdsCount:
                 usedIdsCount[primitiveId] = 0
 
+
+            # materialsList = [ {
+            #     'albedo': 'prop_fish_01_d',
+            #     'normal': 'prop_fish_01_n',
+            #     'sg': 'prop_fish_01_sg',
+            #     'ao': 'void',
+            #     'diffuseFactor': None,
+            #     'specularFactor': None,
+            #     'glossinessFactor': None,
+            #     'aoFactor': None
+            # } ]
+            # materialIdx = 0
+
+
             entry = {
                 'id': f'{primitiveId}.{usedIdsCount[primitiveId]:02}',
                 'model': primitiveId,
@@ -179,7 +195,7 @@ def getElementsToRender(meshNameRegex = None):
 
     return toRender
 
-toRender = getElementsToRender('pf_fish.+')
+toRender = getElementsToRender(meshRegex)
 
 
 # sections = {

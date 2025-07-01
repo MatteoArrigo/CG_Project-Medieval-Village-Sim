@@ -1,6 +1,35 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+/**
+ This shader implements a Physically-Based Rendering (PBR) model using the Specular-Glossiness workflow.
+ It calculates lighting based on material properties, textures, and global parameters.
+ The shader supports normal mapping, ambient occlusion, and specular reflections.
+
+ Inputs for Vertex Shader:
+ - fragPos: Fragment position in world space.
+ - fragNorm: Fragment normal vector.
+ - fragUV: Texture coordinates.
+ - fragTan: Tangent vector for normal mapping.
+ Outputs:
+ - outColor: Final color output of the fragment.
+
+In particular the texture are handled as:
+    - albedoMap: Base color texture (RGB) with alpha for transparency.
+        Implements alpha test: if Alpha channel of albedo is less than 0.5, the fragment is discarded (invisible pixel).
+        It is multiplied by the Diffuse Factor.
+        It can be white to take only the (fractional) color from Diffuse Factor
+    - normalMap: Normal map texture (RGB) for surface detail.
+        If the normal map is completely black (vec3(0.0)), it falls back to the default normal (surface Z = normal).
+    - specGlossMap: Combined specular (RGB) and glossiness (A) texture.
+        It adds no effect if it is completely black, or Specular Factor and Glossiness Factor are both zero.
+    - aoMap: Ambient occlusion texture (R) to modulate ambient light.
+        It is multiplied by the Ambient Occlusion Factor.
+        It adds no effect if it is completely black (vec3(0.0)) or Ambient Occlusion Factor is zero.
+*/
+
+
+
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNorm;
 layout(location = 2) in vec2 fragUV;
@@ -37,7 +66,14 @@ mat3 computeTBN(vec3 N, vec3 T, float tangentW) {
 }
 
 vec3 getNormalFromMap(mat3 TBN) {
-    vec3 tangentNormal = texture(normalMap, fragUV).xyz * 2.0 - 1.0;
+    vec3 tangentNormal = texture(normalMap, fragUV).xyz;
+
+    // Check for completely black normal map (vec3(0.0))
+    if (length(tangentNormal) < 1e-5) {
+        return TBN[2]; // fallback to default normal: surface Z = normal
+    }
+
+    tangentNormal = tangentNormal * 2.0 - 1.0;
     return normalize(TBN * tangentNormal);
 }
 
