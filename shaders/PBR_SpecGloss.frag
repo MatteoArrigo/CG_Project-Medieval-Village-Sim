@@ -62,6 +62,15 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 }
 
 void main() {
+    // Texture sampling
+    vec4 texDiffuse  = texture(albedoMap, fragUV);
+    vec4 texSpecGloss = texture(specGlossMap, fragUV);
+    float ao = texture(aoMap, fragUV).r;  // any of the 3 values (RGB) is ok
+
+    // Alpha test for MASK mode
+    if (texDiffuse.a < 0.5)
+    discard;
+
     vec3 N = normalize(fragNorm);
     vec3 T = normalize(fragTan.xyz);
     float w = fragTan.w;
@@ -72,11 +81,6 @@ void main() {
     vec3 L = normalize(gubo.lightDir);
     vec3 H = normalize(V + L);
     vec3 radiance = gubo.lightColor.rgb;
-
-    // Texture sampling
-    vec4 texDiffuse  = texture(albedoMap, fragUV);
-    vec4 texSpecGloss = texture(specGlossMap, fragUV);
-    float ao = texture(aoMap, fragUV).r;  // any of the 3 values (RGB) is ok
 
     // Apply Specular/Glossiness factors to diffuse color (albedo)
     vec3 diffuseColor = texDiffuse.rgb * matFactors.diffuseFactor;

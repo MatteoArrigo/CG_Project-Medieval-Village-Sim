@@ -1,11 +1,12 @@
 import json
 import os
 from pygltflib import GLTF2
+import re
 
 # Carica il file .gltf
-gltf = GLTF2().load("assets/models/Buildings.gltf")
-texDir = 'all_buildings'
-assetName = 'village'
+gltf = GLTF2().load("assets/models/Props.gltf")
+texDir = 'props'
+assetName = 'village_props'
 
 def getModels():
     models = []
@@ -57,8 +58,10 @@ def get_image_uri(texture_index):
 def get_texture_name(texture_index):
     if texture_index is None:
         return None
-    texture = gltf.textures[texture_index]
-    return texture.name
+    # texture = gltf.textures[texture_index]
+    # return texture.name
+    textureId = gltf.textures[texture_index].source
+    return gltf.images[textureId].name if textureId is not None else None
 
 def getMaterialsList():
     materialsList = []
@@ -71,7 +74,11 @@ def getMaterialsList():
             entry['albedo'] = 'void'
             entry['normal'] = 'void'
             entry['sg'] = 'void'
-            entry['occlusion'] = 'void'
+            entry['ao'] = 'void'
+            entry['aoFactor'] = None
+            entry['diffuseFactor'] = None
+            entry['specularFactor'] = None
+            entry['glossinessFactor'] = None
             materialsList.append(entry)
             continue
         if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness']:
@@ -82,7 +89,7 @@ def getMaterialsList():
         # This way, the constant value of diffuseFactor is taken (multiplied by 1)
 
         entry['normal'] = get_texture_name(material.normalTexture.index) if material.normalTexture else 'void'
-        entry['ao'] = get_texture_name(material.occlusionTexture.index) if material.occlusionTexture else 'white'
+        entry['ao'] = get_texture_name(material.occlusionTexture.index) if material.occlusionTexture else 'void'
         entry['sg'] = get_texture_name(material.extensions['KHR_materials_pbrSpecularGlossiness']['specularGlossinessTexture']['index']) \
             if 'specularGlossinessTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'] else 'void'
 
@@ -119,7 +126,7 @@ def computeRotationFromNode(node):
 
     return rot
 
-def getElementsToRender():
+def getElementsToRender(meshNameRegex = None):
     toRender = []
     materialsList = getMaterialsList()
     usedIdsCount = {}
@@ -129,12 +136,16 @@ def getElementsToRender():
             continue
 
         mesh = gltf.meshes[node.mesh]
+        if meshNameRegex is not None and not re.match(meshNameRegex, mesh.name):
+            continue
+
         for meshId, primitive in enumerate(mesh.primitives):
             primitiveId = f'{mesh.name}-{meshId:02}'
             if primitive.material is None:
                 print(f"Warning: Primitive {primitiveId} has no material - Impossible to render")
                 continue
             materialIdx = primitive.material
+            # print(primitiveId, materialsList[materialIdx]['albedo'])
 
             if primitiveId not in usedIdsCount:
                 usedIdsCount[primitiveId] = 0
@@ -149,6 +160,7 @@ def getElementsToRender():
                     materialsList[materialIdx]['ao']
                 ]
             }
+            usedIdsCount[primitiveId] += 1
             if node.translation:
                 entry['translate'] = [coord for coord in node.translation]
             if node.rotation:
@@ -167,7 +179,7 @@ def getElementsToRender():
 
     return toRender
 
-toRender = getElementsToRender()
+toRender = getElementsToRender('pf_fish.+')
 
 
 # sections = {
@@ -184,6 +196,7 @@ output_file = "script/json_sections.txt"
 
 with open(output_file, "w") as f:
     for section in [models, textures, toRender]:
+    # for section in [models, toRender]:
         for entry in section:
             f.write(f'{entry},\n'.replace("'", '"')
                     .replace('"eulerAngles', '\n  "eulerAngles')

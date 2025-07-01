@@ -5,7 +5,7 @@
 	},
 	"extensionsUsed":[
 		"KHR_materials_specular",
-		"KHR_materials_ior",
+        "KHR_materials_pbrSpecularGlossiness",
 		"KHR_texture_transform"
 	],
 	"extensionsRequired":[
@@ -1097,13 +1097,25 @@
 	"materials":[
 		{
 			"extensions":{
-				"KHR_materials_specular":{
-					"specularColorTexture":{
-						"index":0
+				"KHR_materials_pbrSpecularGlossiness": {
+					"diffuseFactor": [
+						0.9911022,
+						0.9911022,
+						0.9911022,
+						1.0
+					],
+					"diffuseTexture": {
+						"index": 3
+					},
+					"specularFactor": [
+						1.0,
+						1.0,
+						1.0
+					],
+					"glossinessFactor": 1.0,
+					"specularGlossinessTexture": {
+						"index": 4
 					}
-				},
-				"KHR_materials_ior":{
-					"ior":1000
 				}
 			},
 			"name":"mat_sword_shovel_halberd_01.001",
@@ -1112,34 +1124,26 @@
 			},
 			"occlusionTexture":{
 				"index":2
-			},
-			"pbrMetallicRoughness":{
-				"baseColorFactor":[
-					0.9911022186279297,
-					0.9911022186279297,
-					0.9911022186279297,
-					1
-				],
-				"baseColorTexture":{
-					"index":3
-				},
-				"metallicFactor":0,
-				"metallicRoughnessTexture":{
-					"index":4
-				}
 			}
 		},
 		{
 			"extensions":{
-				"KHR_materials_specular":{
-					"specularColorFactor":[
-						0.03310475870966911,
-						0.03310475870966911,
-						0.03310475870966911
-					]
-				},
-				"KHR_materials_ior":{
-					"ior":1000
+				"KHR_materials_pbrSpecularGlossiness": {
+					"diffuseFactor": [
+						0.743349731,
+						0.743349731,
+						0.743349731,
+						1.0
+					],
+					"diffuseTexture": {
+						"index": 7
+					},
+					"specularFactor": [
+						0.03310476,
+						0.03310476,
+						0.03310476
+					],
+					"glossinessFactor": 0.054000001400709152
 				}
 			},
 			"name":"mat_plank_01.001",
@@ -1173,30 +1177,29 @@
 				},
 				"index":6,
 				"strength":0.30000001192092896
-			},
-			"pbrMetallicRoughness":{
-				"baseColorFactor":[
-					0.7433497309684753,
-					0.7433497309684753,
-					0.7433497309684753,
-					1
-				],
-				"baseColorTexture":{
-					"index":7
-				},
-				"metallicFactor":0,
-				"roughnessFactor":0.9459999799728394
 			}
 		},
 		{
-			"extensions":{
-				"KHR_materials_specular":{
-					"specularColorTexture":{
-						"index":8
+			"extensions": {
+				"KHR_materials_pbrSpecularGlossiness": {
+					"diffuseFactor": [
+						1.0,
+						1.0,
+						1.0,
+						1.0
+					],
+					"diffuseTexture": {
+						"index": 11
+					},
+					"specularFactor": [
+						1.0,
+						1.0,
+						1.0
+					],
+					"glossinessFactor": 1.0,
+					"specularGlossinessTexture": {
+						"index": 12
 					}
-				},
-				"KHR_materials_ior":{
-					"ior":1000
 				}
 			},
 			"name":"mat_shield_01.001",
@@ -1206,26 +1209,29 @@
 			"occlusionTexture":{
 				"index":10,
 				"strength":0.7749999761581421
-			},
-			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":11
-				},
-				"metallicFactor":0,
-				"metallicRoughnessTexture":{
-					"index":12
-				}
 			}
 		},
 		{
-			"extensions":{
-				"KHR_materials_specular":{
-					"specularColorTexture":{
-						"index":13
+			"extensions": {
+				"KHR_materials_pbrSpecularGlossiness": {
+					"diffuseFactor": [
+						1.0,
+						1.0,
+						1.0,
+						1.0
+					],
+					"diffuseTexture": {
+						"index": 16
+					},
+					"specularFactor": [
+						1.0,
+						1.0,
+						1.0
+					],
+					"glossinessFactor": 1.0,
+					"specularGlossinessTexture": {
+						"index": 17
 					}
-				},
-				"KHR_materials_ior":{
-					"ior":1000
 				}
 			},
 			"name":"mat_shield_02.001",
@@ -1235,26 +1241,29 @@
 			"occlusionTexture":{
 				"index":15,
 				"strength":0.8209999799728394
-			},
-			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":16
-				},
-				"metallicFactor":0,
-				"metallicRoughnessTexture":{
-					"index":17
-				}
 			}
 		},
 		{
-			"extensions":{
-				"KHR_materials_specular":{
-					"specularColorTexture":{
-						"index":18
+			"extensions": {
+				"KHR_materials_pbrSpecularGlossiness": {
+					"diffuseFactor": [
+						1.0,
+						1.0,
+						1.0,
+						1.0
+					],
+					"diffuseTexture": {
+						"index": 21
+					},
+					"specularFactor": [
+						1.0,
+						1.0,
+						1.0
+					],
+					"glossinessFactor": 1.0,
+					"specularGlossinessTexture": {
+						"index": 22
 					}
-				},
-				"KHR_materials_ior":{
-					"ior":1000
 				}
 			},
 			"name":"mat_shield_03.001",
@@ -1263,26 +1272,29 @@
 			},
 			"occlusionTexture":{
 				"index":20
-			},
-			"pbrMetallicRoughness":{
-				"baseColorTexture":{
-					"index":21
-				},
-				"metallicFactor":0,
-				"metallicRoughnessTexture":{
-					"index":22
-				}
 			}
 		},
 		{
-			"extensions":{
-				"KHR_materials_specular":{
-					"specularColorTexture":{
-						"index":23
+			"extensions": {
+				"KHR_materials_pbrSpecularGlossiness": {
+					"diffuseFactor": [
+						0.656266451,
+						0.656266451,
+						0.656266451,
+						1.0
+					],
+					"diffuseTexture": {
+						"index": 26
+					},
+					"specularFactor": [
+						1.0,
+						1.0,
+						1.0
+					],
+					"glossinessFactor": 1.0,
+					"specularGlossinessTexture": {
+						"index": 27
 					}
-				},
-				"KHR_materials_ior":{
-					"ior":1000
 				}
 			},
 			"name":"mat_skull_01.001",
@@ -1291,21 +1303,6 @@
 			},
 			"occlusionTexture":{
 				"index":25
-			},
-			"pbrMetallicRoughness":{
-				"baseColorFactor":[
-					0.656266450881958,
-					0.656266450881958,
-					0.656266450881958,
-					1
-				],
-				"baseColorTexture":{
-					"index":26
-				},
-				"metallicFactor":0,
-				"metallicRoughnessTexture":{
-					"index":27
-				}
 			}
 		}
 	],

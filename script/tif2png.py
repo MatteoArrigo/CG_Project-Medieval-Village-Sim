@@ -1,8 +1,10 @@
 from PIL import Image
 from pathlib import Path
+import tifffile
+from numpy import asarray
 
 # Set the root directory to search
-root_dir = Path(r'C:\Users\Matteo\Desktop\0LabsHPC\CG project\Polimi-CG-Project\assets\textures\all_buildings')
+root_dir = Path(r'../assets/textures/props')
 
 # Check if the root directory exists
 if not root_dir.exists():
@@ -18,10 +20,13 @@ for tif_path in tif_files:
     png_path = tif_path.with_suffix('.png')
     try:
         # Open and convert the TIFF image
-        with Image.open(tif_path) as img:
-            if img.mode not in ["RGB", "RGBA"]:
-                img = img.convert("RGB")  # Convert to a compatible mode
-            img.save(png_path, format="PNG")
+        img = tifffile.imread(tif_path)
+        if img.dtype == 'uint16':
+            # Scale 16-bit image to 8-bit
+            img = (img / 256).astype('uint8')
+        img = Image.fromarray(img)
+        # img = img.convert('RGBA')
+        img.save(png_path, format="PNG")
         print(f"Converted: {tif_path} -> {png_path}")
         # Delete the original TIFF file
         try:
