@@ -57,6 +57,10 @@ struct skyBoxUniformBufferObject {
 	alignas(16) glm::mat4 mvpMat;
 };
 
+struct TimeUBO {
+    alignas(4) float time; // scalar
+};
+
 
 struct SgAoMaterialFactorsUBO {
     alignas(16) glm::vec3 diffuseFactor;      // (RGBA)
@@ -74,7 +78,8 @@ class CGProject : public BaseProject {
 	
 	// Descriptor Layouts [what will be passed to the shaders]
 	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR,
-        DSLglobal, DSLskyBox, DSLterrainTiled, DSLsgAoFactors;
+        DSLglobal, DSLskyBox, DSLterrainTiled, DSLsgAoFactors,
+        DSLwaterVert, DSLwaterFrag;
 
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
@@ -82,7 +87,7 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDskyBox;
 	VertexDescriptor VDtan;
 	RenderPass RP;
-	Pipeline Pchar, PsimpObj, PskyBox, P_PBR, PterrainTiled, P_PBR_SpecGloss;
+	Pipeline Pchar, PsimpObj, PskyBox, PterrainTiled, P_PBR_SpecGloss, PWater;
 	//*DBG*/Pipeline PDebug;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -172,6 +177,15 @@ class CGProject : public BaseProject {
 
 		DSLskyBox.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(skyBoxUniformBufferObject), 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+		  });
+		DSLwaterVert.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO), 1},
+			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp),1},
+		  });
+        // TODO: forse basta il UBO con solo mvpMat, invece che anche le altre 2...
+        DSLwaterFrag.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(GlobalUniformBufferObject), 1},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
 		  });
 
@@ -266,13 +280,14 @@ class CGProject : public BaseProject {
 		PskyBox.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
 		PskyBox.setCullMode(VK_CULL_MODE_BACK_BIT);
 		PskyBox.setPolygonMode(VK_POLYGON_MODE_FILL);
+
+        PWater.init(this, &VDsimp, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLwaterVert, &DSLwaterFrag});
 		
         PterrainTiled.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/terrain_tiled.frag.spv", {&DSLglobal, &DSLterrainTiled});
 
-//		P_PBR.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR.frag.spv", {&DSLglobal, &DSLlocalPBR});
 		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
 
-		PRs.resize(5);
+		PRs.resize(6);
 		PRs[0].init("CookTorranceChar", {
 							 {&Pchar, {//Pipeline and DSL for the first pass
 								 /*DSLglobal*/{},
@@ -297,7 +312,14 @@ class CGProject : public BaseProject {
 									 }
 									}}
 							  }, /*TotalNtextures*/1, &VDskyBox);
-        PRs[3].init("TerrainTiled", {
+        PRs[3].init("Water", {
+                            {&PWater, {//Pipeline and DSL for the first pass
+                                    /*DSLwater*/{},
+                                                {{true, 0, {}}
+                                }
+                            }}
+                    }, /*TotalNtextures*/1, &VDsimp);
+        PRs[4].init("TerrainTiled", {
                 {&PterrainTiled, {//Pipeline and DSL for the first pass
                         /*DSLglobal*/{},
                         /*DSLterrainTiled*/{
@@ -305,18 +327,7 @@ class CGProject : public BaseProject {
                                      }
                 }}
         }, /*TotalNtextures*/1, &VDtan);
-//		PRs[4].init("PBR", {
-//							 {&P_PBR, {//Pipeline and DSL for the first pass
-//								 /*DSLglobal*/{},
-//								 /*DSLlocalPBR*/{
-//										/*t0*/{true,  0, {}},
-//										/*t1*/{true,  1, {}},
-//										/*t2*/{true,  2, {}},
-//										/*t3*/{true,  3, {}}
-//									 }
-//									}}
-//							  }, /*TotalNtextures*/4, &VDtan);
-        PRs[4].init("PBR_sg", {
+        PRs[5].init("PBR_sg", {
 							 {&P_PBR_SpecGloss, {//Pipeline and DSL for the first pass
 								 {},    /*DSLglobal*/
 								 {      /*DSLlocalPBR*/
@@ -364,8 +375,8 @@ class CGProject : public BaseProject {
 		Pchar.create(&RP);
 		PsimpObj.create(&RP);
 		PskyBox.create(&RP);
+        PWater.create(&RP);
 		PterrainTiled.create(&RP);
-//		P_PBR.create(&RP);
         P_PBR_SpecGloss.create(&RP);
 
 		SC.pipelinesAndDescriptorSetsInit();
@@ -377,8 +388,8 @@ class CGProject : public BaseProject {
 		Pchar.cleanup();
 		PsimpObj.cleanup();
 		PskyBox.cleanup();
+        PWater.cleanup();
 		PterrainTiled.cleanup();
-//		P_PBR.cleanup();
         P_PBR_SpecGloss.cleanup();
 		RP.cleanup();
 
@@ -394,13 +405,15 @@ class CGProject : public BaseProject {
 		DSLlocalPBR.cleanup();
         DSLsgAoFactors.cleanup();
 		DSLskyBox.cleanup();
+        DSLwaterVert.cleanup();
+        DSLwaterFrag.cleanup();
 		DSLterrainTiled.cleanup();
 		DSLglobal.cleanup();
 		
 		Pchar.destroy();	
 		PsimpObj.destroy();
 		PskyBox.destroy();		
-		P_PBR.destroy();		
+        PWater.destroy();
         P_PBR_SpecGloss.destroy();
 		PterrainTiled.destroy();
 
@@ -546,69 +559,75 @@ class CGProject : public BaseProject {
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
 		
 		int instanceId;
+        int techniqueId = 0;
 		// character
-		for(instanceId = 0; instanceId < SC.TI[0].InstanceCount; instanceId++) {
+		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
 			for(int im = 0; im < TMsp->size(); im++) {
 				uboc.mMat[im]   = AdaptMat * (*TMsp)[im];
 				uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
 				uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
 			}
 
-			SC.TI[0].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[0].I[instanceId].DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
 		}
 
-		UniformBufferObjectSimp ubos{};	
+		UniformBufferObjectSimp ubos{};
 		// normal objects
-		for(instanceId = 0; instanceId < SC.TI[1].InstanceCount; instanceId++) {
-			ubos.mMat   = SC.TI[1].I[instanceId].Wm;
+        techniqueId++;
+		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
 			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
 
-			SC.TI[1].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[1].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
 		}
 		
 		// skybox pipeline
 		skyBoxUniformBufferObject sbubo{};
+        techniqueId++;
 		sbubo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
-		SC.TI[2].I[0].DS[0][0]->map(currentImage, &sbubo, 0);
+		SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &sbubo, 0);
+
+        // Water objects
+        techniqueId++;
+        TimeUBO timeUbo{};
+        timeUbo.time = glfwGetTime();
+        ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+        ubos.mvpMat = ViewPrj * ubos.mMat;
+        ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &timeUbo, 0); // Set 0
+        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &ubos, 1); // Set 0
+        SC.TI[techniqueId].I[0].DS[0][1]->map(currentImage, &gubo, 0); // Set 0
 
 		// TerrainTiled objects
-		for(instanceId = 0; instanceId < SC.TI[3].InstanceCount; instanceId++) {
-			ubos.mMat   = SC.TI[3].I[instanceId].Wm;
+        techniqueId++;
+		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
 			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
 
-			SC.TI[3].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[3].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
 		}
 
-//        // PBR objects
-//		for(instanceId = 0; instanceId < SC.TI[4].InstanceCount; instanceId++) {
-//			ubos.mMat   = SC.TI[4].I[instanceId].Wm;
-//			ubos.mvpMat = ViewPrj * ubos.mMat;
-//			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
-//
-//			SC.TI[4].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-//			SC.TI[4].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
-//		}
-        
         // PBR_SpecGloss objects
         SgAoMaterialFactorsUBO sgAoUbo{};
-		for(instanceId = 0; instanceId < SC.TI[4].InstanceCount; instanceId++) {
-			ubos.mMat   = SC.TI[4].I[instanceId].Wm;
+        techniqueId++;
+		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
 			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
             
-            sgAoUbo.diffuseFactor = SC.TI[4].I[instanceId].diffuseFactor;
-            sgAoUbo.specularFactor = SC.TI[4].I[instanceId].specularFactor;
-            sgAoUbo.glossinessFactor = SC.TI[4].I[instanceId].glossinessFactor;
-            sgAoUbo.aoFactor = SC.TI[4].I[instanceId].aoFactor;
+            sgAoUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
+            sgAoUbo.specularFactor = SC.TI[techniqueId].I[instanceId].specularFactor;
+            sgAoUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].glossinessFactor;
+            sgAoUbo.aoFactor = SC.TI[techniqueId].I[instanceId].aoFactor;
 
-			SC.TI[4].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[4].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
-			SC.TI[4].I[instanceId].DS[0][2]->map(currentImage, &sgAoUbo, 0); // Set 2
+			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][2]->map(currentImage, &sgAoUbo, 0); // Set 2
 		}
 
 		// updates the FPS

@@ -7,12 +7,12 @@
 		{"id": "village_props", "file": "assets/models/Props.gltf", "format":"GLTF"},
 		{"id": "props_detail", "file":  "assets/models/PropsDetails.gltf", "format":"GLTF"},
 
-		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"}
+		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
+		{"id":  "water", "file":  "assets/models/Water.gltf", "format":"GLTF"}
 	],
 	"models": [
-		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
-		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
 		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
+		{"id": "water_grid", "VD": "VDsimp", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
 
 		{"id": "terrain_far_01-00", "VD": "VDtan", "model": "terrain_far_01.001", "node": "terrain_far_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
 		{"id": "terrain_near_01-00", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
@@ -334,7 +334,6 @@
 		{"id": "prop_plankpath_01_p8.001-00", "VD": "VDtan", "model": "prop_plankpath_01_p8.001", "node": "prop_plankpath_01_p8.001", "meshId": 0, "asset": "props_detail", "format": "ASSET"}
 	],
 	"textures": [
-		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png",	   "format": "C"},
 		{"id": "pnois", "texture": "assets/textures/Perlin_noise.png", "format": "C"},
 		{"id": "main", "texture": "assets/textures/textures0.png", "format": "C"},
 		{"id": "skybox", "texture": "assets/textures/skybox.jpg", "format": "C"},
@@ -456,7 +455,12 @@
 		{"id": "prop_sword_shovel_halberd_01_e", "texture": "assets/textures/props/prop_sword_shovel_halberd_01_e.png", "format": "D"},
 		{"id": "prop_sword_shovel_halberd_01_n", "texture": "assets/textures/props/prop_sword_shovel_halberd_01_n.png", "format": "D"},
 		{"id": "prop_sword_shovel_halberd_01_o", "texture": "assets/textures/props/prop_sword_shovel_halberd_01_o.png", "format": "D"},
-		{"id": "prop_sword_shovel_halberd_01_sg", "texture": "assets/textures/props/prop_sword_shovel_halberd_01_sg.png", "format": "D"}
+		{"id": "prop_sword_shovel_halberd_01_sg", "texture": "assets/textures/props/prop_sword_shovel_halberd_01_sg.png", "format": "D"},
+
+
+		{"id": "water_a", "texture": "assets/textures/water_a.jpg", "format": "C"},
+		{"id": "water_n", "texture": "assets/textures/water_n.jpg", "format": "D"}
+
 	],
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
@@ -466,6 +470,11 @@
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
 		]},
+
+		{"technique":  "Water", "elements":  [
+			{"id": "water_grid", "model": "water_grid", "texture": ["water_n"]}
+		]},
+
 		{"technique": "TerrainTiled", "elements": [
 
 			{"id": "terrain_near_01-00.00", "model": "terrain_near_01-00", "texture": ["terrain_grass_01_a"],
@@ -478,7 +487,6 @@
 		]},
 
 		{"technique": "PBR_sg", "elements":  [
-
 			{"id": "terrain_far_01-00.00", "model": "terrain_far_01-00", "texture": ["terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg", "terrain_01_o"],
 				"translate": [596.986572265625, -14.051000595092773, 405.6328430175781],
 				"eulerAngles": [-0.03782941734244376, -82.43292172314469, 0.28614077587168324],
