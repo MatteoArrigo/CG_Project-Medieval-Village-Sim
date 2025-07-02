@@ -252,6 +252,73 @@ PhysicsObject* PhysicsManager::addStaticSphere(const glm::vec3& position, float 
     return result;
 }
 
+void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount) {
+
+    for (int instanceIdx=0; instanceIdx<instanceCount; instanceIdx++) {
+        // retrieve instance and model references
+        int modelIdx = instanceRefs[instanceIdx]->Mid;
+        if (modelIdx < 0 || modelIdx >= instanceCount) {
+            std::cerr << "Invalid model index: " << modelIdx << std::endl;
+            continue;
+        }
+        const Instance* instanceRef = instanceRefs[instanceIdx];
+        const Model* modelRef = modelRefs[modelIdx];
+
+        // retrieve the translation inside the scene of the current model
+        glm::vec3 position = glm::vec3(instanceRef->Wm[3]);
+
+        const Model &model = *modelRef;
+        const std::vector<unsigned char> &vertices = model.vertices;
+        const std::vector<uint32_t> &indices = model.indices;
+        const VertexDescriptor *VD = model.VD;
+
+        uint32_t stride = VD->Bindings[0].stride;
+        uint32_t posOffset = VD->Position.offset;
+        std::vector<float> Xs, Ys, Zs;
+
+        for (size_t i = 0; i + 3 < indices.size(); i += 4) {
+            for (int j = 0; j < 4; ++j) {
+                uint32_t idx = indices[i + j];
+                size_t base = idx * stride + posOffset;
+
+                float x = *reinterpret_cast<const float*>(&vertices[base]);
+                float y = *reinterpret_cast<const float*>(&vertices[base + 4]);
+                float z = *reinterpret_cast<const float*>(&vertices[base + 8]);
+
+                Xs.push_back(x);
+                Ys.push_back(y);
+                Zs.push_back(z);
+            }
+        }
+
+        if (Xs.size() >= 9) { // At least 3 triangles (9 vertices)
+            btTriangleMesh* mesh = new btTriangleMesh();
+
+            // Each 3 vertices form a triangle
+            for (size_t i = 0; i + 2 < Xs.size(); i += 3) {
+                btVector3 v0(Xs[i], Ys[i], Zs[i]);
+                btVector3 v1(Xs[i + 1], Ys[i + 1], Zs[i + 1]);
+                btVector3 v2(Xs[i + 2], Ys[i + 2], Zs[i + 2]);
+                mesh->addTriangle(v0, v1, v2);
+            }
+
+            auto obj = std::make_unique<PhysicsObject>();
+            obj->shape = new btBvhTriangleMeshShape(mesh, true);
+
+            btTransform transform;
+            transform.setIdentity();
+            transform.setOrigin(glmToBt(position));
+
+            obj->motionState = new btDefaultMotionState(transform);
+            obj->initialPosition = position;
+            btRigidBody::btRigidBodyConstructionInfo info(0.0f, obj->motionState, obj->shape);
+            obj->body = new btRigidBody(info);
+            dynamicsWorld->addRigidBody(obj->body);
+            staticObjects.push_back(std::move(obj));
+        }
+    }
+}
+
 void PhysicsManager::setGravity(const glm::vec3& gravity) {
     if (dynamicsWorld) {
         dynamicsWorld->setGravity(glmToBt(gravity));

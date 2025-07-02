@@ -4,9 +4,7 @@
 #include <json.hpp>
 
 #include "PhysicsManager.hpp"
-#include "modules/Starter.hpp"
 #include "modules/TextMaker.hpp"
-#include "modules/Scene.hpp"
 #include "modules/Animations.hpp"
 
 // The uniform buffer object used in this example
@@ -343,6 +341,8 @@ std::cout << "\nLoading the scene\n\n";
 			exit(0);
 		}
 
+		// Add static meshes for collision detection
+		PhysicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!

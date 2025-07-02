@@ -5,6 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include <memory>
+#include "modules/Starter.hpp"
+#include "modules/Scene.hpp"
 
 // Struttura per rappresentare un oggetto fisico
 struct PhysicsObject {
@@ -88,9 +90,7 @@ public:
     // Object management
     PhysicsObject* addStaticBox(const glm::vec3& position, const glm::vec3& size);
     PhysicsObject* addStaticSphere(const glm::vec3& position, float radius);
-    PhysicsObject* addStaticMesh(const std::vector<glm::vec3>& vertices,
-                                const std::vector<uint32_t>& indices,
-                                const glm::vec3& position = glm::vec3(0));
+    void addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount);
 
     // Utility
     void setGravity(const glm::vec3& gravity);
