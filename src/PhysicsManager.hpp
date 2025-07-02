@@ -8,7 +8,7 @@
 #include "modules/Starter.hpp"
 #include "modules/Scene.hpp"
 
-// Struttura per rappresentare un oggetto fisico
+// Structure to hold Bullet Physics objects
 struct PhysicsObject {
     btRigidBody* body;
     btCollisionShape* shape;
@@ -19,24 +19,24 @@ struct PhysicsObject {
     ~PhysicsObject();
 };
 
-// Parametri per la creazione del player
+// Physical parameters for the player
 struct PlayerConfig {
     float capsuleRadius = 0.3f;
     float capsuleHeight = 1.6f;
     float mass = 80.0f;
     glm::vec3 startPosition = glm::vec3(20, 20, 20);
 
-    // Parametri di movimento
     float moveSpeed = 2.3f;
     float runSpeed = 3.5f;
     float jumpForce = 500.0f;
-    float airControl = 0.3f; // Controllo del movimento in aria
-    float groundDamping = 0.5f; // Smorzamento quando fermo
+    float airControl = 0.3f; // On-air control factor
+    float groundDamping = 0.5f; // Damping factor when grounded
 };
 
-// Parametri per il terreno
-struct TerrainConfig {
-    float size = 500.0f; // Mezzo lato del piano
+// Background terrain configuration.
+// NOTE: This is a large flat plane which serves as "fallback" ground in case no terrain is loaded.
+struct BackgroundTerrainConfig {
+    float size = 500.0f; // Side length of the terrain square
     glm::vec3 position = glm::vec3(0, 0, 0);
 };
 
@@ -56,7 +56,7 @@ private:
 
     // Configuration
     PlayerConfig playerConfig;
-    TerrainConfig terrainConfig;
+    BackgroundTerrainConfig terrainConfig;
 
     // Internal state
     bool isGrounded;
@@ -74,7 +74,7 @@ public:
 
     // Initialization
     bool initialize(const PlayerConfig& playerCfg = PlayerConfig(),
-                   const TerrainConfig& terrainCfg = TerrainConfig());
+                   const BackgroundTerrainConfig& terrainCfg = BackgroundTerrainConfig());
     void cleanup();
 
     // Update
@@ -97,6 +97,5 @@ public:
     void setPlayerPosition(const glm::vec3& position);
 
     // Debug
-    void debugDrawWorld(); // Per debug rendering (opzionale)
     int getNumRigidBodies() const;
 };

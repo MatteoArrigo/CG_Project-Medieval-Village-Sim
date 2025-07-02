@@ -30,7 +30,7 @@ PhysicsManager::~PhysicsManager() {
     cleanup();
 }
 
-bool PhysicsManager::initialize(const PlayerConfig& playerCfg, const TerrainConfig& terrainCfg) {
+bool PhysicsManager::initialize(const PlayerConfig& playerCfg, const BackgroundTerrainConfig& terrainCfg) {
     playerConfig = playerCfg;
     terrainConfig = terrainCfg;
 
