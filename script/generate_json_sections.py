@@ -4,10 +4,10 @@ from pygltflib import GLTF2
 import re
 
 # Carica il file .gltf
-gltf = GLTF2().load("assets/models/Props.gltf")
-texDir = 'props'
-assetName = 'village_props'
-meshRegex = '.*skull.+'
+gltf = GLTF2().load("assets/models/Terrain.gltf")
+texDir = 'terrain'
+assetName = 'terrain'
+meshRegex = None
 
 def getModels():
     models = []
