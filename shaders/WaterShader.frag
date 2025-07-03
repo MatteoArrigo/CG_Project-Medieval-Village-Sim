@@ -1,10 +1,11 @@
 #version 450
 
-layout(location = 0) in vec2 fragUV;
-layout(location = 1) in vec3 fragPosWorld;
-layout(location = 2) in vec3 fragNormalWorld;
-layout(location = 3) in vec3 fragTangentWorld;
-layout(location = 4) in vec3 fragBitangentWorld;
+layout(location = 0) in vec2 fragUV1;
+layout(location = 1) in vec2 fragUV2;
+layout(location = 2) in vec3 fragPosWorld;
+layout(location = 3) in vec3 fragNormalWorld;
+layout(location = 4) in vec3 fragTangentWorld;
+layout(location = 5) in vec3 fragBitangentWorld;
 
 layout(location = 0) out vec4 outColor;
 
@@ -14,13 +15,14 @@ layout(binding = 0, set = 1) uniform GlobalUniformBufferObject {
     vec3 eyePos;
 } gubo;
 
-layout(binding = 1, set = 1) uniform sampler2D normalMap;
-layout(binding = 2, set = 1) uniform sampler2D facePosX;
-layout(binding = 3, set = 1) uniform sampler2D faceNegX;
-layout(binding = 4, set = 1) uniform sampler2D facePosY;
-layout(binding = 5, set = 1) uniform sampler2D faceNegY;
-layout(binding = 6, set = 1) uniform sampler2D facePosZ;
-layout(binding = 7, set = 1) uniform sampler2D faceNegZ;
+layout(binding = 1, set = 1) uniform sampler2D normalMap1;
+layout(binding = 2, set = 1) uniform sampler2D normalMap2;
+layout(binding = 3, set = 1) uniform sampler2D facePosX;
+layout(binding = 4, set = 1) uniform sampler2D faceNegX;
+layout(binding = 5, set = 1) uniform sampler2D facePosY;
+layout(binding = 6, set = 1) uniform sampler2D faceNegY;
+layout(binding = 7, set = 1) uniform sampler2D facePosZ;
+layout(binding = 8, set = 1) uniform sampler2D faceNegZ;
 
 // Function to sample a cube map from 6 faces based on direction vector
 // The direction vector should be normalized and in world space
@@ -76,10 +78,25 @@ float fresnelSchlick(float cosTheta, float F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+
+vec2 rotateUV(vec2 uv, float angle) {
+    float cosA = cos(angle);
+    float sinA = sin(angle);
+    vec2 centeredUV = uv - 0.5;
+    vec2 rotatedUV;
+    rotatedUV.x = cosA * centeredUV.x - sinA * centeredUV.y;
+    rotatedUV.y = sinA * centeredUV.x + cosA * centeredUV.y;
+    return rotatedUV + 0.5;
+}
+
 void main() {
-    // Sample the normal map and remap from [0,1] to [-1,1]
-    vec3 normalSample = texture(normalMap, fragUV).rgb;
-    vec3 normalTangent = normalize(normalSample * 2.0 - 1.0);
+    vec3 n1 = texture(normalMap1, rotateUV(fragUV1, radians(-60.0))).rgb * 2.0 - 1.0;  // [0,1] -> [-1,1]
+    vec3 n2 = texture(normalMap2, fragUV2).rgb * 2.0 - 1.0;  // [0,1] -> [-1,1]
+
+    float blendFactor = 0.3; // adjust as needed
+    vec3 normalTangent = normalize(mix(n1, n2, blendFactor));
+
+
 
     // Construct TBN matrix and transform to world space
     mat3 TBN = mat3(fragTangentWorld, fragBitangentWorld, fragNormalWorld);
@@ -102,7 +119,7 @@ void main() {
     // Using a simple Blinn-Phong model for specular reflection
     // Adjust shininess factor as needed
     vec3 halfwayDir = normalize(viewDir + normalize(gubo.lightDir));
-    float spec = pow(max(dot(N, halfwayDir), 0.0), 1000.0); // Adjust shininess
+    float spec = pow(max(dot(N, halfwayDir), 0.0), 500.0); // Adjust shininess
     vec3 specular = gubo.lightColor.rgb * spec;
 
 //    vec3 finalColor = mix(waterColor * diffuse + specular, reflectionColor, fresnel);

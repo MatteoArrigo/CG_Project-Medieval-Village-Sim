@@ -126,9 +126,10 @@ class CGProject : public BaseProject {
 
     // defines the global parameters for the uniform
     const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-29.0f),
-                glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-20.0f),
+                glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-10.0f),
                  glm::vec3(1.0f,0.0f,0.0f));
     const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+    const glm::vec4 lightColor = glm::vec4(1.0f, 0.4f, 0.4f, 1.0f);
 
 	glm::vec4 debug1 = glm::vec4(0);
 
@@ -204,7 +205,8 @@ class CGProject : public BaseProject {
 			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
 			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
 			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5, 1},
-			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1}
+			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1},
+			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7, 1}
 		  });
 
         DSLterrainTiled.init(this, {
@@ -340,10 +342,11 @@ class CGProject : public BaseProject {
                                         {true, 3, {} },
                                         {true, 4, {} },
                                         {true, 5, {} },
-                                        {true, 6, {} }
+                                        {true, 6, {} },
+                                        {true, 7, {} }
                                 }
                             }}
-                    }, /*TotalNtextures*/7, &VDsimp);
+                    }, /*TotalNtextures*/8, &VDsimp);
         PRs[4].init("TerrainTiled", {
                 {&PterrainTiled, {//Pipeline and DSL for the first pass
                         /*DSLglobal*/{},
@@ -565,7 +568,7 @@ class CGProject : public BaseProject {
 		GlobalUniformBufferObject gubo{};
 
 		gubo.lightDir = lightDir;
-		gubo.lightColor = glm::vec4(1.0f, 0.5f, 0.5f, 1.0f);
+		gubo.lightColor = lightColor;
 		gubo.eyePos = cameraPos;
 
 		// defines the local parameters for the uniforms
