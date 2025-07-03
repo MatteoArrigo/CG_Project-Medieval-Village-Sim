@@ -7,6 +7,10 @@
 #include "modules/TextMaker.hpp"
 #include "modules/Animations.hpp"
 
+// If true, gravity and inertia are disabled
+// And vertical movement (along y) is enabled.
+const bool FLY_MODE = true;
+
 // The uniform buffer object used in this example
 struct VertexChar {
 	glm::vec3 pos;
@@ -368,7 +372,7 @@ class CGProject : public BaseProject {
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
 
 		// Initialize PhysicsManager
-		if(!PhysicsMgr.initialize()) {
+		if(!PhysicsMgr.initialize(FLY_MODE)) {
 			exit(0);
 		}
 
@@ -709,6 +713,8 @@ class CGProject : public BaseProject {
 
 		// Calculate desired movement vector
 		glm::vec3 moveDir = MOVE_SPEED * m.x * ux - MOVE_SPEED * m.z * uz;
+        if(FLY_MODE)
+            moveDir += MOVE_SPEED * m.y * glm::vec3(0,1,0);
 
 		// Apply movement force to physics body
 		PhysicsMgr.movePlayer(moveDir, fire);

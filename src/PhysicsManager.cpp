@@ -30,9 +30,10 @@ PhysicsManager::~PhysicsManager() {
     cleanup();
 }
 
-bool PhysicsManager::initialize(const PlayerConfig& playerCfg, const BackgroundTerrainConfig& terrainCfg) {
+bool PhysicsManager::initialize(bool flyMode_, const PlayerConfig& playerCfg, const BackgroundTerrainConfig& terrainCfg) {
     playerConfig = playerCfg;
     terrainConfig = terrainCfg;
+    flyMode = flyMode_;
 
     try {
         initializePhysicsWorld();
@@ -57,7 +58,10 @@ void PhysicsManager::initializePhysicsWorld() {
     solver = new btSequentialImpulseConstraintSolver();
 
     dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfig);
-    dynamicsWorld->setGravity(btVector3(0, -9.81f, 0));
+    if(!flyMode)
+        dynamicsWorld->setGravity(btVector3(0, -9.81f, 0));
+    else
+        dynamicsWorld->setGravity(btVector3(0, 0, 0));
 }
 
 void PhysicsManager::createTerrain() {
@@ -126,7 +130,7 @@ void PhysicsManager::update(float deltaTime) {
     dynamicsWorld->stepSimulation(deltaTime, 10);
 
     // Update grounded state
-    isGrounded = checkGrounded();
+    isGrounded = flyMode || checkGrounded();
 }
 
 bool PhysicsManager::checkGrounded() {
@@ -150,40 +154,54 @@ void PhysicsManager::movePlayer(const glm::vec3& moveDirection, bool isRunning) 
     if (!player || !player->body) return;
 
     float speed = isRunning ? playerConfig.runSpeed : playerConfig.moveSpeed;
+    if (flyMode)
+        speed += 5;
     glm::vec3 moveDir = moveDirection * speed;
 
-    btVector3 currentVel = player->body->getLinearVelocity();
-
-    if (glm::length(moveDir) > 0.001f) {
-        btVector3 desiredVel;
-
-        if (isGrounded) {
-            // Full control on ground
-            desiredVel = btVector3(moveDir.x, currentVel.getY(), moveDir.z);
+    if (flyMode) {
+        // --- flyMode version ---
+        if (glm::length(moveDir) > 0.001f) {
+            btVector3 desiredVel(moveDir.x, moveDir.y, moveDir.z);
+            player->body->setLinearVelocity(desiredVel);
+            player->body->activate(true);
         } else {
-            // Limited air control
-            btVector3 airMove = glmToBt(moveDir) * playerConfig.airControl;
-            desiredVel = btVector3(
-                currentVel.getX() + airMove.getX(),
-                currentVel.getY(),
-                currentVel.getZ() + airMove.getZ()
-            );
+            // Stop movement except for vertical velocity
+            player->body->setLinearVelocity(btVector3(0, player->body->getLinearVelocity().getY(), 0));
         }
+    } else {
+        // --- ground mode version ---
+        btVector3 currentVel = player->body->getLinearVelocity();
+        if (glm::length(moveDir) > 0.001f) {
+            btVector3 desiredVel;
 
-        // Smooth interpolation
-        float lerpFactor = isGrounded ? 10.0f : 2.0f;
-        btVector3 newVel = currentVel.lerp(desiredVel, lerpFactor * (1.0f/60.0f)); // Assuming 60 FPS
-        player->body->setLinearVelocity(newVel);
+            if (isGrounded) {
+                // Full control on ground
+                desiredVel = btVector3(moveDir.x, currentVel.getY(), moveDir.z);
+            } else {
+                // Limited air control
+                btVector3 airMove = glmToBt(moveDir) * playerConfig.airControl;
+                desiredVel = btVector3(
+                        currentVel.getX() + airMove.getX(),
+                        currentVel.getY(),
+                        currentVel.getZ() + airMove.getZ()
+                );
+            }
 
-        player->body->activate(true);
-    } else if (isGrounded) {
-        // Apply damping when not moving
-        btVector3 dampedVel(
-            currentVel.getX() * playerConfig.groundDamping,
-            currentVel.getY(),
-            currentVel.getZ() * playerConfig.groundDamping
-        );
-        player->body->setLinearVelocity(dampedVel);
+            // Smooth interpolation
+            float lerpFactor = isGrounded ? 10.0f : 2.0f;
+            btVector3 newVel = currentVel.lerp(desiredVel, lerpFactor * (1.0f/60.0f)); // Assuming 60 FPS
+            player->body->setLinearVelocity(newVel);
+
+            player->body->activate(true);
+        } else if (isGrounded) {
+            // Apply damping when not moving
+            btVector3 dampedVel(
+                    currentVel.getX() * playerConfig.groundDamping,
+                    currentVel.getY(),
+                    currentVel.getZ() * playerConfig.groundDamping
+            );
+            player->body->setLinearVelocity(dampedVel);
+        }
     }
 }
 
