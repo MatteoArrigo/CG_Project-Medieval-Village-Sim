@@ -21,7 +21,7 @@ layout(set = 0, binding = 1) uniform UniformBufferObject {
 } ubo;
 
 const float amplitude = 0.3; // Height of the wave
-const vec3 waveDir = normalize(vec3(3.0, 0.0, -1.0));       // propagation direction in xz plane
+const vec3 waveDir = normalize(vec3(1.0, 0.0, -5.0));       // propagation direction in xz plane
 const float spatialFrequency = 0.9; // Controls wavelength
 const float waveSpeed = 0.9;        // Controls how fast the wave propagates
 

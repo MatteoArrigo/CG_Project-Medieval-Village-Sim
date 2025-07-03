@@ -90,7 +90,7 @@ vec2 rotateUV(vec2 uv, float angle) {
 }
 
 void main() {
-    vec3 n1 = texture(normalMap1, rotateUV(fragUV1, radians(-60.0))).rgb * 2.0 - 1.0;  // [0,1] -> [-1,1]
+    vec3 n1 = texture(normalMap1, rotateUV(fragUV1, radians(-20.0))).rgb * 2.0 - 1.0;  // [0,1] -> [-1,1]
     vec3 n2 = texture(normalMap2, fragUV2).rgb * 2.0 - 1.0;  // [0,1] -> [-1,1]
 
     float blendFactor = 0.3; // adjust as needed

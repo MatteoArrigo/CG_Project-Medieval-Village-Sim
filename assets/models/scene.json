@@ -458,8 +458,10 @@
 		{"id": "prop_sword_shovel_halberd_01_sg", "texture": "assets/textures/props/prop_sword_shovel_halberd_01_sg.png", "format": "D"},
 
 
-		{"id": "water_a", "texture": "assets/textures/water/water_a.jpg", "format": "C"},
-		{"id": "water_n", "texture": "assets/textures/water/water_n.jpg", "format": "D"},
+		{"id": "water_a1", "texture": "assets/textures/water/water_a1.jpg", "format": "C"},
+		{"id": "water_a2", "texture": "assets/textures/water/water_a2.jpg", "format": "C"},
+		{"id": "water_n1", "texture": "assets/textures/water/water_n1.jpg", "format": "D"},
+		{"id": "water_n2", "texture": "assets/textures/water/water_n2.jpg", "format": "D"},
 		{"id": "water_+x", "texture": "assets/textures/water/water_reflection_posx.png", "format": "C"},
 		{"id": "water_-x", "texture": "assets/textures/water/water_reflection_negx.png", "format": "C"},
 		{"id": "water_+y", "texture": "assets/textures/water/water_reflection_posy.png", "format": "C"},
@@ -476,15 +478,7 @@
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
 		]},
 
-		{"technique":  "Water", "elements":  [
-			{"id": "water_grid", "model": "water_grid", "texture": ["water_n",
-				"water_+x", "water_-x",
-				"water_+y", "water_-y",
-				"water_+z", "water_-z" ]}
-		]},
-
 		{"technique": "TerrainTiled", "elements": [
-
 			{"id": "terrain_near_01-00.00", "model": "terrain_near_01-00", "texture": ["terrain_grass_01_a"],
 				"translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] },
 			{"id": "terrain_near_01-01.00", "model": "terrain_near_01-01", "texture": ["terrain_grass_01_a"],
@@ -492,6 +486,14 @@
 			{"id": "Baseplate-00.00", "model": "Baseplate-00", "texture": ["terrain_wetmud_01_a"],
 				"translate": [0.0, -1.7000000476837158, 100.0],
 				"scale": [100.0, 1.0, 100.0]}
+		]},
+
+		{"technique":  "Water", "elements":  [
+			{"id": "water_grid", "model": "water_grid", "texture": [
+				"water_n1", "water_n2",
+				"water_+x", "water_-x",
+				"water_+y", "water_-y",
+				"water_+z", "water_-z" ]}
 		]},
 
 		{"technique": "PBR_sg", "elements":  [
