@@ -110,14 +110,26 @@ class CGProject : public BaseProject {
 	// Other application parameters
 	float Ar;	// Aspect ratio
 
+
+    // TODO: accorpa tutti questi parametri (molti sono stati messi statici, usa invece membri di classe)
+    // TODO: in generale ripulisci questo schifo di main
+
+
 	glm::mat4 ViewPrj;
 	glm::mat4 World;
-	glm::vec3 Pos = glm::vec3(0,0,5);
-	glm::vec3 cameraPos;
-	float Yaw = glm::radians(0.0f);
+    const glm::vec3 startingPosition = glm::vec3(0.0f, 10.0f, 0.0f);    // Player starting position
+	glm::vec3 Pos = startingPosition;    // Player (current) position
+	glm::vec3 cameraPos = glm::vec3(0, 10, 0); // Camera position
+	float Yaw = glm::radians(180.0f);
 	float Pitch = glm::radians(0.0f);
 	float Roll = glm::radians(0.0f);
-	
+
+    // defines the global parameters for the uniform
+    const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-29.0f),
+                glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-20.0f),
+                 glm::vec3(1.0f,0.0f,0.0f));
+    const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+
 	glm::vec4 debug1 = glm::vec4(0);
 
 	// Here you set the main application parameters
@@ -549,15 +561,11 @@ class CGProject : public BaseProject {
 		// updated the animation
 		const float SpeedUpAnimFact = 0.85f;
 		AB.Advance(deltaT * SpeedUpAnimFact);
-		
-		// defines the global parameters for the uniform
-		const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(1.0f,0.0f,0.0f));
-		const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 	
 		GlobalUniformBufferObject gubo{};
 
 		gubo.lightDir = lightDir;
-		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gubo.lightColor = glm::vec4(1.0f, 0.5f, 0.5f, 1.0f);
 		gubo.eyePos = cameraPos;
 
 		// defines the local parameters for the uniforms
@@ -670,8 +678,6 @@ class CGProject : public BaseProject {
 		const float FOVy = glm::radians(45.0f);
 		const float nearPlane = 0.1f;
 		const float farPlane = 500.f;
-		// Player starting point
-		const glm::vec3 StartingPosition = glm::vec3(0.0, 0.0, 5);
 		// Camera target height and distance
 		static float camHeight = 1.5;
 		static float camDist = 5;
@@ -696,7 +702,6 @@ class CGProject : public BaseProject {
 
 		// Game Logic implementation
 		// Current Player Position - statc variable make sure its value remain unchanged in subsequent calls to the procedure
-		static glm::vec3 Pos = StartingPosition;
 		static glm::vec3 oldPos;
 		static int currRunState = 1;
 
@@ -711,11 +716,9 @@ class CGProject : public BaseProject {
 
 		oldPos = Pos;
 
-		static float Yaw = glm::radians(0.0f);
-		static float Pitch = glm::radians(0.0f);
 		static float relDir = glm::radians(0.0f);
 		static float dampedRelDir = glm::radians(0.0f);
-		static glm::vec3 dampedCamPos = StartingPosition;
+		static glm::vec3 dampedCamPos = startingPosition;
 		
 		// World
 		// Position

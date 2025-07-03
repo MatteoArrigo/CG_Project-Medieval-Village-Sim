@@ -22,6 +22,11 @@ layout(binding = 5, set = 1) uniform sampler2D faceNegY;
 layout(binding = 6, set = 1) uniform sampler2D facePosZ;
 layout(binding = 7, set = 1) uniform sampler2D faceNegZ;
 
+// Function to sample a cube map from 6 faces based on direction vector
+// The direction vector should be normalized and in world space
+// The function returns the color sampled from the appropriate face
+// The cube map faces are expected to be bound to the corresponding texture units
+// facePosX, faceNegX, facePosY, faceNegY, facePosZ, faceNegZ
 vec4 sampleCubeFrom6Faces(vec3 dir) {
     vec3 absDir = abs(dir);
     float ma;
@@ -63,9 +68,13 @@ vec4 sampleCubeFrom6Faces(vec3 dir) {
     }
 }
 
-
-
-
+// Fresnel-Schlick approximation for reflectance
+// F0 is the reflectance at normal incidence, typically around 0.04 for dielectrics
+// cosTheta is the cosine of the angle between the view direction and the normal
+// Returns the reflectance value
+float fresnelSchlick(float cosTheta, float F0) {
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
 
 void main() {
     // Sample the normal map and remap from [0,1] to [-1,1]
@@ -84,7 +93,19 @@ void main() {
     float diffuse = max(dot(N, normalize(gubo.lightDir)), 0.0);
     vec3 waterColor = vec3(0.0, 0.4, 0.7);
 
-    vec3 finalColor = mix(waterColor * diffuse, reflectionColor, 0.7);
+    // Fresnel effect for water-like surface
+    float F0 = 0.05; // Water-like reflectivity
+    float cosTheta = clamp(dot(viewDir, N), 0.0, 1.0);
+    float fresnel = fresnelSchlick(cosTheta, F0);
+
+    // Specular highlight
+    // Using a simple Blinn-Phong model for specular reflection
+    // Adjust shininess factor as needed
+    vec3 halfwayDir = normalize(viewDir + normalize(gubo.lightDir));
+    float spec = pow(max(dot(N, halfwayDir), 0.0), 1000.0); // Adjust shininess
+    vec3 specular = gubo.lightColor.rgb * spec;
+
+//    vec3 finalColor = mix(waterColor * diffuse + specular, reflectionColor, fresnel);
+    vec3 finalColor = mix(waterColor * diffuse + specular, reflectionColor, fresnel);
     outColor = vec4(finalColor, 1.0);
-//    outColor = vec4(reflectionColor, 1.0);
 }
