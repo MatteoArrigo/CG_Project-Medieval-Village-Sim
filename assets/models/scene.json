@@ -458,9 +458,14 @@
 		{"id": "prop_sword_shovel_halberd_01_sg", "texture": "assets/textures/props/prop_sword_shovel_halberd_01_sg.png", "format": "D"},
 
 
-		{"id": "water_a", "texture": "assets/textures/water_a.jpg", "format": "C"},
-		{"id": "water_n", "texture": "assets/textures/water_n.jpg", "format": "D"}
-
+		{"id": "water_a", "texture": "assets/textures/water/water_a.jpg", "format": "C"},
+		{"id": "water_n", "texture": "assets/textures/water/water_n.jpg", "format": "D"},
+		{"id": "water_+x", "texture": "assets/textures/water/water_reflection_posx.png", "format": "C"},
+		{"id": "water_-x", "texture": "assets/textures/water/water_reflection_negx.png", "format": "C"},
+		{"id": "water_+y", "texture": "assets/textures/water/water_reflection_posy.png", "format": "C"},
+		{"id": "water_-y", "texture": "assets/textures/water/water_reflection_negy.png", "format": "C"},
+		{"id": "water_+z", "texture": "assets/textures/water/water_reflection_posz.png", "format": "C"},
+		{"id": "water_-z", "texture": "assets/textures/water/water_reflection_negz.png", "format": "C"}
 	],
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
@@ -472,7 +477,10 @@
 		]},
 
 		{"technique":  "Water", "elements":  [
-			{"id": "water_grid", "model": "water_grid", "texture": ["water_n"]}
+			{"id": "water_grid", "model": "water_grid", "texture": ["water_n",
+				"water_+x", "water_-x",
+				"water_+y", "water_-y",
+				"water_+z", "water_-z" ]}
 		]},
 
 		{"technique": "TerrainTiled", "elements": [

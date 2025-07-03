@@ -186,7 +186,13 @@ class CGProject : public BaseProject {
         // TODO: forse basta il UBO con solo mvpMat, invece che anche le altre 2...
         DSLwaterFrag.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(GlobalUniformBufferObject), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
+			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
+			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5, 1},
+			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1}
 		  });
 
         DSLterrainTiled.init(this, {
@@ -314,11 +320,18 @@ class CGProject : public BaseProject {
 							  }, /*TotalNtextures*/1, &VDskyBox);
         PRs[3].init("Water", {
                             {&PWater, {//Pipeline and DSL for the first pass
-                                    /*DSLwater*/{},
-                                                {{true, 0, {}}
+                                    /*DSLwaterVert*/{},
+                                    /*DSLwaterFrag*/ {
+                                        {true, 0, {} },
+                                        {true, 1, {} },     // 6 textures for cubemap faces
+                                        {true, 2, {} },     // Order is: +x, -x, +y, -y, +z, -z
+                                        {true, 3, {} },
+                                        {true, 4, {} },
+                                        {true, 5, {} },
+                                        {true, 6, {} }
                                 }
                             }}
-                    }, /*TotalNtextures*/1, &VDsimp);
+                    }, /*TotalNtextures*/7, &VDsimp);
         PRs[4].init("TerrainTiled", {
                 {&PterrainTiled, {//Pipeline and DSL for the first pass
                         /*DSLglobal*/{},
@@ -357,7 +370,7 @@ class CGProject : public BaseProject {
 		}
 		AB.init({{0,32,0.0f,0}});
 		SKA.init(Anim, N_ANIMATIONS, "Armature|mixamo.com|Layer0", 0);
-		
+
 		// submits the main command buffer
 		submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
 
@@ -667,8 +680,8 @@ class CGProject : public BaseProject {
 		const float maxPitch = glm::radians(60.0f);
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
-		const float MOVE_SPEED_BASE = 10.0f;
-		const float MOVE_SPEED_RUN  = 10.0f;
+		const float MOVE_SPEED_BASE = 30.0f;
+		const float MOVE_SPEED_RUN  = 30.0f;
 		const float ZOOM_SPEED = MOVE_SPEED_BASE * 1.5f;
 		const float MAX_CAM_DIST =  7.5;
 		const float MIN_CAM_DIST =  1.5;

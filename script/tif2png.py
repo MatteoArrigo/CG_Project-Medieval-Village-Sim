@@ -4,7 +4,7 @@ import tifffile
 from numpy import asarray
 
 # Set the root directory to search
-root_dir = Path(r'../assets/textures/props')
+root_dir = Path(r'../assets/textures/terrain')
 
 # Check if the root directory exists
 if not root_dir.exists():
