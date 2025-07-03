@@ -164,9 +164,9 @@ class Model {
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
-	VertexDescriptor *VD;
 
 	public:
+	VertexDescriptor *VD;
 	glm::mat4 Wm;
 	std::vector<unsigned char> vertices{};
 	std::vector<uint32_t> indices{};

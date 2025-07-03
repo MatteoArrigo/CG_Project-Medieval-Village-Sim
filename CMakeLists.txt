@@ -99,12 +99,25 @@ elseif(WIN32)
 
 
     # List of directories to add to the include path
-    list(APPEND INCLUDE_DIRS "${GLFW}/include" ${GLM} headers)
+    list(APPEND INCLUDE_DIRS
+            "${GLFW}/include"
+            ${GLM}
+            headers
+            external/bullet3/src
+    )
 
     # List of libraries to link to the executable
-    list(APPEND LINK_LIBS "${GLFW}/lib-mingw-w64/libglfw3.a")
+    list(APPEND LINK_LIBS
+            "${GLFW}/lib-mingw-w64/libglfw3.a"
+            BulletDynamics
+            BulletCollision
+            LinearMath
+    )
     file(GLOB_RECURSE SOURCES src/*.cpp)
     file(GLOB_RECURSE HEADERS include/*.h include/*.hpp)
+
+    # === Add Bullet ===
+    add_subdirectory(external/bullet3)
 
     add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 

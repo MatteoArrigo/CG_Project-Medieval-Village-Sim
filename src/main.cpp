@@ -3,9 +3,8 @@
 
 #include <json.hpp>
 
-#include "modules/Starter.hpp"
+#include "PhysicsManager.hpp"
 #include "modules/TextMaker.hpp"
-#include "modules/Scene.hpp"
 #include "modules/Animations.hpp"
 
 // The uniform buffer object used in this example
@@ -97,6 +96,9 @@ class CGProject : public BaseProject {
 	//*DBG*/Model MS;
 	//*DBG*/DescriptorSet SSD;
 
+	// PhysicsManager for collision detection
+	PhysicsManager PhysicsMgr;
+
 	// To support animation
 	#define N_ANIMATIONS 1
 
@@ -117,7 +119,7 @@ class CGProject : public BaseProject {
 	float Yaw = glm::radians(0.0f);
 	float Pitch = glm::radians(0.0f);
 	float Roll = glm::radians(0.0f);
-	
+
 	glm::vec4 debug1 = glm::vec4(0);
 
 	// Here you set the main application parameters
@@ -127,7 +129,7 @@ class CGProject : public BaseProject {
 		windowHeight = 800;
 		windowTitle = "CGProject - Medieval Village Sim";
     	windowResizable = GLFW_TRUE;
-		
+
 		// Initial aspect ratio
 		Ar = 4.0f / 3.0f;
 	}
@@ -144,7 +146,7 @@ class CGProject : public BaseProject {
 		txt.resizeScreen(w, h);
 	}
 	
-	// Here you load and setup all your Vulkan Models and Texutures.
+	// Here you load and setup all your Vulkan Models, Texutures and Physics manger.
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
@@ -364,6 +366,14 @@ class CGProject : public BaseProject {
 		// initializes the textual output and Prepares for showing the FPS count
 		txt.init(this, windowWidth, windowHeight);
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
+
+		// Initialize PhysicsManager
+		if(!PhysicsMgr.initialize()) {
+			exit(0);
+		}
+
+		// Add static meshes for collision detection
+		PhysicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -515,20 +525,8 @@ class CGProject : public BaseProject {
 
 		static int curAnim = 0;
 		if(glfwGetKey(window, GLFW_KEY_SPACE)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_SPACE;
-
-				curAnim = (curAnim + 1) % 5;
-				AB.Start(curAnim, 0.5);
-        std::cout << "Playing anim: " << curAnim << "\n";
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_SPACE) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
+            PhysicsMgr.jumpPlayer();
+        }
 
 		// moves the view
 		float deltaT = GameLogic();
@@ -652,13 +650,16 @@ class CGProject : public BaseProject {
 	}
 	
 	float GameLogic() {
+		// Retrieve configs from PhysicsManger.hpp
+		PlayerConfig physicsConfig;
+
 		// Parameters
 		// Camera FOV-y, Near Plane and Far Plane
 		const float FOVy = glm::radians(45.0f);
 		const float nearPlane = 0.1f;
 		const float farPlane = 500.f;
 		// Player starting point
-		const glm::vec3 StartingPosition = glm::vec3(0.0, 0.0, 5);
+		const glm::vec3 StartingPosition = physicsConfig.startPosition;
 		// Camera target height and distance
 		static float camHeight = 1.5;
 		static float camDist = 5;
@@ -667,108 +668,92 @@ class CGProject : public BaseProject {
 		const float maxPitch = glm::radians(60.0f);
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
-		const float MOVE_SPEED_BASE = 10.0f;
-		const float MOVE_SPEED_RUN  = 10.0f;
-		const float ZOOM_SPEED = MOVE_SPEED_BASE * 1.5f;
-		const float MAX_CAM_DIST =  7.5;
-		const float MIN_CAM_DIST =  1.5;
+		const float MOVE_SPEED_BASE = physicsConfig.moveSpeed;
+		const float MOVE_SPEED_RUN = physicsConfig.runSpeed;
+		const float JUMP_FORCE = physicsConfig.jumpForce;
+		const float MAX_CAM_DIST = 7.5;
+		const float MIN_CAM_DIST = 1.5;
 
 		// Integration with the timers and the controllers
+		// TODO: Detect running by pressing SHIFT key (currently hardcoded as walking all the time)
+		// TODO: Detect jump by pressing SPACE key
 		float deltaT;
 		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 		bool fire = false;
 		getSixAxis(deltaT, m, r, fire);
 		float MOVE_SPEED = fire ? MOVE_SPEED_RUN : MOVE_SPEED_BASE;
 
+		// Step the physics simulation
+		PhysicsMgr.update(deltaT);
 
-		// Game Logic implementation
-		// Current Player Position - statc variable make sure its value remain unchanged in subsequent calls to the procedure
-		static glm::vec3 Pos = StartingPosition;
-		static glm::vec3 oldPos;
-		static int currRunState = 1;
+		// Get current player position from physics body
+		glm::vec3 Pos = PhysicsMgr.getPlayerPosition();
 
-/*		camDist = camDist - m.y * ZOOM_SPEED * deltaT;
-		camDist = camDist < MIN_CAM_DIST ? MIN_CAM_DIST :
-				 (camDist > MAX_CAM_DIST ? MAX_CAM_DIST : camDist);*/
-		camDist = (MIN_CAM_DIST + MIN_CAM_DIST) / 2.0f; 
+		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
 
-		// To be done in the assignment
-		ViewPrj = glm::mat4(1);
-		World = glm::mat4(1);
-
-		oldPos = Pos;
-
+		// Camera rotation controls
 		static float Yaw = glm::radians(0.0f);
 		static float Pitch = glm::radians(0.0f);
 		static float relDir = glm::radians(0.0f);
 		static float dampedRelDir = glm::radians(0.0f);
 		static glm::vec3 dampedCamPos = StartingPosition;
-		
-		// World
-		// Position
-		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
-		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
-		Pos = Pos + MOVE_SPEED * m.x * ux * deltaT;
-		Pos = Pos - MOVE_SPEED * m.z * uz * deltaT;
-		
-		camHeight += MOVE_SPEED * m.y * deltaT;
-		// Rotation
+
+		// Update camera rotation
 		Yaw = Yaw - ROT_SPEED * deltaT * r.y;
 		Pitch = Pitch - ROT_SPEED * deltaT * r.x;
-		Pitch  =  Pitch < minPitch ? minPitch :
-				   (Pitch > maxPitch ? maxPitch : Pitch);
+		Pitch = Pitch < minPitch ? minPitch : (Pitch > maxPitch ? maxPitch : Pitch);
 
+		// Calculate movement direction based on camera orientation
+		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
+		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
 
+		// Calculate desired movement vector
+		glm::vec3 moveDir = MOVE_SPEED * m.x * ux - MOVE_SPEED * m.z * uz;
+
+		// Apply movement force to physics body
+		PhysicsMgr.movePlayer(moveDir, fire);
+
+		// Camera height adjustment
+		camHeight += MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
+		camHeight -= MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_E) ? 1.0f : 0.0f) * deltaT;
+		camHeight = glm::clamp(camHeight, 0.5f, 3.0f);
+
+		// Exponential smoothing factor for camera damping
 		float ef = exp(-10.0 * deltaT);
+
 		// Rotational independence from view with damping
-		if(glm::length(glm::vec3(m.x, 0.0f, m.z)) > 0.001f) {
-			relDir = Yaw + atan2(m.x, m.z);
+		if(glm::length(glm::vec3(moveDir.x, 0.0f, moveDir.z)) > 0.001f) {
+			relDir = Yaw + atan2(moveDir.x, moveDir.z);
 			dampedRelDir = dampedRelDir > relDir + 3.1416f ? dampedRelDir - 6.28f :
 						   dampedRelDir < relDir - 3.1416f ? dampedRelDir + 6.28f : dampedRelDir;
 		}
 		dampedRelDir = ef * dampedRelDir + (1.0f - ef) * relDir;
-		
-		// Final world matrix computaiton
+
+		// Final world matrix computation using physics position
 		World = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
-		
+
 		// Projection
 		glm::mat4 Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
 		Prj[1][1] *= -1;
 
 		// View
-		// Target
+		// Target position based on physics body position
 		glm::vec3 target = Pos + glm::vec3(0.0f, camHeight, 0.0f);
 
-		// Camera position, depending on Yaw parameter, but not character direction
+		// Camera position, depending on Yaw parameter
 		glm::mat4 camWorld = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
 		cameraPos = camWorld * glm::vec4(0.0f, camHeight + camDist * sin(Pitch), camDist * cos(Pitch), 1.0);
+
 		// Damping of camera
 		dampedCamPos = ef * dampedCamPos + (1.0f - ef) * cameraPos;
 
 		glm::mat4 View = glm::lookAt(dampedCamPos, target, glm::vec3(0,1,0));
 
 		ViewPrj = Prj * View;
-		
-		float vel = length(Pos - oldPos) / deltaT;
-		
-		if(vel < 0.2) {
-			if(currRunState != 1) {
-				currRunState = 1;
-			}
-		} else if(vel < 3.5) {
-			if(currRunState != 2) {
-				currRunState = 2;
-			}
-		} else {
-			if(currRunState != 3) {
-				currRunState = 3;
-			}
-		}
-		
+
 		return deltaT;
 	}
 };
-
 
 // This is the main: probably you do not need to touch this!
 int main() {
