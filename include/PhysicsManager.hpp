@@ -28,7 +28,7 @@ struct PlayerConfig {
 
     float moveSpeed = 2.3f;
     float runSpeed = 3.5f;
-    float jumpForce = 500.0f;
+    float jumpForce = 100.0f;
     float airControl = 0.3f; // On-air control factor
     float groundDamping = 0.5f; // Damping factor when grounded
 };

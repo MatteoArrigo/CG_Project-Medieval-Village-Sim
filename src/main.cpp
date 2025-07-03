@@ -525,20 +525,8 @@ class CGProject : public BaseProject {
 
 		static int curAnim = 0;
 		if(glfwGetKey(window, GLFW_KEY_SPACE)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_SPACE;
-
-				curAnim = (curAnim + 1) % 5;
-				AB.Start(curAnim, 0.5);
-        std::cout << "Playing anim: " << curAnim << "\n";
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_SPACE) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
+            PhysicsMgr.jumpPlayer();
+        }
 
 		// moves the view
 		float deltaT = GameLogic();
