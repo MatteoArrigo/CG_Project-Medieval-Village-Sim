@@ -302,6 +302,7 @@ class CGProject : public BaseProject {
 		PskyBox.setPolygonMode(VK_POLYGON_MODE_FILL);
 
         PWater.init(this, &VDsimp, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLwaterVert, &DSLwaterFrag});
+        PWater.setTransparency(true);
 		
         PterrainTiled.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/terrain_tiled.frag.spv", {&DSLglobal, &DSLterrainTiled});
 
@@ -332,7 +333,7 @@ class CGProject : public BaseProject {
 									 }
 									}}
 							  }, /*TotalNtextures*/1, &VDskyBox);
-        PRs[3].init("Water", {
+        PRs[4].init("Water", {
                             {&PWater, {//Pipeline and DSL for the first pass
                                     /*DSLwaterVert*/{},
                                     /*DSLwaterFrag*/ {
@@ -347,7 +348,7 @@ class CGProject : public BaseProject {
                                 }
                             }}
                     }, /*TotalNtextures*/8, &VDsimp);
-        PRs[4].init("TerrainTiled", {
+        PRs[3].init("TerrainTiled", {
                 {&PterrainTiled, {//Pipeline and DSL for the first pass
                         /*DSLglobal*/{},
                         /*DSLterrainTiled*/{
@@ -369,9 +370,9 @@ class CGProject : public BaseProject {
 							  }, 4, &VDtan);
 
 		// sets the size of the Descriptor Set Pool
-		DPSZs.uniformBlocksInPool = 100;
-		DPSZs.texturesInPool = 100;
-		DPSZs.setsInPool = 100;
+		DPSZs.uniformBlocksInPool = 1000;
+		DPSZs.texturesInPool = 1000;
+		DPSZs.setsInPool = 1000;
 		
         std::cout << "\nLoading the scene\n\n";
 		if(SC.init(this, /*Npasses*/1, VDRs, PRs, "assets/models/scene.json") != 0) {
@@ -614,17 +615,6 @@ class CGProject : public BaseProject {
 		sbubo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
 		SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &sbubo, 0);
 
-        // Water objects
-        techniqueId++;
-        TimeUBO timeUbo{};
-        timeUbo.time = glfwGetTime();
-        ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-        ubos.mvpMat = ViewPrj * ubos.mMat;
-        ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
-        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &timeUbo, 0); // Set 0
-        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &ubos, 1); // Set 0
-        SC.TI[techniqueId].I[0].DS[0][1]->map(currentImage, &gubo, 0); // Set 0
-
 		// TerrainTiled objects
         techniqueId++;
 		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
@@ -635,6 +625,17 @@ class CGProject : public BaseProject {
 			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
 			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
 		}
+
+        // Water objects
+        techniqueId++;
+        TimeUBO timeUbo{};
+        timeUbo.time = glfwGetTime();
+        ubos.mMat   = SC.TI[techniqueId].I[0].Wm;
+        ubos.mvpMat = ViewPrj * ubos.mMat;
+        ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &timeUbo, 0); // Set 0
+        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &ubos, 1); // Set 0
+        SC.TI[techniqueId].I[0].DS[0][1]->map(currentImage, &gubo, 0); // Set 0
 
         // PBR_SpecGloss objects
         SgAoMaterialFactorsUBO sgAoUbo{};

@@ -117,12 +117,14 @@ void main() {
 
     // Specular highlight
     // Using a simple Blinn-Phong model for specular reflection
-    // Adjust shininess factor as needed
     vec3 halfwayDir = normalize(viewDir + normalize(gubo.lightDir));
-    float spec = pow(max(dot(N, halfwayDir), 0.0), 500.0); // Adjust shininess
-    vec3 specular = gubo.lightColor.rgb * spec;
+    float spec = pow(max(dot(N, halfwayDir), 0.0), 200.0);
+        // Adjust the exponent (10.0) to control the shininess of the surface (how large is the specular highlight)
+    vec3 specular = gubo.lightColor.rgb * spec * fresnel * 4;
+        // Adjust the intensity of the specular highlight
 
 //    vec3 finalColor = mix(waterColor * diffuse + specular, reflectionColor, fresnel);
     vec3 finalColor = mix(waterColor * diffuse + specular, reflectionColor, fresnel);
-    outColor = vec4(finalColor, 1.0);
+    float alpha = mix(0.2, 0.9, fresnel); // more transparent at grazing angles
+    outColor = vec4(finalColor, alpha);
 }
