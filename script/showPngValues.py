@@ -14,9 +14,23 @@ def show_png_values(file_path):
         for i, pixel in enumerate(pixels[:100]):
             print(f"Pixel {i}: {pixel}")
 
+        # for pixel in pixels:
+        #     if pixel[3] != 255:
+        #         print(f"Pixel con alpha diverso da 255: {pixel}")
+        #         break
+
+        # Imposta il canale alpha (A) di tutti i pixel a 255
+        # pixels = [(r, g, b, 255) for r, g, b, a in pixels]
+        # img.putdata(pixels)
+
+        # Salva l'immagine modificata
+        # output_path = file_path.replace(".png", "_modified.png")
+        # img.save(output_path)
+        # print(f"Immagine salvata con canale alpha impostato a 255: {output_path}")
+
     except Exception as e:
         print(f"Errore durante la lettura del file PNG: {e}")
 
 # Esempio di utilizzo
-file_path = "../assets/textures/all_buildings/build_building_01_sg.png"
+file_path = r"C:\Users\Matteo\Desktop\0LabsHPC\CG project\Polimi-CG-Project\assets\textures\water\posy.png"
 show_png_values(file_path)
