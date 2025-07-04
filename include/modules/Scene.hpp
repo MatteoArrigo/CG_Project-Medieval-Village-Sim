@@ -91,7 +91,6 @@ class Scene {
 	std::unordered_map<std::string, VertexDescriptor *> VDIds;
 	int Npasses;
 
-
 	int init(BaseProject *_BP,  int _Npasses, std::vector<VertexDescriptorRef>  &VDRs, std::vector<TechniqueRef> &PRs, std::string file);
 
 	void pipelinesAndDescriptorSetsInit();
