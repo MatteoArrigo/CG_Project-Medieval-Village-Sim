@@ -100,6 +100,7 @@ class CGProject : public BaseProject {
 
 	// PhysicsManager for collision detection
 	PhysicsManager PhysicsMgr;
+	PlayerConfig physicsConfig;
 
 	// To support animation
 	#define N_ANIMATIONS 1
