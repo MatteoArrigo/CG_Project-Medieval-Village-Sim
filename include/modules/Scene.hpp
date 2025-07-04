@@ -13,8 +13,17 @@ struct Instance {
 
     glm::vec3 diffuseFactor;
     glm::vec3 specularFactor;
-    float glossinessFactor;
-    float aoFactor;
+
+    /**
+     * Factor 1 is used for
+     *  - glossiness in PBR SpecularGlossiness
+     *  - mask blend factor in Terrain
+     * Factor 2 is used for
+     *  - ambient occlusion in PBR SpecularGlossiness
+     *  - tiling factor in Terrain
+     * */
+    float factor1;
+    float factor2;
 	
 	glm::mat4 Wm;
 	TechniqueInstances *TIp;
@@ -279,13 +288,17 @@ std::cout << "}\n";
                 else
                     TI[k].I[j].specularFactor = glm::vec3(1.0f, 1.0f, 1.0f); // Default specular factor
                 if (is[j].contains("glossinessFactor"))
-                    TI[k].I[j].glossinessFactor = is[j]["glossinessFactor"];
+                    TI[k].I[j].factor1 = is[j]["glossinessFactor"];
+                else if( is[j].contains("maskBlendFactor") )
+                    TI[k].I[j].factor1 = is[j]["maskBlendFactor"];
                 else
-                    TI[k].I[j].glossinessFactor = 0.5f; // Default glossiness factor
+                    TI[k].I[j].factor1 = 0.5f; // Default glossiness factor
                 if (is[j].contains("aoFactor"))
-                    TI[k].I[j].aoFactor = is[j]["aoFactor"];
+                    TI[k].I[j].factor2 = is[j]["aoFactor"];
+                else if( is[j].contains("tilingFactor") )
+                    TI[k].I[j].factor2 = is[j]["tilingFactor"];
                 else
-                    TI[k].I[j].aoFactor = 1.0f; // Default ambient occlusion factor
+                    TI[k].I[j].factor2 = 1.0f; // Default ambient occlusion factor
 
 				nlohmann::json TMjson = is[j]["transform"];
 				if(TMjson.is_null()) {

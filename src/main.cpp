@@ -64,7 +64,6 @@ struct TimeUBO {
     alignas(4) float time; // scalar
 };
 
-
 struct SgAoMaterialFactorsUBO {
     alignas(16) glm::vec3 diffuseFactor;      // (RGBA)
     alignas(16) glm::vec3 specularFactor;     // (RGB)
@@ -72,7 +71,10 @@ struct SgAoMaterialFactorsUBO {
     alignas(4) float aoFactor; // scalar
 } ;
 
-
+struct TerrainFactorsUBO {
+    alignas(4) float maskBlendFactor;
+    alignas(4) float tilingFactor;
+};
 
 // MAIN ! 
 class CGProject : public BaseProject {
@@ -81,7 +83,7 @@ class CGProject : public BaseProject {
 	
 	// Descriptor Layouts [what will be passed to the shaders]
 	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR,
-        DSLglobal, DSLskyBox, DSLterrainTiled, DSLsgAoFactors,
+        DSLglobal, DSLskyBox, DSLterrain, DSLsgAoFactors, DSLterrainFactors,
         DSLwaterVert, DSLwaterFrag;
 
 	// Vertex formants, Pipelines [Shader couples] and Render passes
@@ -90,7 +92,7 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDskyBox;
 	VertexDescriptor VDtan;
 	RenderPass RP;
-	Pipeline Pchar, PsimpObj, PskyBox, PterrainTiled, P_PBR_SpecGloss, PWater;
+	Pipeline Pchar, PsimpObj, PskyBox, Pterrain, P_PBR_SpecGloss, PWater;
 	//*DBG*/Pipeline PDebug;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -195,9 +197,22 @@ class CGProject : public BaseProject {
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
 		  });
 
-        DSLterrainTiled.init(this, {
+        DSLterrain.init(this, {
                 {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
-                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+                {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
+                {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
+                {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
+                {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
+                {6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5, 1},
+                {7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1},
+                {8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7, 1},
+                {9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 8, 1},
+        });
+
+        // This is for the PBR of terrain  -- SET 2
+        DSLterrainFactors.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TerrainFactorsUBO), 1},
         });
 
 		DSLlocalPBR.init(this, {
@@ -207,11 +222,8 @@ class CGProject : public BaseProject {
 					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
                     {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1}
 				  });
-        
-        /* This is for the PBR with specular glossines  -- SET 1
-         *  UniformBufferObject from SimplePosNormUVTan.vert
-         *  albedoMap, normalMap, specGlossMap, SgAoMaterialFactorsUBO from PBR_SpecGloss.frag
-        */
+
+        // This is for the PBR with specular glossines  -- SET 2
         DSLsgAoFactors.init(this, {
                 {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SgAoMaterialFactorsUBO), 1},
         });
@@ -289,7 +301,7 @@ class CGProject : public BaseProject {
 
         PWater.init(this, &VDsimp, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLwaterVert, &DSLwaterFrag});
 		
-        PterrainTiled.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/terrain_tiled.frag.spv", {&DSLglobal, &DSLterrainTiled});
+        Pterrain.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLglobal, &DSLterrain, &DSLterrainFactors});
 
 		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
 
@@ -325,14 +337,23 @@ class CGProject : public BaseProject {
                                 }
                             }}
                     }, /*TotalNtextures*/1, &VDsimp);
-        PRs[4].init("TerrainTiled", {
-                {&PterrainTiled, {//Pipeline and DSL for the first pass
+        PRs[4].init("Terrain", {
+                {&Pterrain, {//Pipeline and DSL for the first pass
                         /*DSLglobal*/{},
-                        /*DSLterrainTiled*/{
-                                             /*t0*/{true,  0, {}}// index 0 of the "texture" field in the json file
-                                     }
+                        /*DSLterrain*/{
+                                             {true,  0, {}},
+                                             {true,  1, {}},
+                                             {true,  2, {}},
+                                             {true,  3, {}},
+                                             {true,  4, {}},
+                                             {true,  5, {}},
+                                             {true,  6, {}},
+                                             {true,  7, {}},
+                                             {true,  8, {}},
+                                     },
+                                     {}
                 }}
-        }, /*TotalNtextures*/1, &VDtan);
+        }, /*TotalNtextures*/9, &VDtan);
         PRs[5].init("PBR_sg", {
 							 {&P_PBR_SpecGloss, {//Pipeline and DSL for the first pass
 								 {},    /*DSLglobal*/
@@ -390,7 +411,7 @@ class CGProject : public BaseProject {
 		PsimpObj.create(&RP);
 		PskyBox.create(&RP);
         PWater.create(&RP);
-		PterrainTiled.create(&RP);
+		Pterrain.create(&RP);
         P_PBR_SpecGloss.create(&RP);
 
 		SC.pipelinesAndDescriptorSetsInit();
@@ -403,7 +424,7 @@ class CGProject : public BaseProject {
 		PsimpObj.cleanup();
 		PskyBox.cleanup();
         PWater.cleanup();
-		PterrainTiled.cleanup();
+		Pterrain.cleanup();
         P_PBR_SpecGloss.cleanup();
 		RP.cleanup();
 
@@ -421,7 +442,8 @@ class CGProject : public BaseProject {
 		DSLskyBox.cleanup();
         DSLwaterVert.cleanup();
         DSLwaterFrag.cleanup();
-		DSLterrainTiled.cleanup();
+		DSLterrain.cleanup();
+        DSLterrainFactors.cleanup();
 		DSLglobal.cleanup();
 		
 		Pchar.destroy();	
@@ -429,7 +451,7 @@ class CGProject : public BaseProject {
 		PskyBox.destroy();		
         PWater.destroy();
         P_PBR_SpecGloss.destroy();
-		PterrainTiled.destroy();
+		Pterrain.destroy();
 
 		RP.destroy();
 
@@ -603,15 +625,20 @@ class CGProject : public BaseProject {
         SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &ubos, 1); // Set 0
         SC.TI[techniqueId].I[0].DS[0][1]->map(currentImage, &gubo, 0); // Set 0
 
-		// TerrainTiled objects
+		// Terrain objects
         techniqueId++;
+        TerrainFactorsUBO terrainFactorsUbo{};
 		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
 			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
 			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
 
+            terrainFactorsUbo.maskBlendFactor = SC.TI[techniqueId].I[instanceId].factor1;
+            terrainFactorsUbo.tilingFactor = SC.TI[techniqueId].I[instanceId].factor2;
+
 			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
 			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][2]->map(currentImage, &terrainFactorsUbo, 0);  // Set 2
 		}
 
         // PBR_SpecGloss objects
@@ -624,8 +651,8 @@ class CGProject : public BaseProject {
             
             sgAoUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
             sgAoUbo.specularFactor = SC.TI[techniqueId].I[instanceId].specularFactor;
-            sgAoUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].glossinessFactor;
-            sgAoUbo.aoFactor = SC.TI[techniqueId].I[instanceId].aoFactor;
+            sgAoUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].factor1;
+            sgAoUbo.aoFactor = SC.TI[techniqueId].I[instanceId].factor2;
 
 			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
 			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
