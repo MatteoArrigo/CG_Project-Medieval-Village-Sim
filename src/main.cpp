@@ -3,10 +3,10 @@
 
 #include <json.hpp>
 
-#include "PhysicsManager.hpp"
-#include "modules/Starter.hpp"
+#include <PhysicsManager.hpp>
+//#include "modules/Starter.hpp"
+//#include "modules/Scene.hpp"
 #include "modules/TextMaker.hpp"
-#include "modules/Scene.hpp"
 #include "modules/Animations.hpp"
 
 // The uniform buffer object used in this example
