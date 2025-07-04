@@ -122,12 +122,19 @@ class CGProject : public BaseProject {
 
 	glm::mat4 ViewPrj;
 	glm::mat4 World;
-    const glm::vec3 startingPosition = glm::vec3(0.0f, 10.0f, 0.0f);    // Player starting position
-	glm::vec3 Pos = startingPosition;    // Player (current) position
-	glm::vec3 cameraPos = glm::vec3(0, 10, 0); // Camera position
+	glm::vec3 cameraPos;
+
+    // Camera rotation controls
 	float Yaw = glm::radians(180.0f);
 	float Pitch = glm::radians(0.0f);
 	float Roll = glm::radians(0.0f);
+    float relDir = glm::radians(0.0f);
+    float dampedRelDir = glm::radians(0.0f);
+    glm::vec3 dampedCamPos = physicsConfig.startPosition;
+
+    // Camera target height and distance
+    float camHeight = 1.5;
+    float camDist = 5;
 
 
     // defines the global parameters for the uniform
@@ -679,9 +686,6 @@ class CGProject : public BaseProject {
 	}
 	
 	float GameLogic() {
-		// Retrieve configs from PhysicsManger.hpp
-		PlayerConfig physicsConfig;
-
 		// Parameters
 		// Camera FOV-y, Near Plane and Far Plane
 		const float FOVy = glm::radians(45.0f);
@@ -689,9 +693,6 @@ class CGProject : public BaseProject {
 		const float farPlane = 500.f;
 		// Player starting point
 		const glm::vec3 StartingPosition = physicsConfig.startPosition;
-		// Camera target height and distance
-		static float camHeight = 1.5;
-		static float camDist = 5;
 		// Camera Pitch limits
 		const float minPitch = glm::radians(-8.75f);
 		const float maxPitch = glm::radians(60.0f);
@@ -719,13 +720,6 @@ class CGProject : public BaseProject {
 		glm::vec3 Pos = PhysicsMgr.getPlayerPosition();
 
 		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
-
-		// Camera rotation controls
-		static float Yaw = glm::radians(0.0f);
-		static float Pitch = glm::radians(0.0f);
-		static float relDir = glm::radians(0.0f);
-		static float dampedRelDir = glm::radians(0.0f);
-		static glm::vec3 dampedCamPos = StartingPosition;
 
 		// Update camera rotation
 		Yaw = Yaw - ROT_SPEED * deltaT * r.y;
