@@ -273,7 +273,6 @@ btTransform glmMat4ToBtTransform(const glm::mat4& mat) {
 // Il problema specifico delle boardwalk sembra essere dato dalle fence
 
 void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount) {
-
     for (int instanceIdx=0; instanceIdx<instanceCount; instanceIdx++) {
 
         // Skip instances that are not used for physics
@@ -289,9 +288,6 @@ void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs,
         }
         const Instance* instanceRef = instanceRefs[instanceIdx];
         const Model* modelRef = modelRefs[modelIdx];
-
-        // retrieve the translation inside the scene of the current model
-        glm::vec3 position = glm::vec3(instanceRef->Wm[3]);
 
         const Model &model = *modelRef;
         const std::vector<unsigned char> &vertices = model.vertices;
