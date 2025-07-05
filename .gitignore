@@ -132,4 +132,5 @@ fabric.properties
 
 *.name
 *.iml
-**/debug
+json_sections.txt
+**/debug/

@@ -3,7 +3,9 @@
 
 #include <json.hpp>
 
-#include "PhysicsManager.hpp"
+#include <PhysicsManager.hpp>
+//#include "modules/Starter.hpp"
+//#include "modules/Scene.hpp"
 #include "modules/TextMaker.hpp"
 #include "modules/Animations.hpp"
 
@@ -105,6 +107,7 @@ class CGProject : public BaseProject {
 
 	// PhysicsManager for collision detection
 	PhysicsManager PhysicsMgr;
+	PlayerConfig physicsConfig;
 
 	// To support animation
 	#define N_ANIMATIONS 1
@@ -119,13 +122,34 @@ class CGProject : public BaseProject {
 	// Other application parameters
 	float Ar;	// Aspect ratio
 
+
+    // TODO: accorpa tutti questi parametri (molti sono stati messi statici, usa invece membri di classe)
+    // TODO: in generale ripulisci questo schifo di main
+
+
 	glm::mat4 ViewPrj;
 	glm::mat4 World;
-	glm::vec3 Pos = glm::vec3(0,0,5);
 	glm::vec3 cameraPos;
-	float Yaw = glm::radians(0.0f);
+
+    // Camera rotation controls
+	float Yaw = glm::radians(180.0f);
 	float Pitch = glm::radians(0.0f);
 	float Roll = glm::radians(0.0f);
+    float relDir = glm::radians(0.0f);
+    float dampedRelDir = glm::radians(0.0f);
+    glm::vec3 dampedCamPos = physicsConfig.startPosition;
+
+    // Camera target height and distance
+    float camHeight = 1.5;
+    float camDist = 5;
+
+
+    // defines the global parameters for the uniform
+    const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-29.0f),
+                glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-10.0f),
+                 glm::vec3(1.0f,0.0f,0.0f));
+    const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+    const glm::vec4 lightColor = glm::vec4(1.0f, 0.4f, 0.4f, 1.0f);
 
 	glm::vec4 debug1 = glm::vec4(0);
 
@@ -195,7 +219,14 @@ class CGProject : public BaseProject {
         // TODO: forse basta il UBO con solo mvpMat, invece che anche le altre 2...
         DSLwaterFrag.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(GlobalUniformBufferObject), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
+			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
+			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5, 1},
+			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1},
+			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7, 1}
 		  });
 
         DSLgrass.init(this, {
@@ -307,9 +338,10 @@ class CGProject : public BaseProject {
 		PskyBox.setPolygonMode(VK_POLYGON_MODE_FILL);
 
         PWater.init(this, &VDsimp, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLwaterVert, &DSLwaterFrag});
+        PWater.setTransparency(true);
 
         Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLglobal, &DSLgrass});
-		
+
         Pterrain.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLglobal, &DSLterrain, &DSLterrainFactors});
 
 		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
@@ -340,12 +372,20 @@ class CGProject : public BaseProject {
 									}}
 							  }, /*TotalNtextures*/1, &VDskyBox);
         PRs[3].init("Water", {
-                            {&PWater, {//Pipeline and DSL for the first pass
-                                    /*DSLwater*/{},
-                                                {{true, 0, {}}
-                                }
-                            }}
-                    }, /*TotalNtextures*/1, &VDtan);
+                {&PWater, {//Pipeline and DSL for the first pass
+                        /*DSLwaterVert*/{},
+                        /*DSLwaterFrag*/ {
+                                                {true, 0, {} },
+                                                {true, 1, {} },     // 6 textures for cubemap faces
+                                                {true, 2, {} },     // Order is: +x, -x, +y, -y, +z, -z
+                                                {true, 3, {} },
+                                                {true, 4, {} },
+                                                {true, 5, {} },
+                                                {true, 6, {} },
+                                                {true, 7, {} }
+                                        }
+                }}
+        }, /*TotalNtextures*/8, &VDsimp);
         PRs[4].init("Terrain", {
                 {&Pterrain, {//Pipeline and DSL for the first pass
                         /*DSLglobal*/{},
@@ -404,7 +444,7 @@ class CGProject : public BaseProject {
 		}
 		AB.init({{0,32,0.0f,0}});
 		SKA.init(Anim, N_ANIMATIONS, "Armature|mixamo.com|Layer0", 0);
-		
+
 		// submits the main command buffer
 		submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
 
@@ -510,7 +550,7 @@ class CGProject : public BaseProject {
         RP.end(commandBuffer);
 	}
 
-// Here is where you update the uniforms, where logic of application is.
+    // Here is where you update the uniforms, where logic of application is.
 	void updateUniformBuffer(uint32_t currentImage) {
 		static bool debounce = false;
 		static int curDebounce = 0;
@@ -589,15 +629,11 @@ class CGProject : public BaseProject {
 		// updated the animation
 		const float SpeedUpAnimFact = 0.85f;
 		AB.Advance(deltaT * SpeedUpAnimFact);
-		
-		// defines the global parameters for the uniform
-		const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(1.0f,0.0f,0.0f));
-		const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 	
 		GlobalUniformBufferObject gubo{};
 
 		gubo.lightDir = lightDir;
-		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gubo.lightColor = lightColor;
 		gubo.eyePos = cameraPos;
 
 		// defines the local parameters for the uniforms
@@ -647,7 +683,7 @@ class CGProject : public BaseProject {
         techniqueId++;
         TimeUBO timeUbo{};
         timeUbo.time = glfwGetTime();
-        ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+        ubos.mMat   = SC.TI[techniqueId].I[0].Wm;
         ubos.mvpMat = ViewPrj * ubos.mMat;
         ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
         SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &timeUbo, 0); // Set 0
@@ -724,9 +760,6 @@ class CGProject : public BaseProject {
 	}
 	
 	float GameLogic() {
-		// Retrieve configs from PhysicsManger.hpp
-		PlayerConfig physicsConfig;
-
 		// Parameters
 		// Camera FOV-y, Near Plane and Far Plane
 		const float FOVy = glm::radians(45.0f);
@@ -763,13 +796,6 @@ class CGProject : public BaseProject {
 		glm::vec3 Pos = PhysicsMgr.getPlayerPosition();
 
 		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
-
-		// Camera rotation controls
-		static float Yaw = glm::radians(0.0f);
-		static float Pitch = glm::radians(0.0f);
-		static float relDir = glm::radians(0.0f);
-		static float dampedRelDir = glm::radians(0.0f);
-		static glm::vec3 dampedCamPos = StartingPosition;
 
 		// Update camera rotation
 		Yaw = Yaw - ROT_SPEED * deltaT * r.y;
