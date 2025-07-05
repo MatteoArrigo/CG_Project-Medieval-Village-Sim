@@ -734,11 +734,11 @@ class CGProject : public BaseProject {
 		// Player starting point
 		const glm::vec3 StartingPosition = physicsConfig.startPosition;
 		// Camera target height and distance
-		static float camHeight = 1.5;
-		static float camDist = 5;
+		static float camHeight = 1;
+		static float camDist = 3;
 		// Camera Pitch limits
-		const float minPitch = glm::radians(-8.75f);
-		const float maxPitch = glm::radians(60.0f);
+		const float minPitch = glm::radians(-40.0f);
+		const float maxPitch = glm::radians(80.0f);
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
 		const float MOVE_SPEED_BASE = physicsConfig.moveSpeed;

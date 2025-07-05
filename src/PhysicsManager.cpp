@@ -166,7 +166,7 @@ void PhysicsManager::movePlayer(const glm::vec3& moveDirection, bool isRunning) 
             player->body->activate(true);
         } else {
             // Stop movement except for vertical velocity
-            player->body->setLinearVelocity(btVector3(0, player->body->getLinearVelocity().getY(), 0));
+            player->body->setLinearVelocity(btVector3(0, 0, 0));
         }
     } else {
         // --- ground mode version ---
