@@ -12,7 +12,7 @@
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
-const bool FLY_MODE = true;
+const bool FLY_MODE = false;
 
 // The uniform buffer object used in this example
 struct VertexChar {
@@ -371,22 +371,7 @@ class CGProject : public BaseProject {
 									 }
 									}}
 							  }, /*TotalNtextures*/1, &VDskyBox);
-        PRs[3].init("Water", {
-                {&PWater, {//Pipeline and DSL for the first pass
-                        /*DSLwaterVert*/{},
-                        /*DSLwaterFrag*/ {
-                                                {true, 0, {} },
-                                                {true, 1, {} },     // 6 textures for cubemap faces
-                                                {true, 2, {} },     // Order is: +x, -x, +y, -y, +z, -z
-                                                {true, 3, {} },
-                                                {true, 4, {} },
-                                                {true, 5, {} },
-                                                {true, 6, {} },
-                                                {true, 7, {} }
-                                        }
-                }}
-        }, /*TotalNtextures*/8, &VDsimp);
-        PRs[4].init("Terrain", {
+        PRs[3].init("Terrain", {
                 {&Pterrain, {//Pipeline and DSL for the first pass
                         /*DSLglobal*/{},
                         /*DSLterrain*/{
@@ -403,6 +388,21 @@ class CGProject : public BaseProject {
                                      {}
                 }}
         }, /*TotalNtextures*/9, &VDtan);
+        PRs[4].init("Water", {
+                {&PWater, {//Pipeline and DSL for the first pass
+                        /*DSLwaterVert*/{},
+                        /*DSLwaterFrag*/ {
+                                                {true, 0, {} },
+                                                {true, 1, {} },     // 6 textures for cubemap faces
+                                                {true, 2, {} },     // Order is: +x, -x, +y, -y, +z, -z
+                                                {true, 3, {} },
+                                                {true, 4, {} },
+                                                {true, 5, {} },
+                                                {true, 6, {} },
+                                                {true, 7, {} }
+                                        }
+                }}
+        }, /*TotalNtextures*/8, &VDsimp);
         PRs[5].init("Grass", {
                  {&Pgrass, {//Pipeline and DSL for the first pass
                      /*DSLgrass*/{
@@ -679,6 +679,22 @@ class CGProject : public BaseProject {
 		sbubo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
 		SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &sbubo, 0);
 
+        // Terrain objects
+        techniqueId++;
+        TerrainFactorsUBO terrainFactorsUbo{};
+        for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+            ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            ubos.mvpMat = ViewPrj * ubos.mMat;
+            ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+
+            terrainFactorsUbo.maskBlendFactor = SC.TI[techniqueId].I[instanceId].factor1;
+            terrainFactorsUbo.tilingFactor = SC.TI[techniqueId].I[instanceId].factor2;
+
+            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+            SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[0][2]->map(currentImage, &terrainFactorsUbo, 0);  // Set 2
+        }
+
         // Water objects
         techniqueId++;
         TimeUBO timeUbo{};
@@ -689,22 +705,6 @@ class CGProject : public BaseProject {
         SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &timeUbo, 0); // Set 0
         SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &ubos, 1); // Set 0
         SC.TI[techniqueId].I[0].DS[0][1]->map(currentImage, &gubo, 0); // Set 0
-
-		// Terrain objects
-        techniqueId++;
-        TerrainFactorsUBO terrainFactorsUbo{};
-		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
-			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-			ubos.mvpMat = ViewPrj * ubos.mMat;
-			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
-
-            terrainFactorsUbo.maskBlendFactor = SC.TI[techniqueId].I[instanceId].factor1;
-            terrainFactorsUbo.tilingFactor = SC.TI[techniqueId].I[instanceId].factor2;
-
-			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
-			SC.TI[techniqueId].I[instanceId].DS[0][2]->map(currentImage, &terrainFactorsUbo, 0);  // Set 2
-		}
 
         // Vegetation/Grass objects
         techniqueId++;
