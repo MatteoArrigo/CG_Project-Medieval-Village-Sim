@@ -4,6 +4,7 @@
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNorm;
 layout(location = 2) in vec2 inUV;
+layout(location = 3) in vec4 inTangent;
 
 layout(location = 0) out vec3 fragPosWorld;
 layout(location = 1) out vec3 fragNormalWorld;
@@ -43,13 +44,11 @@ void main() {
     fragNormalWorld = normalize(ubo.nMat * vec4(inNorm, 0.0)).xyz;
     fragUV = inUV;
 
-    // Hardcoded tangent space basis (quad vertical orientation)
-    vec3 up = vec3(0.0, 1.0, 0.0); // adjust to model orientation if needed
-    vec3 tangent = normalize(cross(up, inNorm));
-    vec3 bitangent = normalize(cross(inNorm, tangent));
-
-    fragTangent = mat3(ubo.nMat) * tangent;
-    fragBitangent = mat3(ubo.nMat) * bitangent;
+    // Compute tangent space basis from inTangent and inNorm
+    vec3 localTangent = inTangent.xyz;
+    vec3 localBitangent = cross(inNorm, localTangent) * inTangent.w;
+    fragTangent = normalize((ubo.nMat * vec4(localTangent, 0.0)).xyz);
+    fragBitangent = normalize((ubo.nMat * vec4(localBitangent, 0.0)).xyz);
 
     gl_Position = ubo.mvpMat * vec4(pos, 1.0);
 }

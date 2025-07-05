@@ -307,7 +307,7 @@ class CGProject : public BaseProject {
 
         PWater.init(this, &VDsimp, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLwaterVert, &DSLwaterFrag});
 
-        Pgrass.init(this, &VDsimp, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLglobal, &DSLgrass});
+        Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLglobal, &DSLgrass});
 		
         Pterrain.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLglobal, &DSLterrain, &DSLterrainFactors});
 
@@ -344,7 +344,7 @@ class CGProject : public BaseProject {
                                                 {{true, 0, {}}
                                 }
                             }}
-                    }, /*TotalNtextures*/1, &VDsimp);
+                    }, /*TotalNtextures*/1, &VDtan);
         PRs[4].init("Terrain", {
                 {&Pterrain, {//Pipeline and DSL for the first pass
                         /*DSLglobal*/{},

@@ -4,9 +4,9 @@ from pygltflib import GLTF2
 import re
 
 # Carica il file .gltf
-gltf = GLTF2().load("assets/models/Terrain.gltf")
-texDir = 'terrain'
-assetName = 'terrain'
+gltf = GLTF2().load("assets/models/Vegetation.gltf")
+texDir = 'vegetation'
+assetName = 'vegetation'
 meshRegex = None
 
 def getModels():
@@ -17,7 +17,7 @@ def getModels():
             id = f"{model}-{meshId:02}"
             models.append({
                 "id": id,
-                'VD': "VDtan",
+                'VD': "VDsimp",
                 "model": model,
                 'node': model,
                 "meshId": meshId,
@@ -106,6 +106,18 @@ def getMaterialsList():
         materialsList.append(entry)
     return materialsList
 
+def getMaterialsList2():
+    materialsList = []
+    for material in gltf.materials:
+        entry = {
+            'name': material.name,
+            'normal': get_texture_name(material.normalTexture.index) if material.normalTexture else 'void',
+        }
+        entry['albedo'] = entry['normal'].replace('Normal', 'Albedo_Opacity')
+
+        materialsList.append(entry)
+    return materialsList
+
 
 def computeRotationFromNode(node):
     rotOld = [node.rotation[i] for i in range(4)]
@@ -130,7 +142,7 @@ def computeRotationFromNode(node):
 
 def getElementsToRender(meshNameRegex = None):
     toRender = []
-    materialsList = getMaterialsList()
+    materialsList = getMaterialsList2()
     usedIdsCount = {}
     for node in gltf.nodes:
         if node.mesh is None:
@@ -170,10 +182,11 @@ def getElementsToRender(meshNameRegex = None):
                 'id': f'{primitiveId}.{usedIdsCount[primitiveId]:02}',
                 'model': primitiveId,
                 'texture': [
+                    # materialsList[materialIdx]['albedo'],
                     materialsList[materialIdx]['albedo'],
                     materialsList[materialIdx]['normal'],
-                    materialsList[materialIdx]['sg'],
-                    materialsList[materialIdx]['ao']
+                    # materialsList[materialIdx]['sg'],
+                    # materialsList[materialIdx]['ao']
                 ]
             }
             usedIdsCount[primitiveId] += 1
@@ -183,14 +196,14 @@ def getElementsToRender(meshNameRegex = None):
                 entry['eulerAngles'] = [x for x in computeRotationFromNode(node)]
             if node.scale:
                 entry['scale'] = [coord for coord in node.scale]
-            if materialsList[materialIdx]['diffuseFactor'] is not None:
-                entry['diffuseFactor'] = materialsList[materialIdx]['diffuseFactor']
-            if materialsList[materialIdx]['specularFactor'] is not None:
-                entry['specularFactor'] = materialsList[materialIdx]['specularFactor']
-            if materialsList[materialIdx]['glossinessFactor'] is not None:
-                entry['glossinessFactor'] = materialsList[materialIdx]['glossinessFactor']
-            if materialsList[materialIdx]['aoFactor'] is not None:
-                entry['aoFactor'] = materialsList[materialIdx]['aoFactor']
+            # if materialsList[materialIdx]['diffuseFactor'] is not None:
+            #     entry['diffuseFactor'] = materialsList[materialIdx]['diffuseFactor']
+            # if materialsList[materialIdx]['specularFactor'] is not None:
+            #     entry['specularFactor'] = materialsList[materialIdx]['specularFactor']
+            # if materialsList[materialIdx]['glossinessFactor'] is not None:
+            #     entry['glossinessFactor'] = materialsList[materialIdx]['glossinessFactor']
+            # if materialsList[materialIdx]['aoFactor'] is not None:
+            #     entry['aoFactor'] = materialsList[materialIdx]['aoFactor']
             toRender.append(entry)
 
     return toRender
@@ -209,6 +222,7 @@ toRender = getElementsToRender(meshRegex)
 #     json.dump(sections, f, indent=4)
 
 output_file = "script/json_sections.txt"
+print('ciao')
 
 with open(output_file, "w") as f:
     for section in [models, textures, toRender]:
