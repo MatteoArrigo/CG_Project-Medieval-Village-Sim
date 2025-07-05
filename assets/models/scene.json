@@ -480,12 +480,17 @@
 
 		{"technique": "TerrainTiled", "elements": [
 			{"id": "terrain_near_01-00.00", "model": "terrain_near_01-00", "texture": ["terrain_grass_01_a"],
-				"translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] },
+				"translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] ,
+				"physics": true},
 			{"id": "terrain_near_01-01.00", "model": "terrain_near_01-01", "texture": ["terrain_grass_01_a"],
-				"translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] },
+				"translate": [286.080810546875, -0.0002593994140625, -396.2229919433594],
+				"physics": true
+			},
 			{"id": "Baseplate-00.00", "model": "Baseplate-00", "texture": ["terrain_wetmud_01_a"],
 				"translate": [0.0, -1.7000000476837158, 100.0],
-				"scale": [100.0, 1.0, 100.0]}
+				"scale": [100.0, 1.0, 100.0],
+				"physics": true
+			}
 		]},
 
 		{"technique":  "Water", "elements":  [

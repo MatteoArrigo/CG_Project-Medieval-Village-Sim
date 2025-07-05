@@ -255,6 +255,12 @@ PhysicsObject* PhysicsManager::addStaticSphere(const glm::vec3& position, float 
 void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount) {
 
     for (int instanceIdx=0; instanceIdx<instanceCount; instanceIdx++) {
+
+        // Skip instances that are not used for physics
+        if(!instanceRefs[instanceIdx]->usedForPhysics) {
+            continue;
+        }
+
         // retrieve instance and model references
         int modelIdx = instanceRefs[instanceIdx]->Mid;
         if (modelIdx < 0 || modelIdx >= instanceCount) {

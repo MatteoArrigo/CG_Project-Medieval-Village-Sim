@@ -11,6 +11,8 @@ struct Instance {
 	std::vector<DescriptorSetLayout *> **D;
 	int *NDs;
 
+    bool usedForPhysics;
+
     glm::vec3 diffuseFactor;
     glm::vec3 specularFactor;
     float glossinessFactor;
@@ -265,6 +267,12 @@ std::cout << "#" << NTextures;
 std::cout << " " << is[j]["texture"][h] << "(" << TI[k].I[j].Tid[h] << ")";
 				}
 std::cout << "}\n";
+
+                if(is[j].contains("physics") && is[j]["physics"].get<bool>()) {
+                    TI[k].I[j].usedForPhysics = true;
+                } else {
+                    TI[k].I[j].usedForPhysics = false;
+                }
 
                 //TODO: pensa se lasciare così o gestire in qualche altro modo con array o che so io...
                 // Check optional PBR SpecularGlossiness parameters
