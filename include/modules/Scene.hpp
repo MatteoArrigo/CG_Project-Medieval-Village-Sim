@@ -86,6 +86,10 @@ class Scene {
 	VertexDescriptorRef *VRef;
 	std::unordered_map<std::string, int> InstanceIds;
 
+	Instance **I_physics;
+    int InstancePhysicsCount = 0;
+	std::unordered_map<std::string, int> InstancePhysicsIds;
+
 	// Pipelines, DSL and Vertex Formats
 	std::unordered_map<std::string, TechniqueRef *> TechniqueIds;
 	int TechniqueInstanceCount = 0;
@@ -399,6 +403,52 @@ std::cout << "Creating instances\n";
 		}
 std::cout << i << " instances created\n";
 
+std::cout << "Creating physics-only instances\n";
+
+        nlohmann::json jsonInstancesPhysics = js["instances_no_visible"];
+        InstancePhysicsCount = jsonInstancesPhysics.size();
+		I_physics =  (Instance **)calloc(InstancePhysicsCount, sizeof(Instance*));
+
+        for(int j = 0; j < InstancePhysicsCount; j++) {
+            I_physics[j] = (Instance*) calloc(1, sizeof(Instance));
+
+            I_physics[j]->id = new std::string(jsonInstancesPhysics[j]["id"]);
+            I_physics[j]->Mid = MeshIds[jsonInstancesPhysics[j]["model"]];
+            I_physics[j]->usedForPhysics = true;
+
+            glm::vec3 trT = glm::vec3(0.0f);
+            glm::mat4 trR = glm::mat4(1.0f);
+            glm::vec3 trS = glm::vec3(1.0f);
+            nlohmann::json Tr_Tjson = jsonInstancesPhysics[j]["translate"];
+            if(!Tr_Tjson.is_null()) {
+                trT.x = Tr_Tjson[0];
+                trT.y = Tr_Tjson[1];
+                trT.z = Tr_Tjson[2];
+            }
+            nlohmann::json Tr_REjson = jsonInstancesPhysics[j]["eulerAngles"];
+            if(!Tr_REjson.is_null()) {
+                trR = glm::rotate(glm::mat4(1.0f),
+                                  glm::radians((float)Tr_REjson[1]),
+                                  glm::vec3(0.0f,1.0f,0.0f)) *
+                      glm::rotate(glm::mat4(1.0f),
+                                  glm::radians((float)Tr_REjson[0]),
+                                  glm::vec3(1.0f,0.0f,0.0f)) *
+                      glm::rotate(glm::mat4(1.0f),
+                                  glm::radians((float)Tr_REjson[2]),
+                                  glm::vec3(0.0f,0.0f,1.0f));
+            }
+            nlohmann::json Tr_Sjson = jsonInstancesPhysics[j]["scale"];
+            if(!Tr_Sjson.is_null()) {
+                trS.x = Tr_Sjson[0];
+                trS.y = Tr_Sjson[1];
+                trS.z = Tr_Sjson[2];
+            }
+            I_physics[j]->Wm = glm::translate(glm::mat4(1.0f), trT) *
+                                 trR *
+                                 glm::scale(glm::mat4(1.0f), trS);
+		}
+std::cout << " Physics-only instances created\n";
+
 
 /*		} catch (const nlohmann::json::exception& e) {
 		std::cout << "\n\n\nException while parsing JSON file: " << file << "\n";
@@ -415,9 +465,10 @@ std::cout << i << " instances created\n";
 void Scene::pipelinesAndDescriptorSetsInit() {
 //std::cout << "Scene DS init\n";
 	for(int i = 0; i < InstanceCount; i++) {
+//        std::cout << "Instance " << i << ": " << *I[i]->id << "\n";
 //std::cout << "I: " << i << ", NTx: " << I[i]->NTx << ", NDs: " << I[i]->NDs << ", nPasses: " << Npasses << "\n";
 
-		I[i]->DS = (DescriptorSet ***)calloc(Npasses, sizeof(DescriptorSet **));
+        I[i]->DS = (DescriptorSet ***)calloc(Npasses, sizeof(DescriptorSet **));
 		for(int ipas = 0; ipas < Npasses; ipas++) {
 //std::cout << "DSs for pass " << ipas << ": " << I[i]->NDs[ipas] << "\n";
 			I[i]->DS[ipas] = (DescriptorSet **)calloc(I[i]->NDs[ipas], sizeof(DescriptorSet *));

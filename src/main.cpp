@@ -414,6 +414,7 @@ class CGProject : public BaseProject {
 
 		// Add static meshes for collision detection
 		PhysicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
+        PhysicsMgr.addStaticMeshes(SC.M, SC.I_physics, SC.InstancePhysicsCount);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -429,8 +430,12 @@ class CGProject : public BaseProject {
 		PterrainTiled.create(&RP);
         P_PBR_SpecGloss.create(&RP);
 
+        std::cout << "Creating pipelines and descriptor sets\n";
+
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
+
+        std::cout << "Ended creating pipelines and descriptor sets\n";
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!

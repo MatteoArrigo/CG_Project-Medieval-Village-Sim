@@ -8,7 +8,9 @@
 		{"id": "props_detail", "file":  "assets/models/PropsDetails.gltf", "format":"GLTF"},
 
 		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
-		{"id":  "water", "file":  "assets/models/Water.gltf", "format":"GLTF"}
+		{"id":  "water", "file":  "assets/models/Water.gltf", "format":"GLTF"},
+
+		{"id":  "physics", "file":  "assets/models/Physics_Models.gltf", "format":"GLTF"}
 	],
 	"models": [
 		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
@@ -19,6 +21,7 @@
 		{"id": "terrain_near_01-01", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 1, "asset": "terrain", "format": "ASSET"},
 		{"id": "Baseplate-00", "VD": "VDtan", "model": "Baseplate.001", "node": "Baseplate.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
 
+		{"id": "boardwalk_physics", "VD": "VDsimp", "model": "Cube.001", "node": "boardwalk_physics", "meshId": 0, "asset": "physics", "format": "ASSET"},
 
 		{"id": "build_boat_01-00", "VD": "VDtan", "model": "build_boat_01", "node": "build_boat_01", "meshId": 0, "asset": "village", "format": "ASSET"},
 		{"id": "build_boat_dragonhead_01-00", "VD": "VDtan", "model": "build_boat_dragonhead_01", "node": "build_boat_dragonhead_01", "meshId": 0, "asset": "village", "format": "ASSET"},
@@ -473,6 +476,12 @@
 		{"technique": "CookTorranceChar", "elements": [
 		]},
 		{"technique": "CookTorranceNoiseSimp", "elements": [
+			{"id":  "prova", "model": "boardwalk_physics", "texture": ["void", "void"],
+				"translate": [19.924665451049805, 2.9846808910369873, 38.07094955444336],
+				"eulerAngles": [0, -21.52894192651753, 0.0],
+				"scale": [1.8899998664855957, 0.171991229057312, 16.549999237060547],
+				"physics": true
+			}
 		]},
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
@@ -1707,49 +1716,35 @@
 
 			{"id": "prop_boardwalk_01-00.00", "model": "prop_boardwalk_01-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
-				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
-				"physics": true	
-			},
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5},
 			{"id": "prop_boardwalk_02-00.00", "model": "prop_boardwalk_02-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
 				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
-				"physics": true	
+				"physics": false
 			},
 			{"id": "prop_boardwalk_03-00.00", "model": "prop_boardwalk_03-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
 				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
-				"physics": true	
+				"physics": false
 			},
 			{"id": "prop_boardwalk_04-00.00", "model": "prop_boardwalk_04-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
-				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
-				"physics": true	
-			},
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5},
 			{"id": "prop_boardwalk_05-00.00", "model": "prop_boardwalk_05-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
-				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
-				"physics": true	
-			},
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5},
 			{"id": "prop_boardwalk_06-00.00", "model": "prop_boardwalk_06-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
-				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
-				"physics": true	
-			},
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5},
 			{"id": "prop_boardwalk_07-00.00", "model": "prop_boardwalk_07-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
-				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
-				"physics": true	
-			},
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5},
 			{"id": "prop_boardwalk_08-00.00", "model": "prop_boardwalk_08-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
-				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
-				"physics": true	
-			},
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5},
 			{"id": "prop_boardwalk_09-00.00", "model": "prop_boardwalk_09-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
-				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
-				"physics": true	
-			},
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5},
 			{"id": "prop_boardwalk_10-00.00", "model": "prop_boardwalk_10-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
 				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
