@@ -420,7 +420,9 @@ std::cout << i << " instances created\n";
 void Scene::pipelinesAndDescriptorSetsInit() {
 //std::cout << "Scene DS init\n";
 	for(int i = 0; i < InstanceCount; i++) {
+//std::cout << "Debug - Instance " << i << " out of " << InstanceCount << "\n";
 //std::cout << "I: " << i << ", NTx: " << I[i]->NTx << ", NDs: " << I[i]->NDs << ", nPasses: " << Npasses << "\n";
+
 
 		I[i]->DS = (DescriptorSet ***)calloc(Npasses, sizeof(DescriptorSet **));
 		for(int ipas = 0; ipas < Npasses; ipas++) {
@@ -433,6 +435,7 @@ void Scene::pipelinesAndDescriptorSetsInit() {
 				Tids.resize(ntxs);
 //std::cout << "DSs " << j << " for pass " << ipas << " has " << ntxs << " textures\n";
 				for(int kt = 0; kt < ntxs; kt++) {
+//std::cout << "Debug " << j << " " << I[i]->NDs[ipas] << " - " << kt << " " << ntxs << "\n";
 					if(Tr->PT[ipas].texDefs[j][kt].fromInstance) {
 						Tids[kt] = T[I[i]->Tid[
 									  Tr->PT[ipas].texDefs[j][kt].pos

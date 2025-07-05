@@ -84,7 +84,7 @@ class CGProject : public BaseProject {
 	// Descriptor Layouts [what will be passed to the shaders]
 	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR,
         DSLglobal, DSLskyBox, DSLterrain, DSLsgAoFactors, DSLterrainFactors,
-        DSLwaterVert, DSLwaterFrag;
+        DSLwaterVert, DSLwaterFrag, DSLgrass;
 
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
@@ -92,7 +92,7 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDskyBox;
 	VertexDescriptor VDtan;
 	RenderPass RP;
-	Pipeline Pchar, PsimpObj, PskyBox, Pterrain, P_PBR_SpecGloss, PWater;
+	Pipeline Pchar, PsimpObj, PskyBox, Pterrain, P_PBR_SpecGloss, PWater, Pgrass;
 	//*DBG*/Pipeline PDebug;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -128,7 +128,7 @@ class CGProject : public BaseProject {
 
 	glm::vec4 debug1 = glm::vec4(0);
 
-	// Here you set the main application parameters
+    // Here you set the main application parameters
 	void setWindowParameters() {
 		// window size, titile and initial background
 		windowWidth = 1000;
@@ -195,6 +195,13 @@ class CGProject : public BaseProject {
         DSLwaterFrag.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(GlobalUniformBufferObject), 1},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+		  });
+
+        DSLgrass.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
+			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO), 1},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1}
 		  });
 
         DSLterrain.init(this, {
@@ -273,13 +280,13 @@ class CGProject : public BaseProject {
 				  {0, 3, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexTan, tan),
 				         sizeof(glm::vec4), TANGENT}
 				});
-				
+
 		VDRs.resize(4);
 		VDRs[0].init("VDchar",   &VDchar);
 		VDRs[1].init("VDsimp",   &VDsimp);
 		VDRs[2].init("VDskybox", &VDskyBox);
 		VDRs[3].init("VDtan",    &VDtan);
-		
+
 		// initializes the render passes
 		RP.init(this);
 		// sets the blue sky
@@ -292,7 +299,6 @@ class CGProject : public BaseProject {
 		Pchar.init(this, &VDchar, "shaders/PosNormUvTanWeights.vert.spv", "shaders/CookTorranceForCharacter.frag.spv", {&DSLglobal, &DSLlocalChar});
 
 		PsimpObj.init(this, &VDsimp, "shaders/SimplePosNormUV.vert.spv", "shaders/CookTorrance.frag.spv", {&DSLglobal, &DSLlocalSimp});
-		PsimpObj.init(this, &VDsimp, "shaders/SimplePosNormUV.vert.spv", "shaders/CookTorrance.frag.spv", {&DSLglobal, &DSLlocalSimp});
 
 		PskyBox.init(this, &VDskyBox, "shaders/SkyBoxShader.vert.spv", "shaders/SkyBoxShader.frag.spv", {&DSLskyBox});
 		PskyBox.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
@@ -300,12 +306,14 @@ class CGProject : public BaseProject {
 		PskyBox.setPolygonMode(VK_POLYGON_MODE_FILL);
 
         PWater.init(this, &VDsimp, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLwaterVert, &DSLwaterFrag});
+
+        Pgrass.init(this, &VDsimp, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLglobal, &DSLgrass});
 		
         Pterrain.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLglobal, &DSLterrain, &DSLterrainFactors});
 
 		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
 
-		PRs.resize(6);
+        PRs.resize(7);
 		PRs[0].init("CookTorranceChar", {
 							 {&Pchar, {//Pipeline and DSL for the first pass
 								 /*DSLglobal*/{},
@@ -354,7 +362,18 @@ class CGProject : public BaseProject {
                                      {}
                 }}
         }, /*TotalNtextures*/9, &VDtan);
-        PRs[5].init("PBR_sg", {
+        PRs[5].init("Grass", {
+                 {&Pgrass, {//Pipeline and DSL for the first pass
+                     /*DSLgrass*/{
+                            {},
+                            {
+                                    {true, 0, {}},
+                                    {true, 1, {}}
+                            }
+                         }
+                        }}
+                  }, /*TotalNtextures*/2, &VDsimp);
+        PRs[6].init("PBR_sg", {
 							 {&P_PBR_SpecGloss, {//Pipeline and DSL for the first pass
 								 {},    /*DSLglobal*/
 								 {      /*DSLlocalPBR*/
@@ -368,9 +387,9 @@ class CGProject : public BaseProject {
 							  }, 4, &VDtan);
 
 		// sets the size of the Descriptor Set Pool
-		DPSZs.uniformBlocksInPool = 100;
-		DPSZs.texturesInPool = 100;
-		DPSZs.setsInPool = 100;
+		DPSZs.uniformBlocksInPool = 1000;
+		DPSZs.texturesInPool = 1000;
+		DPSZs.setsInPool = 1000;
 		
         std::cout << "\nLoading the scene\n\n";
 		if(SC.init(this, /*Npasses*/1, VDRs, PRs, "assets/models/scene.json") != 0) {
@@ -404,19 +423,25 @@ class CGProject : public BaseProject {
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() {
 		// creates the render pass
+        std::cout << "Creating pipelines and descriptor sets\n";
 		RP.create();
 		
 		// This creates a new pipeline (with the current surface), using its shaders for the provided render pass
+        std::cout << "Creating pipelines\n";
 		Pchar.create(&RP);
 		PsimpObj.create(&RP);
 		PskyBox.create(&RP);
         PWater.create(&RP);
+        Pgrass.create(&RP);
 		Pterrain.create(&RP);
         P_PBR_SpecGloss.create(&RP);
 
+        std::cout << "Creating descriptor sets\n";
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
-	}
+
+        std::cout << "pipelinesAndDescriptorSetsInit done\n";
+    }
 
 	// Here you destroy your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsCleanup() {
@@ -424,6 +449,7 @@ class CGProject : public BaseProject {
 		PsimpObj.cleanup();
 		PskyBox.cleanup();
         PWater.cleanup();
+        Pgrass.cleanup();
 		Pterrain.cleanup();
         P_PBR_SpecGloss.cleanup();
 		RP.cleanup();
@@ -442,6 +468,7 @@ class CGProject : public BaseProject {
 		DSLskyBox.cleanup();
         DSLwaterVert.cleanup();
         DSLwaterFrag.cleanup();
+        DSLgrass.cleanup();
 		DSLterrain.cleanup();
         DSLterrainFactors.cleanup();
 		DSLglobal.cleanup();
@@ -450,6 +477,7 @@ class CGProject : public BaseProject {
 		PsimpObj.destroy();
 		PskyBox.destroy();		
         PWater.destroy();
+        Pgrass.destroy();
         P_PBR_SpecGloss.destroy();
 		Pterrain.destroy();
 
@@ -478,10 +506,10 @@ class CGProject : public BaseProject {
 		// begin standard pass
 		RP.begin(commandBuffer, currentImage);
 		SC.populateCommandBuffer(commandBuffer, 0, currentImage);
-		RP.end(commandBuffer);
+        RP.end(commandBuffer);
 	}
 
-	// Here is where you update the uniforms, where logic of application is.
+// Here is where you update the uniforms, where logic of application is.
 	void updateUniformBuffer(uint32_t currentImage) {
 		static bool debounce = false;
 		static int curDebounce = 0;
@@ -581,7 +609,7 @@ class CGProject : public BaseProject {
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) * 
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
-		
+
 		int instanceId;
         int techniqueId = 0;
 		// character
@@ -640,6 +668,20 @@ class CGProject : public BaseProject {
 			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
 			SC.TI[techniqueId].I[instanceId].DS[0][2]->map(currentImage, &terrainFactorsUbo, 0);  // Set 2
 		}
+
+        // Vegetation/Grass objects
+        techniqueId++;
+        for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+            ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            ubos.mvpMat = ViewPrj * ubos.mMat;
+            ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+
+            timeUbo.time = glfwGetTime();
+
+            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+            SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &timeUbo, 1);  // Set 1
+        }
 
         // PBR_SpecGloss objects
         SgAoMaterialFactorsUBO sgAoUbo{};
@@ -707,7 +749,6 @@ class CGProject : public BaseProject {
 
 		// Integration with the timers and the controllers
 		// TODO: Detect running by pressing SHIFT key (currently hardcoded as walking all the time)
-		// TODO: Detect jump by pressing SPACE key
 		float deltaT;
 		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 		bool fire = false;
