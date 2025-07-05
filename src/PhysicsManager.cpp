@@ -67,10 +67,10 @@ void PhysicsManager::createTerrain() {
     btTriangleMesh* terrainTriMesh = new btTriangleMesh();
 
     float size = terrainConfig.size;
-    btVector3 A(-size, 0, -size);
-    btVector3 B(+size, 0, -size);
-    btVector3 C(+size, 0, +size);
-    btVector3 D(-size, 0, +size);
+    btVector3 A(-size, -1.8, -size);
+    btVector3 B(+size, -1.8, -size);
+    btVector3 C(+size, -1.8, +size);
+    btVector3 D(-size, -1.8, +size);
 
     // Add triangles
     terrainTriMesh->addTriangle(A, B, C);
