@@ -530,7 +530,8 @@
 		{"technique": "Terrain", "elements": [
 
 			{"id": "Baseplate-00.00", "model": "Baseplate-00", "texture": [
-				"transparent", "void", "void", "void", "terrain_wetmud_01_a", "terrain_wetmud_01_n", "terrain_wetmud_01_sg", "white", "white"
+				"void", "void", "void", "void",
+				"terrain_wetmud_01_a", "terrain_wetmud_01_n", "terrain_wetmud_01_sg", "white", "white"
 			], "translate": [0.0, -1.7000000476837158, 100.0],
 				"scale": [100.0, 1.0, 100.0],
 				"maskBlendFactor": 1, "tilingFactor": 30
@@ -539,24 +540,24 @@
 			{"id": "terrain_near_01-00.00", "model": "terrain_near_01-00", "texture": [
 				"terrain_01_m",
 				"terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg",
-				"terrain_mudslide_01_a", "terrain_mudslide_01_n", "terrain_mudslide_01_sg",
+				"terrain_grass_01_a", "terrain_grass_01_n", "terrain_grass_01_sg",
 				"terrain_01_o", "terrain_01_o_highpassed"
 			], "translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] ,
-				"maskBlendFactor": 0.3, "tilingFactor": 8},
+				"maskBlendFactor": 0.5, "tilingFactor": 8},
 			{"id": "terrain_near_01-01.00", "model": "terrain_near_01-01", "texture": [
 				"terrain_01_m",
 				"terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg",
-				"terrain_mudslide_01_a", "terrain_mudslide_01_n", "terrain_mudslide_01_sg",
+				"terrain_grass_01_a", "terrain_grass_01_n", "terrain_grass_01_sg",
 				"terrain_01_o", "terrain_01_o_highpassed"
 			], "translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] ,
-				"maskBlendFactor": 0.3, "tilingFactor": 8},
+				"maskBlendFactor": 0.5, "tilingFactor": 8},
 			{"id": "terrain_far_01-00.02", "model": "terrain_far_01-00", "texture": [
 				"terrain_01_m",
 				"terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg",
-				"terrain_mudslide_01_a", "terrain_mudslide_01_n", "terrain_mudslide_01_sg",
+				"void", "void", "void",
 				"terrain_01_o", "terrain_01_o_highpassed"
 			], "translate": [286.080810546875, -0.0002593994140625, -396.2229919433594],
-				"maskBlendFactor": 0.3, "tilingFactor": 8},
+				"maskBlendFactor": 0, "tilingFactor": 0},
 
 			{"id": "terrain_far_01-00.00", "model": "terrain_far_01-00", "texture": [
 				"terrain_01_m",

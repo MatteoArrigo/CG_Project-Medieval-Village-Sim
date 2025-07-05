@@ -1,6 +1,38 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+/**
+ * Vertex shader for rendering animated grass blades with wind sway effect.
+ *
+ * Inputs:
+ *   - inPos (vec3, location = 0): Local position of the vertex.
+ *   - inNorm (vec3, location = 1): Local normal vector.
+ *   - inUV (vec2, location = 2): Texture coordinates.
+ *   - inTangent (vec4, location = 3): Tangent vector (xyz) and handedness (w).
+ *
+ * Outputs:
+ *   - fragPosWorld (vec3, location = 0): World-space position of the vertex.
+ *   - fragNormalWorld (vec3, location = 1): World-space normal.
+ *   - fragUV (vec2, location = 2): Texture coordinates passed to fragment shader.
+ *   - fragTangent (vec3, location = 3): World-space tangent.
+ *   - fragBitangent (vec3, location = 4): World-space bitangent.
+ *
+ * Uniform Buffers:
+ *   - UniformBufferObject (mvpMat, mMat, nMat)
+ *   - TimeUBO
+ *
+ * Constants:
+ *   - windDir (vec3): Direction of wind.
+ *   - frequency (float): Speed of swaying.
+ *   - amplitude (float): Sway amount.
+ *
+ * Main Function:
+ *   - Applies wind sway to the grass blade based on vertex height and time.
+ *   - Transforms positions and normals to world space.
+ *   - Computes tangent and bitangent in world space.
+ *   - Outputs transformed vertex position for rasterization.
+ */
+
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNorm;
 layout(location = 2) in vec2 inUV;

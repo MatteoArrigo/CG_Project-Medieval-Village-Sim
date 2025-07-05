@@ -7,8 +7,9 @@
 #include "modules/TextMaker.hpp"
 #include "modules/Animations.hpp"
 
-// If true, gravity and inertia are disabled
-// And vertical movement (along y) is enabled.
+/** If true, gravity and inertia are disabled
+ And vertical movement (along y, thus actual fly) is enabled.
+ */
 const bool FLY_MODE = true;
 
 // The uniform buffer object used in this example

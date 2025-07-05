@@ -1,5 +1,34 @@
 #version 450
 
+/**
+ * Fragment shader for terrain rendering with texture blending, normal mapping,
+ * ambient occlusion, and physically-based lighting. Supports mask-based blending between
+ * main and terrain textures, configurable tiling, and advanced lighting calculations.
+ *
+ * Inputs:
+ *   - fragPos: Fragment world position
+ *   - fragNorm: Fragment normal
+ *   - fragUV: Fragment UV coordinates
+ *   - fragTan: Fragment tangent (xyz) and handedness (w)
+ *
+*  Texture samplers:
+*    - mAlbedoMap, tAlbedoMap: Albedo (base color) maps for main and terrain
+*    - mNormalMap, tNormalMap: Normal maps for main and terrain
+*    - mSGMap, tSGMap: Specular-gloss maps for main and terrain
+*    - maskMap: Alpha mask for blending main and terrain textures
+*    - aoMap, aoMapHighPassed: Ambient occlusion maps (base and high-passed)
+*  Uniform factors:
+*   - maskBlendFactor: Controls the strength of blending between main and terrain textures.
+        When alpha channel of maskMap is 0.0, only main terrain texture is used.
+        When alpha channel of maskMap is 1.0, The maskBlendFactor is applied to mix the main and tiled textures.
+*   - tilingFactor: controls the tiling factor to apply for secondary texture, mixed where alpha channle of maskMap is 1.0.
+ * Uniform Global lighting and camera parameters
+ *
+ * Outputs:
+ *   - outColor: Final fragment color (vec4)
+ */
+
+
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNorm;
 layout(location = 2) in vec2 fragUV;
@@ -40,10 +69,13 @@ const vec3  SPECULAR_FACTOR    = vec3(0.05);  // very low specular (non-metal)
 const float GLOSSINESS_FACTOR  = 0.25;        // rough surface
 const float AO_FACTOR          = 0.4;         // full ambient occlusion
 
-
+// Function to get the mask blend factor based on the mask texture
+// The mask texture's alpha channel is used to blend between the main and terrain textures.
+// When the alpha channel is 0.0, only the main texture is used.
+// When the alpha channel is 1.0, the maskBlendFactor is applied to mix the main and tiled textures.
 float getMaskBlend() {
-//    return (texture(maskMap, fragUV).a) * terrainFactors.maskBlendFactor;
-    return (1.0 - texture(maskMap, fragUV).a) * terrainFactors.maskBlendFactor;
+    return (texture(maskMap, fragUV).a) * terrainFactors.maskBlendFactor;
+//    return (1.0 - texture(maskMap, fragUV).a) * terrainFactors.maskBlendFactor;
 }
 
 vec4 getBlendedTexture(sampler2D mTex, sampler2D tTex) {
