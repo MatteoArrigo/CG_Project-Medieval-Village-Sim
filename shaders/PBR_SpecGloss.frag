@@ -105,7 +105,7 @@ void main() {
 
     // Alpha test for MASK mode
     if (texDiffuse.a < 0.5)
-    discard;
+        discard;
 
     vec3 N = normalize(fragNorm);
     vec3 T = normalize(fragTan.xyz);
