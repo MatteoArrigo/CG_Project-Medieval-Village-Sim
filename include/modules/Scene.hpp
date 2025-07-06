@@ -95,6 +95,9 @@ class Scene {
 	VertexDescriptorRef *VRef;
 	std::unordered_map<std::string, int> InstanceIds;
 
+    Instance **I_physics;
+    int InstancePhysicsCount = 0;
+
 	// Pipelines, DSL and Vertex Formats
 	std::unordered_map<std::string, TechniqueRef *> TechniqueIds;
 	int TechniqueInstanceCount = 0;
