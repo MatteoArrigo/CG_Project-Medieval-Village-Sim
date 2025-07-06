@@ -61,6 +61,7 @@ private:
     // Internal state
     bool isGrounded;
     float groundCheckDistance;
+    bool flyMode; // If true, player can fly and has no gravity nor inertia, for debug purposes
 
     // Helper methods
     void initializePhysicsWorld();
@@ -73,7 +74,7 @@ public:
     ~PhysicsManager();
 
     // Initialization
-    bool initialize(const PlayerConfig& playerCfg = PlayerConfig(),
+    bool initialize(bool flyMode_, const PlayerConfig& playerCfg = PlayerConfig(),
                    const BackgroundTerrainConfig& terrainCfg = BackgroundTerrainConfig());
     void cleanup();
 
