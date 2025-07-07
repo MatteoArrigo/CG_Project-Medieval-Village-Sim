@@ -3639,7 +3639,11 @@ void FrameBufferAttachment::createResources() {
 	int aspect = properties->aspect;
 	VkSampleCountFlagBits samples = properties->samples;
 	bool doDepthTransition = properties->doDepthTransition;
-	
+
+    if (aspect & VK_IMAGE_ASPECT_COLOR_BIT)   std::cout << "COLOR \n";
+    if (aspect & VK_IMAGE_ASPECT_DEPTH_BIT)   std::cout << "DEPTH \n";
+    if (aspect & VK_IMAGE_ASPECT_STENCIL_BIT) std::cout << "STENCIL\n ";
+
 	BP->createImage(RP->width, RP->height, 1, 1,
 				samples, format, VK_IMAGE_TILING_OPTIMAL,
 				usage, 0, 

@@ -12,7 +12,7 @@
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
-const bool FLY_MODE = false;
+const bool FLY_MODE = true;
 
 // The uniform buffer object used in this example
 struct VertexChar {
@@ -94,8 +94,9 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDsimp;
 	VertexDescriptor VDskyBox;
 	VertexDescriptor VDtan;
-	RenderPass RP;
+	RenderPass RPshadow, RP;
 	Pipeline Pchar, PsimpObj, PskyBox, Pterrain, P_PBR_SpecGloss, PWater, Pgrass;
+    Pipeline PshadowMap;
 	//*DBG*/Pipeline PDebug;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -172,6 +173,12 @@ class CGProject : public BaseProject {
 		// Update Render Pass
 		RP.width = w;
 		RP.height = h;
+
+        //TODO così risoluzione della shadow map dovrebbe dipendere dalla dimensione della finestra
+        // pensa se impostare valori fissi invece
+        // Per ora ho attuato quello che ho scritto su, capisci se revertare o meno
+//        RPshadow.width = w;
+//        RPshadow.height = h;
 		
 		// updates the textual output
 		txt.resizeScreen(w, h);
@@ -247,6 +254,7 @@ class CGProject : public BaseProject {
                 {7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1},
                 {8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7, 1},
                 {9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 8, 1},
+                {10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 9, 1},
         });
 
         // This is for the PBR of terrain  -- SET 2
@@ -320,10 +328,19 @@ class CGProject : public BaseProject {
 		VDRs[3].init("VDtan",    &VDtan);
 
 		// initializes the render passes
-		RP.init(this);
-		// sets the blue sky
+        // RP 1: used for shadow map, rendered from light point of view
+        // The option set, different by default ones, are for writing a depth buffer instead of color
+        RPshadow.init(this, 1024, 1024,-1,
+                      RenderPass::getStandardAttchmentsProperties(StockAttchmentsConfiguration::AT_DEPTH_ONLY, this),
+                      RenderPass::getStandardDependencies(StockAttchmentsDependencies::ATDEP_DEPTH_TRANS), true);
+		RPshadow.properties[0].clearValue.depthStencil = {1.0f, 0};
+		// RP 2: used for the main rendering
+        // Now default options are used, so it will write color and depth
+        RP.init(this);
 		RP.properties[0].clearValue = {0.0f,0.9f,1.0f,1.0f};
-		
+
+        RPshadow.create();
+        RP.create();
 
 		// Pipelines [Shader couples]
 		// The last array, is a vector of pointer to the layouts of the sets that will
@@ -346,9 +363,21 @@ class CGProject : public BaseProject {
 
 		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
 
+        PshadowMap.init(this, &VDtan, "shaders/shadowMapShader.vert.spv", "shaders/shadowMapShader.frag.spv", {});
+        PshadowMap.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);  // or VK_COMPARE_OP_LESS
+        PshadowMap.setCullMode(VK_CULL_MODE_BACK_BIT);
+        PshadowMap.setPolygonMode(VK_POLYGON_MODE_FILL);
+
+
+        std::cout << "Shadow image format: " << RPshadow.attachments[0].properties->format << std::endl;
+        std::cout << "Image usage: " << RPshadow.attachments[0].properties->usage << std::endl;
+
+
+
         PRs.resize(7);
 		PRs[0].init("CookTorranceChar", {
-							 {&Pchar, {//Pipeline and DSL for the first pass
+                            {&PshadowMap, {}},
+                             {&Pchar,     {//Pipeline and DSL for the first pass
 								 /*DSLglobal*/{},
 								 /*DSLlocalChar*/{
 										/*t0*/{true,  0, {}}// index 0 of the "texture" field in the json file
@@ -356,7 +385,8 @@ class CGProject : public BaseProject {
 									}}
 							  }, /*TotalNtextures*/1, &VDchar);
 		PRs[1].init("CookTorranceNoiseSimp", {
-							 {&PsimpObj, {//Pipeline and DSL for the first pass
+                {&PshadowMap, {}},
+                {&PsimpObj,   {//Pipeline and DSL for the first pass
 								 /*DSLglobal*/{},
 								 /*DSLlocalSimp*/{
 										/*t0*/{true,  0, {}},// index 0 of the "texture" field in the json file
@@ -365,14 +395,16 @@ class CGProject : public BaseProject {
 									}}
 							  }, /*TotalNtextures*/2, &VDsimp);
 		PRs[2].init("SkyBox", {
-							 {&PskyBox, {//Pipeline and DSL for the first pass
+                {&PshadowMap, {}},
+                {&PskyBox,    {//Pipeline and DSL for the first pass
 								 /*DSLskyBox*/{
-										/*t0*/{true,  0, {}}// index 0 of the "texture" field in the json file
+										/*t0*/{true,  0, {}}
 									 }
 									}}
 							  }, /*TotalNtextures*/1, &VDskyBox);
         PRs[3].init("Terrain", {
-                {&Pterrain, {//Pipeline and DSL for the first pass
+                {&PshadowMap, {}},
+                {&Pterrain,   {//Pipeline and DSL for the first pass
                         /*DSLglobal*/{},
                         /*DSLterrain*/{
                                              {true,  0, {}},
@@ -384,12 +416,15 @@ class CGProject : public BaseProject {
                                              {true,  6, {}},
                                              {true,  7, {}},
                                              {true,  8, {}},
+                                              {false,  9,
+                                                      RPshadow.attachments[0].getViewAndSampler()}
                                      },
                                      {}
                 }}
         }, /*TotalNtextures*/9, &VDtan);
         PRs[4].init("Water", {
-                {&PWater, {//Pipeline and DSL for the first pass
+                {&PshadowMap, {}},
+                {&PWater,     {//Pipeline and DSL for the first pass
                         /*DSLwaterVert*/{},
                         /*DSLwaterFrag*/ {
                                                 {true, 0, {} },
@@ -404,7 +439,8 @@ class CGProject : public BaseProject {
                 }}
         }, /*TotalNtextures*/8, &VDsimp);
         PRs[5].init("Grass", {
-                 {&Pgrass, {//Pipeline and DSL for the first pass
+                {&PshadowMap, {}},
+                {&Pgrass,     {//Pipeline and DSL for the first pass
                      /*DSLgrass*/{
                             {},
                             {
@@ -415,7 +451,8 @@ class CGProject : public BaseProject {
                         }}
                   }, /*TotalNtextures*/2, &VDsimp);
         PRs[6].init("PBR_sg", {
-							 {&P_PBR_SpecGloss, {//Pipeline and DSL for the first pass
+                {&PshadowMap,      {}},
+                {&P_PBR_SpecGloss, {//Pipeline and DSL for the first pass
 								 {},    /*DSLglobal*/
 								 {      /*DSLlocalPBR*/
 										{true,  0, {}},     // albedo
@@ -433,7 +470,7 @@ class CGProject : public BaseProject {
 		DPSZs.setsInPool = 1000;
 		
         std::cout << "\nLoading the scene\n\n";
-		if(SC.init(this, /*Npasses*/1, VDRs, PRs, "assets/models/scene.json") != 0) {
+		if(SC.init(this, /*Npasses*/2, VDRs, PRs, "assets/models/scene.json") != 0) {
 			std::cout << "ERROR LOADING THE SCENE\n";
 			exit(0);
 		}
@@ -465,8 +502,9 @@ class CGProject : public BaseProject {
 	void pipelinesAndDescriptorSetsInit() {
 		// creates the render pass
         std::cout << "Creating pipelines and descriptor sets\n";
-		RP.create();
-		
+//        RPshadow.create();
+//        RP.create();
+
 		// This creates a new pipeline (with the current surface), using its shaders for the provided render pass
         std::cout << "Creating pipelines\n";
 		Pchar.create(&RP);
@@ -476,6 +514,7 @@ class CGProject : public BaseProject {
         Pgrass.create(&RP);
 		Pterrain.create(&RP);
         P_PBR_SpecGloss.create(&RP);
+        PshadowMap.create(&RPshadow);
 
         std::cout << "Creating descriptor sets\n";
 		SC.pipelinesAndDescriptorSetsInit();
@@ -493,7 +532,9 @@ class CGProject : public BaseProject {
         Pgrass.cleanup();
 		Pterrain.cleanup();
         P_PBR_SpecGloss.cleanup();
-		RP.cleanup();
+        PshadowMap.cleanup();
+		RPshadow.cleanup();
+        RP.cleanup();
 
 		SC.pipelinesAndDescriptorSetsCleanup();
 		txt.pipelinesAndDescriptorSetsCleanup();
@@ -522,6 +563,7 @@ class CGProject : public BaseProject {
         P_PBR_SpecGloss.destroy();
 		Pterrain.destroy();
 
+        RPshadow.destroy();
 		RP.destroy();
 
 		SC.localCleanup();	
@@ -545,8 +587,16 @@ class CGProject : public BaseProject {
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
 	// This is the real place where the Command Buffer is written
 		// begin standard pass
+
+        //TODO capisci meglio
+        // così teoricamente calcola prima lo shadow pass sull'unico framebuffer usato (currentImage = 0)
+        // E poi in qualche modo usa l'output per il secondo pass
+        RPshadow.begin(commandBuffer, 0);
+        SC.populateCommandBuffer(commandBuffer, 0, 0);
+        RPshadow.end(commandBuffer);
+
 		RP.begin(commandBuffer, currentImage);
-		SC.populateCommandBuffer(commandBuffer, 0, currentImage);
+		SC.populateCommandBuffer(commandBuffer, 1, currentImage);
         RP.end(commandBuffer);
 	}
 
@@ -647,7 +697,12 @@ class CGProject : public BaseProject {
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) * 
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
 
-		int instanceId;
+
+        //TODO this may be the way to retireve the depth buffer (shadow map) computed
+        // così teoricamente dovvresti poter passare la texture (shadow map) manualmente nel codice
+//        VkDescriptorImageInfo shadowMapInfo = RPshadow.attachments[0].getViewAndSampler();
+
+        int instanceId;
         int techniqueId = 0;
 		// character
 		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
@@ -657,8 +712,8 @@ class CGProject : public BaseProject {
 				uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
 			}
 
-			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &uboc, 0);  // Set 1
 		}
 
 		UniformBufferObjectSimp ubos{};
@@ -669,15 +724,16 @@ class CGProject : public BaseProject {
 			ubos.mvpMat = ViewPrj * ubos.mMat;
 			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
 
-			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0);  // Set 1
 		}
-		
+
 		// skybox pipeline
 		skyBoxUniformBufferObject sbubo{};
         techniqueId++;
 		sbubo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
-		SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &sbubo, 0);
+		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &sbubo, 0);
+//		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &shadowMapInfo, 2);
 
         // Terrain objects
         techniqueId++;
@@ -690,9 +746,9 @@ class CGProject : public BaseProject {
             terrainFactorsUbo.maskBlendFactor = SC.TI[techniqueId].I[instanceId].factor1;
             terrainFactorsUbo.tilingFactor = SC.TI[techniqueId].I[instanceId].factor2;
 
-            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-            SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[0][2]->map(currentImage, &terrainFactorsUbo, 0);  // Set 2
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0);  // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &terrainFactorsUbo, 0);  // Set 2
         }
 
         // Water objects
@@ -702,9 +758,9 @@ class CGProject : public BaseProject {
         ubos.mMat   = SC.TI[techniqueId].I[0].Wm;
         ubos.mvpMat = ViewPrj * ubos.mMat;
         ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
-        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &timeUbo, 0); // Set 0
-        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &ubos, 1); // Set 0
-        SC.TI[techniqueId].I[0].DS[0][1]->map(currentImage, &gubo, 0); // Set 0
+        SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &timeUbo, 0); // Set 0
+        SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &ubos, 1); // Set 0
+        SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &gubo, 0); // Set 0
 
         // Vegetation/Grass objects
         techniqueId++;
@@ -715,9 +771,9 @@ class CGProject : public BaseProject {
 
             timeUbo.time = glfwGetTime();
 
-            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-            SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &timeUbo, 1);  // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0);  // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &timeUbo, 1);  // Set 1
         }
 
         // PBR_SpecGloss objects
@@ -733,12 +789,12 @@ class CGProject : public BaseProject {
             sgAoUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].factor1;
             sgAoUbo.aoFactor = SC.TI[techniqueId].I[instanceId].factor2;
 
-			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
-			SC.TI[techniqueId].I[instanceId].DS[0][2]->map(currentImage, &sgAoUbo, 0); // Set 2
+			SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0); // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &sgAoUbo, 0); // Set 2
 		}
 
-		// updates the FPS
+        // updates the FPS
 		static float elapsedT = 0.0f;
 		static int countedFrames = 0;
 		
@@ -757,7 +813,7 @@ class CGProject : public BaseProject {
 		}
 		
 		txt.updateCommandBuffer();
-	}
+    }
 	
 	float GameLogic() {
 		// Parameters

@@ -49,6 +49,14 @@ layout(binding = 7, set = 1) uniform sampler2D tSGMap;
 layout(binding = 8, set = 1) uniform sampler2D aoMap;
 layout(binding = 9, set = 1) uniform sampler2D aoMapHighPassed;
 
+/**
+DEBUG VERSION
+There's an additional sampler2D set to read the depth buffer written in shadow pass
+It should print the constant color (0.1) written during that pass
+*/
+
+layout(binding = 10, set = 1) uniform sampler2D prova;
+
 layout(binding = 0, set = 0) uniform GlobalUniformBufferObject {
     vec3 lightDir;
     vec4 lightColor;
@@ -145,5 +153,8 @@ void main() {
     vec3 ambient = vec3(AO_FACTOR) * albedo * ao;
     vec3 color = (diffuse + specular) * lightColor * NdotL + ambient;
 
-    outColor = vec4(color, 1.0);
+//    outColor = vec4(color, 1.0);
+
+    vec3 a = texture(prova, fragUV).rgb;
+    outColor = vec4(a.r, a.r, a.r,1.0); // For testing purposes, outputting depth value
 }
