@@ -8,6 +8,9 @@
 #include "modules/Scene.hpp"
 #include "modules/Animations.hpp"
 
+#include "npc/npc_manager.hpp"
+#include "npc/npc.hpp"
+
 // The uniform buffer object used in this example
 struct VertexChar {
 	glm::vec3 pos;
@@ -85,11 +88,11 @@ class CGProject : public BaseProject {
 	//*DBG*/DescriptorSet SSD;
 
 	// To support animation
-	#define N_ANIMATIONS 1
+	#define N_ANIMATIONS 5
 
-	AnimBlender AB;
-	Animations Anim[N_ANIMATIONS];
-	SkeletalAnimation SKA;
+	// AnimBlender AB;
+	// Animations Anim[N_ANIMATIONS];
+	// SkeletalAnimation SKA;
 
 	// to provide textual feedback
 	TextMaker txt;
@@ -106,6 +109,9 @@ class CGProject : public BaseProject {
 	float Roll = glm::radians(0.0f);
 	
 	glm::vec4 debug1 = glm::vec4(0);
+
+	// To manage NPSs
+	NPCManager npcManager;
 
 	// Here you set the main application parameters
 	void setWindowParameters() {
@@ -317,6 +323,18 @@ std::cout << "\nLoading the scene\n\n";
 			std::cout << "ERROR LOADING THE SCENE\n";
 			exit(0);
 		}
+		//std::cout << "SIUUUUUM o\n";
+		if (npcManager.init("assets/models/scene.json", SC.As) != 0) {
+			std::cout << "ERROR LOADING NPCs\n";
+			exit(0);
+		}
+
+		// if (npcManager.getAnims().size() == 5 /* || anims[0].AF == nullptr */) {
+		// 	std::cout << "Anims tutto apposto\n";
+		// } else {
+		// 	std::cout << "ERRORE \n";
+		// }
+/*
 		// initializes animations
 		for(int ian = 0; ian < N_ANIMATIONS; ian++) {
 			Anim[ian].init(*SC.As[ian]);
@@ -324,7 +342,13 @@ std::cout << "\nLoading the scene\n\n";
 		AB.init({{0,32,0.0f,0}, {0,16,0.0f,1}, {0,263,0.0f,2}, {0,83,0.0f,3}, {0,16,0.0f,4}});
 		//AB.init({{0,31,0.0f}});
 		SKA.init(Anim, N_ANIMATIONS, "Armature|mixamo.com|Layer0", 0);
-		
+
+		// Initialize the npcs
+		// Mario  e tutte le sue animazioni
+		std::vector<std::string> marioStates = {"Walking", "Running", "Idle", "Pointing", "Waving"};
+		auto npc1 = std::make_shared<NPC>("Mario", glm::vec3(20,20,20), AB, marioStates);
+		npcManager.addNPC(npc1);
+*/
 		// initializes the textual output
 		txt.init(this, windowWidth, windowHeight);
 
@@ -385,9 +409,10 @@ std::cout << "\nLoading the scene\n\n";
 		SC.localCleanup();	
 		txt.localCleanup();
 
-		for(int ian = 0; ian < N_ANIMATIONS; ian++) {
-			Anim[ian].cleanup();
-		}
+		npcManager.cleanup();
+		// for(int ian = 0; ian < N_ANIMATIONS; ian++) {
+		// 	Anim[ian].cleanup();
+		// }
 	}
 	
 	// Here it is the creation of the command buffer:
@@ -482,17 +507,45 @@ std::cout << "Showing bone index: " << debug1.z << "\n";
 		}
 
 		static int curAnim = 0;
+		//std::cout << "AAAAAAAAAAAAAAA \n";
+		static AnimBlender* AB = npcManager.getNPCs()[0]->getAnimBlender();
+		// std::cout << "First segment starts at " << AB->segments[0].st << " and ends at " << AB->segments[0].en << "\n";
+
 		if(glfwGetKey(window, GLFW_KEY_SPACE)) {
 			if(!debounce) {
 				debounce = true;
 				curDebounce = GLFW_KEY_SPACE;
 
 				curAnim = (curAnim + 1) % 5;
-				AB.Start(curAnim, 0.5);
+				AB->Start(curAnim, 0.5);
 std::cout << "Playing anim: " << curAnim << "\n";
 			}
 		} else {
 			if((curDebounce == GLFW_KEY_SPACE) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+
+		// Handle the E key for NPC interaction
+		glm::vec3 playerPos = cameraPos;		// TODO: sostituire con la posizione del giocatore una volta implementato il player
+		if(glfwGetKey(window, GLFW_KEY_E)) {
+			if(!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_E;
+
+				auto nearest = npcManager.getNearestNPC(playerPos, 2.0f);
+				if (nearest && nearest->canInteract(glm::distance(nearest->getPosition(), playerPos))) {
+					nearest->interact();
+					txt.print(0.5f, 0.1f, nearest->getCurrentDialogue(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+					std::cout << "NPC in state : " << nearest->getState() << "\n";
+				}
+				else {
+					std::cout << "No NPC nearby to interact with.\n";
+				}
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_E) && debounce) {
 				debounce = false;
 				curDebounce = 0;
 			}
@@ -503,8 +556,12 @@ std::cout << "Playing anim: " << curAnim << "\n";
 
 		// updated the animation
 		const float SpeedUpAnimFact = 0.85f;
-		AB.Advance(deltaT * SpeedUpAnimFact);
-		
+		// std::cout << "QQQQQQQQQQQQQQ \n";
+		if (AB->segments[0].st != 0 && AB->segments[0].en != 32) {
+		 	std::cout << "First segment starts at " << AB->segments[0].st << " and ends at " << AB->segments[0].en << "\n";
+		}
+		AB->Advance(deltaT * SpeedUpAnimFact);
+		// std::cout << "YYYYYYYYYYYYYY \n";
 		// defines the global parameters for the uniform
 		const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(1.0f,0.0f,0.0f));
 		const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
@@ -519,20 +576,22 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		UniformBufferObjectChar uboc{};	
 		uboc.debug1 = debug1;
 
-		SKA.Sample(AB);
-		std::vector<glm::mat4> *TMsp = SKA.getTransformMatrices();
-		
+		static SkeletalAnimation* SKA = npcManager.getNPCs()[0]->getSkeletalAnimation();
+		// std::cout << "TTTTTTTTTTTTTTT \n";
+		SKA->Sample(*AB);
+		std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
+
 //printMat4("TF[55]", (*TMsp)[55]);
 		
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) * 
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
-		
+
 		int instanceId;
 		// character
 		for(instanceId = 0; instanceId < SC.TI[0].InstanceCount; instanceId++) {
 			for(int im = 0; im < TMsp->size(); im++) {
-				uboc.mMat[im]   = AdaptMat * (*TMsp)[im];
+				uboc.mMat[im]   = SC.TI[0].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
 				uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
 				uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
 //std::cout << im << "\t";

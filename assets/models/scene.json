@@ -1,6 +1,10 @@
 {
 	"assetfiles": [
 		{"id": "hm", "file": "assets/models/uomo.gltf", "format":"GLTF"},
+		{"id": "a1", "file": "assets/models/running.gltf", "format":"GLTF"},
+		{"id": "a2", "file": "assets/models/idle.gltf", "format":"GLTF"},
+		{"id": "a3", "file": "assets/models/pointing.gltf", "format":"GLTF"},
+		{"id": "a4", "file": "assets/models/waving.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 		{"id": "props_structural", "file": "assets/models/PropsStructural.gltf", "format":"GLTF"},
@@ -8,6 +12,17 @@
 		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
 
 		{"id":  "baseplate", "file":  "assets/models/Baseplate.gltf", "format":"GLTF"}
+	],
+	"npcs": [
+		{
+			"id": "npc1",
+			"name": "Mario",
+			"position": [20, 20, 20],
+			"animList": ["hm", "a1", "a2", "a3", "a4"],
+			"startEndFrames": [[0,32], [0,16], [0,263], [0,83], [0,16]],
+			"npcStates": ["Walking", "Running", "Idle", "Pointing", "Waving"],
+			"BaseTrackName": "Armature|mixamo.com|Layer0"
+		}
 	],
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
@@ -221,6 +236,12 @@
 	],
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
+			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
+				"translate": [20, 20, 20]
+			},
+			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
+				"translate": [20, 20, 20]
+			}
 		]},
 		{"technique": "CookTorranceNoiseSimp", "elements": [
 		]},
