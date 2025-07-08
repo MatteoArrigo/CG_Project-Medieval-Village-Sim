@@ -9,10 +9,13 @@
 #include "modules/TextMaker.hpp"
 #include "modules/Animations.hpp"
 
+#include "character/char_manager.hpp"
+#include "character/character.hpp"
+
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
-const bool FLY_MODE = false;
+const bool FLY_MODE = true;
 
 // The uniform buffer object used in this example
 struct VertexChar {
@@ -109,13 +112,6 @@ class CGProject : public BaseProject {
 	PhysicsManager PhysicsMgr;
 	PlayerConfig physicsConfig;
 
-	// To support animation
-	#define N_ANIMATIONS 1
-
-	AnimBlender AB;
-	Animations Anim[N_ANIMATIONS];
-	SkeletalAnimation SKA;
-
 	// to provide textual feedback
 	TextMaker txt;
 	
@@ -153,7 +149,10 @@ class CGProject : public BaseProject {
 
 	glm::vec4 debug1 = glm::vec4(0);
 
-    // Here you set the main application parameters
+	// To manage NPSs
+	CharManager charManager;
+
+	// Here you set the main application parameters
 	void setWindowParameters() {
 		// window size, titile and initial background
 		windowWidth = 1000;
@@ -438,18 +437,18 @@ class CGProject : public BaseProject {
 			exit(0);
 		}
 
-		// initializes animations
-		for(int ian = 0; ian < N_ANIMATIONS; ian++) {
-			Anim[ian].init(*SC.As[ian]);
+		// Characters and animations initialization
+		if (charManager.init("assets/models/scene.json", SC.As) != 0) {
+			std::cout << "ERROR LOADING CHARACTERs\n";
+			exit(0);
 		}
-		AB.init({{0,32,0.0f,0}});
-		SKA.init(Anim, N_ANIMATIONS, "Armature|mixamo.com|Layer0", 0);
+
+		// initializes the textual output
+		txt.init(this, windowWidth, windowHeight);
 
 		// submits the main command buffer
 		submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
 
-		// initializes the textual output and Prepares for showing the FPS count
-		txt.init(this, windowWidth, windowHeight);
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
 
 		// Initialize PhysicsManager
@@ -528,9 +527,7 @@ class CGProject : public BaseProject {
 		SC.localCleanup();	
 		txt.localCleanup();
 
-		for(auto & ian : Anim) {
-			ian.cleanup();
-		}
+		charManager.cleanup();
 	}
 	
 	// Here it is the creation of the command buffer:
@@ -604,13 +601,16 @@ class CGProject : public BaseProject {
 			}
 		}
 
+		static int curAnim = 0;
+		static AnimBlender* AB = charManager.getCharacters()[0]->getAnimBlender();
 		if(glfwGetKey(window, GLFW_KEY_O)) {
 			if(!debounce) {
 				debounce = true;
 				curDebounce = GLFW_KEY_O;
 
-				debug1.z = (float)(((int)debug1.z + 64) % 65);
-        std::cout << "Showing bone index: " << debug1.z << "\n";
+				curAnim = (curAnim + 1) % 5;
+				AB->Start(curAnim, 0.5);
+				std::cout << "Playing anim: " << curAnim << "\n";
 			}
 		} else {
 			if((curDebounce == GLFW_KEY_O) && debounce) {
@@ -619,17 +619,44 @@ class CGProject : public BaseProject {
 			}
 		}
 
-		static int curAnim = 0;
 		if(glfwGetKey(window, GLFW_KEY_SPACE)) {
             PhysicsMgr.jumpPlayer();
         }
+
+		// Handle the E key for Character interaction
+		glm::vec3 playerPos = cameraPos;		// TODO: sostituire con la posizione del giocatore una volta implementato il player
+		if(glfwGetKey(window, GLFW_KEY_E)) {
+			if(!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_E;
+
+				auto nearest = charManager.getNearestCharacter(playerPos);
+				// glm::distance(nearest->getPosition(), playerPos))
+				if (nearest) {
+					nearest->interact();
+					txt.print(0.5f, 0.1f, nearest->getCurrentDialogue(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+					std::cout << "Character in state : " << nearest->getState() << "\n";
+				}
+				else {
+					std::cout << "No Character nearby to interact with.\n";
+				}
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_E) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
 
 		// moves the view
 		float deltaT = GameLogic();
 
 		// updated the animation
 		const float SpeedUpAnimFact = 0.85f;
-		AB.Advance(deltaT * SpeedUpAnimFact);
+		AB->Advance(deltaT * SpeedUpAnimFact);
+		// defines the global parameters for the uniform
+		const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(1.0f,0.0f,0.0f));
+		const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 	
 		GlobalUniformBufferObject gubo{};
 
@@ -641,8 +668,11 @@ class CGProject : public BaseProject {
 		UniformBufferObjectChar uboc{};	
 		uboc.debug1 = debug1;
 
-		SKA.Sample(AB);
-		std::vector<glm::mat4> *TMsp = SKA.getTransformMatrices();
+		static SkeletalAnimation* SKA = charManager.getCharacters()[0]->getSkeletalAnimation();
+		SKA->Sample(*AB);
+		std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
+
+//printMat4("TF[55]", (*TMsp)[55]);
 		
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) * 
@@ -653,7 +683,7 @@ class CGProject : public BaseProject {
 		// character
 		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
 			for(int im = 0; im < TMsp->size(); im++) {
-				uboc.mMat[im]   = AdaptMat * (*TMsp)[im];
+				uboc.mMat[im]   = SC.TI[0].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
 				uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
 				uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
 			}
@@ -728,7 +758,7 @@ class CGProject : public BaseProject {
 			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
 			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
-            
+
             sgAoUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
             sgAoUbo.specularFactor = SC.TI[techniqueId].I[instanceId].specularFactor;
             sgAoUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].factor1;

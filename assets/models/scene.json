@@ -1,6 +1,10 @@
 {
 	"assetfiles": [
 		{"id": "hm", "file": "assets/models/uomo.gltf", "format":"GLTF"},
+		{"id": "a1", "file": "assets/models/running.gltf", "format":"GLTF"},
+		{"id": "a2", "file": "assets/models/idle.gltf", "format":"GLTF"},
+		{"id": "a3", "file": "assets/models/pointing.gltf", "format":"GLTF"},
+		{"id": "a4", "file": "assets/models/waving.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 
@@ -12,7 +16,20 @@
 
 		{"id":  "vegetation", "file":  "assets/models/Vegetation.gltf", "format": "GLTF"}
 	],
+	"characters": [
+		{
+			"id": "char1",
+			"name": "Mario",
+			"position": [20, 20, 20],
+			"animList": ["hm", "a1", "a2", "a3", "a4"],
+			"startEndFrames": [[0,32], [0,16], [0,263], [0,83], [0,16]],
+			"charStates": ["Walking", "Running", "Idle", "Pointing", "Waving"],
+			"BaseTrackName": "Armature|mixamo.com|Layer0"
+		}
+	],
 	"models": [
+		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
+		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
 		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
 		{"id": "water_grid", "VD": "VDsimp", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
 
@@ -376,6 +393,7 @@
 		{"id": "Meadow_Grass_01_Var1_LOD2-00", "VD": "VDtan", "model": "Meadow_Grass_01_Var1_LOD2", "node": "Meadow_Grass_01_Var1_LOD2", "meshId": 0, "asset": "vegetation", "format": "ASSET"}
 	],
 	"textures": [
+		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png", "format": "C"},
 		{"id": "pnois", "texture": "assets/textures/Perlin_noise.png", "format": "C"},
 		{"id": "main", "texture": "assets/textures/textures0.png", "format": "C"},
 		{"id": "skybox", "texture": "assets/textures/skybox.jpg", "format": "C"},
@@ -525,6 +543,12 @@
     ],
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
+			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
+				"translate": [20, 20, 20]
+			},
+			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
+				"translate": [20, 20, 20]
+			}
 		]},
 		{"technique": "CookTorranceNoiseSimp", "elements": [
 		]},
