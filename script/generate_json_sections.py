@@ -1,11 +1,13 @@
 import json
 import os
 from pygltflib import GLTF2
+import re
 
 # Carica il file .gltf
-gltf = GLTF2().load("assets/models/PropsStructural.gltf")
-texDir = 'props_structural'
-assetName = 'props_structural'
+gltf = GLTF2().load("assets/models/Vegetation.gltf")
+texDir = 'vegetation'
+assetName = 'vegetation'
+meshRegex = None
 
 def getModels():
     models = []
@@ -15,7 +17,7 @@ def getModels():
             id = f"{model}-{meshId:02}"
             models.append({
                 "id": id,
-                'VD': "VDtan",
+                'VD': "VDsimp",
                 "model": model,
                 'node': model,
                 "meshId": meshId,
@@ -54,70 +56,67 @@ def get_image_uri(texture_index):
     image_index = texture.source
     return gltf.images[image_index].uri if image_index is not None else None
 
+def get_texture_name(texture_index):
+    if texture_index is None:
+        return None
+    # texture = gltf.textures[texture_index]
+    # return texture.name
+    textureId = gltf.textures[texture_index].source
+    return gltf.images[textureId].name if textureId is not None else None
+
 def getMaterialsList():
     materialsList = []
-    for i, material in enumerate(gltf.materials):
-        # print(f"\nMateriale {i}: {material.name or '[senza nome]'}")
+    for material in gltf.materials:
+        entry = {'name': material.name}
 
-        # Albedo (baseColorTexture)
-        albedo_index = None
         # print(material.extensions['KHR_materials_pbrSpecularGlossiness'])
-        if not material.extensions:
-            print(f"Warning: Material {material.name} has no extensions.")
-            materialsList.append(('void', 'void', material.name))
+        if not material.extensions or 'KHR_materials_pbrSpecularGlossiness' not in material.extensions:
+            print(f"Warning: Material {material.name} does not support KHR_materials_pbrSpecularGlossiness")
+            entry['albedo'] = 'void'
+            entry['normal'] = 'void'
+            entry['sg'] = 'void'
+            entry['ao'] = 'void'
+            entry['aoFactor'] = None
+            entry['diffuseFactor'] = None
+            entry['specularFactor'] = None
+            entry['glossinessFactor'] = None
+            materialsList.append(entry)
             continue
-        if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'].keys():
-            albedo_index = material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseTexture']['index']
-        albedo_uri = get_image_uri(albedo_index)
-        # print(f"  Albedo: {albedo_uri or '— nessuna'}")
+        if 'diffuseTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness']:
+            entry['albedo'] = get_texture_name(material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseTexture']['index'])
+        else:
+            entry['albedo'] = 'white'  # Default texture if no diffuse texture is provided
+            print(f"Warning: Material {material.name} does not have a diffuse texture in KHR_materials_pbrSpecularGlossiness")
+        # This way, the constant value of diffuseFactor is taken by diffuseFactor
+            # In particular, diffuse factore represents a fraction of 255 (still float in 0.0-1.0)
 
-        # Normal Map
-        normal_index = material.normalTexture.index if material.normalTexture else None
-        normal_uri = get_image_uri(normal_index)
-        # print(f"  Normal map: {normal_uri or '— nessuna'}")
+        entry['normal'] = get_texture_name(material.normalTexture.index) if material.normalTexture else 'void'
+        entry['ao'] = get_texture_name(material.occlusionTexture.index) if material.occlusionTexture else 'void'
+        entry['sg'] = get_texture_name(material.extensions['KHR_materials_pbrSpecularGlossiness']['specularGlossinessTexture']['index']) \
+            if 'specularGlossinessTexture' in material.extensions['KHR_materials_pbrSpecularGlossiness'] else 'void'
 
-        materialsList.append((albedo_uri, normal_uri, material.name))
+        entry['aoFactor'] = material.occlusionTexture.strength if material.occlusionTexture else None
+        entry['diffuseFactor'] = material.extensions['KHR_materials_pbrSpecularGlossiness']['diffuseFactor'][:3] \
+            if 'diffuseFactor' in material.extensions['KHR_materials_pbrSpecularGlossiness'] else None
+        entry['specularFactor'] = material.extensions['KHR_materials_pbrSpecularGlossiness']['specularFactor'] \
+            if 'specularFactor' in material.extensions['KHR_materials_pbrSpecularGlossiness'] else None
+        entry['glossinessFactor'] = material.extensions['KHR_materials_pbrSpecularGlossiness']['glossinessFactor'] \
+            if 'glossinessFactor' in material.extensions['KHR_materials_pbrSpecularGlossiness'] else None
+
+        materialsList.append(entry)
     return materialsList
 
-def getTextureMap():
-    primitiveTextureMap = {}
-    materialsList = getMaterialsList()
-    for mesh in gltf.meshes:
-        for i, primitive in enumerate(mesh.primitives):
-            if primitive.material is not None:
-                idx = primitive.material
-                name = mesh.name
-                if materialsList[idx][0] is not None:
-                    albedoTex = materialsList[idx][0][:-4]
-                else:
-                    albedoTex = 'void'
-                if materialsList[idx][1] is not None:
-                    normalTex = materialsList[idx][1][:-4]
-                else:
-                    normalTex = 'void'
+def getMaterialsList2():
+    materialsList = []
+    for material in gltf.materials:
+        entry = {
+            'name': material.name,
+            'normal': get_texture_name(material.normalTexture.index) if material.normalTexture else 'void',
+        }
+        entry['albedo'] = entry['normal'].replace('Normal', 'Albedo_Opacity')
 
-                primitiveTextureMap[f'{name}-{i:02}'] = (albedoTex, normalTex)
-                # line = '{' + f'"id": "{name}",  "model": "{name}","texture": ["{albedoTex}", "{normalTex}", "void", "void"]' + '},'
-                # lines.append(line)
-    return primitiveTextureMap
-
-# from scipy.spatial.transform import Rotation as R
-# def quaternion_to_euler(quaternion):
-#     # Crea un oggetto Rotation dal quaternione
-#     rotation = R.from_quat(quaternion)
-#     # Converte il quaternione in angoli di Eulero (ordine: XYZ)
-#     euler_angles = rotation.as_euler('xyz', degrees=True)
-#     return euler_angles
-
-def getAllChildrenNodes(gltfNode):
-    children = []
-    if gltfNode.mesh:
-        children.append(gltfNode.name)
-    if gltfNode.children:
-        for child in gltfNode.children:
-            childNode = gltf.nodes[child]
-            children.extend(getAllChildrenNodes(childNode))
-    return children
+        materialsList.append(entry)
+    return materialsList
 
 
 def computeRotationFromNode(node):
@@ -141,117 +140,75 @@ def computeRotationFromNode(node):
 
     return rot
 
-def getElementsToRender():
-    nodeNames = [node.name for node in gltf.nodes]
-    toRenderTmp = {}
-    for node in gltf.nodes:
-        if node.translation:
-            children = [nodeNames[i] for i in node.children if 'collider' not in nodeNames[i]]
-            childrenIdx = [i for i in node.children if 'collider' not in nodeNames[i]]
-            if not children and not node.mesh:
-                continue
-
-            if node.name not in toRenderTmp:
-                toRenderTmp[node.name] = {'children': children, 'childrenNodes': childrenIdx}
-                toRenderTmp[node.name]['transf'] = []
-
-            childTranfs = []
-            for childIdx in childrenIdx:
-                tranfEntry = {}
-                childNode = gltf.nodes[childIdx]
-
-                trans = [0.0, 0.0, 0.0]  # Inizializza una lista di grandezza 3
-                if node.translation:
-                    trans = [x + y for x, y in zip(trans, node.translation)]
-                if childNode.translation:
-                    trans = [x + y for x, y in zip(trans, childNode.translation)]
-                # trans[0] *= -1
-                tranfEntry['translation'] = trans
-
-                rot = [0.0, 0.0, 0.0]  # Inizializza una lista di grandezza 3
-                if node.rotation:
-                    rot = [x + y for x, y in zip(rot, computeRotationFromNode(node))]
-                if childNode.rotation:
-                    rot = [x + y for x, y in zip(rot, computeRotationFromNode(childNode))]
-                tranfEntry['rotation'] = rot
-
-                scale = [1.0, 1.0, 1.0]  # Inizializza una lista di grandezza 3
-                if node.scale:
-                    scale = [x * y for x, y in zip(scale, node.scale)]
-                if childNode.scale:
-                    scale = [x * y for x, y in zip(scale, childNode.scale)]
-                tranfEntry['scale'] = node.scale
-
-                childTranfs.append(tranfEntry)
-
-            if node.mesh:
-                children.append(node.name)
-                childrenIdx.append(gltf.nodes.index(node))
-                tranfEntry = {
-                    'translation': node.translation if node.translation else [0.0, 0.0, 0.0],
-                    'rotation': computeRotationFromNode(node) if node.rotation else [0.0, 0.0, 0.0],
-                    'scale': node.scale if node.scale else [1.0, 1.0, 1.0]
-                }
-                childTranfs.append(tranfEntry)
-            toRenderTmp[node.name]['transf'].append(childTranfs)
-
-    usedIdsCount = {}
+def getElementsToRender(meshNameRegex = None):
     toRender = []
-    primitiveTextureMap = getTextureMap()
-    for groupName, groupData in toRenderTmp.items():
+    materialsList = getMaterialsList2()
+    usedIdsCount = {}
+    for node in gltf.nodes:
+        if node.mesh is None:
+        # if node.mesh is None or node.translation is None:
+            continue
 
-        for childIdxLocal, meshName in enumerate(groupData["children"]):
-            if meshName[:-2] not in usedIdsCount:
-                usedIdsCount[meshName[:-2]] = 1
-                id = meshName
-            else:
-                child_suffix = usedIdsCount[meshName[:-2]]  # Prendi le ultime 2 cifre di `meshName` come intero
-                incremented_suffix = child_suffix + 1  # Incrementa il valore
-                id = f"{meshName[:-2]}{incremented_suffix:02}"  # Riforma il nome con il suffisso incrementato
-                usedIdsCount[meshName[:-2]] = child_suffix + 1
-            # print(id, meshName)
+        mesh = gltf.meshes[node.mesh]
+        if meshNameRegex is not None and not re.match(meshNameRegex, mesh.name):
+            continue
 
-            primitives = [model for model in models
-                          if gltf.nodes[groupData['childrenNodes'][childIdxLocal]].mesh and
-                          model['model'] == gltf.meshes[gltf.nodes[groupData['childrenNodes'][childIdxLocal]].mesh].name]
-            if(len(primitives) == 0):
-                print(f"Warning: {meshName} not found in models")
+        for meshId, primitive in enumerate(mesh.primitives):
+            primitiveId = f'{mesh.name}-{meshId:02}'
+            if primitive.material is None:
+                print(f"Warning: Primitive {primitiveId} has no material - Impossible to render")
                 continue
+            materialIdx = primitive.material
+            # print(primitiveId, materialsList[materialIdx]['albedo'])
 
-            for i, transf in enumerate(groupData['transf']):
-                for idxPrimitive, primitiveEntry in enumerate(primitives):
+            if primitiveId not in usedIdsCount:
+                usedIdsCount[primitiveId] = 0
 
-                    if primitiveEntry['id'] not in primitiveTextureMap:
-                        print(f"Warning: {primitiveEntry['id']} not found in primitiveTextureMap")
-                        continue
 
-                    entry = {
-                       'id': id+f'-{i:02}'+primitiveEntry['id'][-3:],
-                       'model': primitiveEntry['id'],
-                       'texture': [
-                           primitiveTextureMap[primitiveEntry['id']][0],
-                           primitiveTextureMap[primitiveEntry['id']][1],
-                           "void",
-                           "void"
-                       ]
-                    }
-                    if 'translation' in transf[childIdxLocal]:
-                        entry['translate'] = transf[childIdxLocal]["translation"]
-                    if 'rotation' in transf[childIdxLocal]:
-                        entry['eulerAngles'] = [
-                        # entry['quaternion'] = [
-                            transf[childIdxLocal]["rotation"][0],
-                            transf[childIdxLocal]["rotation"][1],
-                            transf[childIdxLocal]["rotation"][2],
-                            # transf["rotation"][3]
-                        ]
-                    if 'scale' in transf[childIdxLocal]:
-                        entry['scale'] = transf[childIdxLocal]["scale"]
-                    toRender.append(entry)
+            # materialsList = [ {
+            #     'albedo': 'prop_fish_01_d',
+            #     'normal': 'prop_fish_01_n',
+            #     'sg': 'prop_fish_01_sg',
+            #     'ao': 'void',
+            #     'diffuseFactor': None,
+            #     'specularFactor': None,
+            #     'glossinessFactor': None,
+            #     'aoFactor': None
+            # } ]
+            # materialIdx = 0
+
+
+            entry = {
+                'id': f'{primitiveId}.{usedIdsCount[primitiveId]:02}',
+                'model': primitiveId,
+                'texture': [
+                    # materialsList[materialIdx]['albedo'],
+                    materialsList[materialIdx]['albedo'],
+                    materialsList[materialIdx]['normal'],
+                    # materialsList[materialIdx]['sg'],
+                    # materialsList[materialIdx]['ao']
+                ]
+            }
+            usedIdsCount[primitiveId] += 1
+            if node.translation:
+                entry['translate'] = [coord for coord in node.translation]
+            if node.rotation:
+                entry['eulerAngles'] = [x for x in computeRotationFromNode(node)]
+            if node.scale:
+                entry['scale'] = [coord for coord in node.scale]
+            # if materialsList[materialIdx]['diffuseFactor'] is not None:
+            #     entry['diffuseFactor'] = materialsList[materialIdx]['diffuseFactor']
+            # if materialsList[materialIdx]['specularFactor'] is not None:
+            #     entry['specularFactor'] = materialsList[materialIdx]['specularFactor']
+            # if materialsList[materialIdx]['glossinessFactor'] is not None:
+            #     entry['glossinessFactor'] = materialsList[materialIdx]['glossinessFactor']
+            # if materialsList[materialIdx]['aoFactor'] is not None:
+            #     entry['aoFactor'] = materialsList[materialIdx]['aoFactor']
+            toRender.append(entry)
 
     return toRender
 
-toRender = getElementsToRender()
+toRender = getElementsToRender(meshRegex)
 
 
 # sections = {
@@ -265,12 +222,16 @@ toRender = getElementsToRender()
 #     json.dump(sections, f, indent=4)
 
 output_file = "script/json_sections.txt"
+print('ciao')
 
 with open(output_file, "w") as f:
     for section in [models, textures, toRender]:
+    # for section in [models, toRender]:
         for entry in section:
             f.write(f'{entry},\n'.replace("'", '"')
-                    .replace('"quat', '\n  "quat')
+                    .replace('"eulerAngles', '\n  "eulerAngles')
+                    .replace('"quaternion', '\n  "quaternion')
                     .replace('"translate', '\n  "translate')
-                    .replace('"scale', '\n  "scale'))
+                    .replace('"scale', '\n  "scale')
+                    .replace('"diffuseFactor', '\n  "diffuseFactor'))
         f.write("\n\n")

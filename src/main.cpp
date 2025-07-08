@@ -3,13 +3,19 @@
 
 #include <json.hpp>
 
-#include "modules/Starter.hpp"
+#include <PhysicsManager.hpp>
+//#include "modules/Starter.hpp"
+//#include "modules/Scene.hpp"
 #include "modules/TextMaker.hpp"
-#include "modules/Scene.hpp"
 #include "modules/Animations.hpp"
 
 #include "character/char_manager.hpp"
 #include "character/character.hpp"
+
+/** If true, gravity and inertia are disabled
+ And vertical movement (along y, thus actual fly) is enabled.
+ */
+const bool FLY_MODE = false;
 
 // The uniform buffer object used in this example
 struct VertexChar {
@@ -60,8 +66,21 @@ struct skyBoxUniformBufferObject {
 	alignas(16) glm::mat4 mvpMat;
 };
 
+struct TimeUBO {
+    alignas(4) float time; // scalar
+};
 
+struct SgAoMaterialFactorsUBO {
+    alignas(16) glm::vec3 diffuseFactor;      // (RGBA)
+    alignas(16) glm::vec3 specularFactor;     // (RGB)
+    alignas(4) float glossinessFactor;  // scalar
+    alignas(4) float aoFactor; // scalar
+} ;
 
+struct TerrainFactorsUBO {
+    alignas(4) float maskBlendFactor;
+    alignas(4) float tilingFactor;
+};
 
 // MAIN ! 
 class CGProject : public BaseProject {
@@ -69,7 +88,9 @@ class CGProject : public BaseProject {
 	// Here you list all the Vulkan objects you need:
 	
 	// Descriptor Layouts [what will be passed to the shaders]
-	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR, DSLglobal, DSLskyBox, DSLterrainTiled;
+	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR,
+        DSLglobal, DSLskyBox, DSLterrain, DSLsgAoFactors, DSLterrainFactors,
+        DSLwaterVert, DSLwaterFrag, DSLgrass;
 
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
@@ -77,7 +98,7 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDskyBox;
 	VertexDescriptor VDtan;
 	RenderPass RP;
-	Pipeline Pchar, PsimpObj, PskyBox, P_PBR, PterrainTiled;
+	Pipeline Pchar, PsimpObj, PskyBox, Pterrain, P_PBR_SpecGloss, PWater, Pgrass;
 	//*DBG*/Pipeline PDebug;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -87,12 +108,9 @@ class CGProject : public BaseProject {
 	//*DBG*/Model MS;
 	//*DBG*/DescriptorSet SSD;
 
-	// To support animation
-	// #define N_ANIMATIONS 5
-
-	// AnimBlender AB;
-	// Animations Anim[N_ANIMATIONS];
-	// SkeletalAnimation SKA;
+	// PhysicsManager for collision detection
+	PhysicsManager PhysicsMgr;
+	PlayerConfig physicsConfig;
 
 	// to provide textual feedback
 	TextMaker txt;
@@ -100,14 +118,35 @@ class CGProject : public BaseProject {
 	// Other application parameters
 	float Ar;	// Aspect ratio
 
+
+    // TODO: accorpa tutti questi parametri (molti sono stati messi statici, usa invece membri di classe)
+    // TODO: in generale ripulisci questo schifo di main
+
+
 	glm::mat4 ViewPrj;
 	glm::mat4 World;
-	glm::vec3 Pos = glm::vec3(0,0,5);
 	glm::vec3 cameraPos;
-	float Yaw = glm::radians(0.0f);
+
+    // Camera rotation controls
+	float Yaw = glm::radians(180.0f);
 	float Pitch = glm::radians(0.0f);
 	float Roll = glm::radians(0.0f);
-	
+    float relDir = glm::radians(0.0f);
+    float dampedRelDir = glm::radians(0.0f);
+    glm::vec3 dampedCamPos = physicsConfig.startPosition;
+
+    // Camera target height and distance
+    float camHeight = 1.5;
+    float camDist = 5;
+
+
+    // defines the global parameters for the uniform
+    const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-29.0f),
+                glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-10.0f),
+                 glm::vec3(1.0f,0.0f,0.0f));
+    const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+    const glm::vec4 lightColor = glm::vec4(1.0f, 0.4f, 0.4f, 1.0f);
+
 	glm::vec4 debug1 = glm::vec4(0);
 
 	// To manage NPSs
@@ -116,11 +155,11 @@ class CGProject : public BaseProject {
 	// Here you set the main application parameters
 	void setWindowParameters() {
 		// window size, titile and initial background
-		windowWidth = 800;
-		windowHeight = 600;
+		windowWidth = 1000;
+		windowHeight = 800;
 		windowTitle = "CGProject - Medieval Village Sim";
     	windowResizable = GLFW_TRUE;
-		
+
 		// Initial aspect ratio
 		Ar = 4.0f / 3.0f;
 	}
@@ -137,7 +176,7 @@ class CGProject : public BaseProject {
 		txt.resizeScreen(w, h);
 	}
 	
-	// Here you load and setup all your Vulkan Models and Texutures.
+	// Here you load and setup all your Vulkan Models, Texutures and Physics manger.
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() {
 		// Descriptor Layouts [what will be passed to the shaders]
@@ -172,12 +211,49 @@ class CGProject : public BaseProject {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(skyBoxUniformBufferObject), 1},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
 		  });
+		DSLwaterVert.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO), 1},
+			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp),1},
+		  });
+        // TODO: forse basta il UBO con solo mvpMat, invece che anche le altre 2...
+        DSLwaterFrag.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(GlobalUniformBufferObject), 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
+			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
+			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5, 1},
+			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1},
+			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7, 1}
+		  });
+
+        DSLgrass.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
+			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO), 1},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1}
+		  });
+
+        DSLterrain.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
+                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+                {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
+                {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
+                {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
+                {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
+                {6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5, 1},
+                {7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1},
+                {8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7, 1},
+                {9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 8, 1},
+        });
+
+        // This is for the PBR of terrain  -- SET 2
+        DSLterrainFactors.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TerrainFactorsUBO), 1},
+        });
 
 		DSLlocalPBR.init(this, {
-					// this array contains the binding:
-					// first  element : the binding number
-					// second element : the type of element (buffer or texture)
-					// third  element : the pipeline stage where it will be used
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
 					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
@@ -185,10 +261,10 @@ class CGProject : public BaseProject {
                     {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1}
 				  });
 
-		DSLterrainTiled.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
-		});
+        // This is for the PBR with specular glossines  -- SET 2
+        DSLsgAoFactors.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SgAoMaterialFactorsUBO), 1},
+        });
 
 		VDchar.init(this, {
 				  {0, sizeof(VertexChar), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -235,13 +311,13 @@ class CGProject : public BaseProject {
 				  {0, 3, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexTan, tan),
 				         sizeof(glm::vec4), TANGENT}
 				});
-				
+
 		VDRs.resize(4);
 		VDRs[0].init("VDchar",   &VDchar);
 		VDRs[1].init("VDsimp",   &VDsimp);
 		VDRs[2].init("VDskybox", &VDskyBox);
 		VDRs[3].init("VDtan",    &VDtan);
-		
+
 		// initializes the render passes
 		RP.init(this);
 		// sets the blue sky
@@ -254,18 +330,22 @@ class CGProject : public BaseProject {
 		Pchar.init(this, &VDchar, "shaders/PosNormUvTanWeights.vert.spv", "shaders/CookTorranceForCharacter.frag.spv", {&DSLglobal, &DSLlocalChar});
 
 		PsimpObj.init(this, &VDsimp, "shaders/SimplePosNormUV.vert.spv", "shaders/CookTorrance.frag.spv", {&DSLglobal, &DSLlocalSimp});
-		PsimpObj.init(this, &VDsimp, "shaders/SimplePosNormUV.vert.spv", "shaders/CookTorrance.frag.spv", {&DSLglobal, &DSLlocalSimp});
 
 		PskyBox.init(this, &VDskyBox, "shaders/SkyBoxShader.vert.spv", "shaders/SkyBoxShader.frag.spv", {&DSLskyBox});
 		PskyBox.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
 		PskyBox.setCullMode(VK_CULL_MODE_BACK_BIT);
 		PskyBox.setPolygonMode(VK_POLYGON_MODE_FILL);
 
-		P_PBR.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR.frag.spv", {&DSLglobal, &DSLlocalPBR});
+        PWater.init(this, &VDsimp, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLwaterVert, &DSLwaterFrag});
+        PWater.setTransparency(true);
 
-		PterrainTiled.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/terrain_tiled.frag.spv", {&DSLglobal, &DSLterrainTiled});
+        Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLglobal, &DSLgrass});
 
-		PRs.resize(5);
+        Pterrain.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLglobal, &DSLterrain, &DSLterrainFactors});
+
+		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
+
+        PRs.resize(7);
 		PRs[0].init("CookTorranceChar", {
 							 {&Pchar, {//Pipeline and DSL for the first pass
 								 /*DSLglobal*/{},
@@ -290,35 +370,68 @@ class CGProject : public BaseProject {
 									 }
 									}}
 							  }, /*TotalNtextures*/1, &VDskyBox);
-		PRs[3].init("PBR", {
-							 {&P_PBR, {//Pipeline and DSL for the first pass
-								 /*DSLglobal*/{},
-								 /*DSLlocalPBR*/{
-										/*t0*/{true,  0, {}},// index 0 of the "texture" field in the json file
-										/*t1*/{true,  1, {}},// index 1 of the "texture" field in the json file
-										/*t2*/{true,  2, {}},// index 2 of the "texture" field in the json file
-										/*t3*/{true,  3, {}}// index 3 of the "texture" field in the json file
-									 }
+        PRs[3].init("Terrain", {
+                {&Pterrain, {//Pipeline and DSL for the first pass
+                        /*DSLglobal*/{},
+                        /*DSLterrain*/{
+                                             {true,  0, {}},
+                                             {true,  1, {}},
+                                             {true,  2, {}},
+                                             {true,  3, {}},
+                                             {true,  4, {}},
+                                             {true,  5, {}},
+                                             {true,  6, {}},
+                                             {true,  7, {}},
+                                             {true,  8, {}},
+                                     },
+                                     {}
+                }}
+        }, /*TotalNtextures*/9, &VDtan);
+        PRs[4].init("Water", {
+                {&PWater, {//Pipeline and DSL for the first pass
+                        /*DSLwaterVert*/{},
+                        /*DSLwaterFrag*/ {
+                                                {true, 0, {} },
+                                                {true, 1, {} },     // 6 textures for cubemap faces
+                                                {true, 2, {} },     // Order is: +x, -x, +y, -y, +z, -z
+                                                {true, 3, {} },
+                                                {true, 4, {} },
+                                                {true, 5, {} },
+                                                {true, 6, {} },
+                                                {true, 7, {} }
+                                        }
+                }}
+        }, /*TotalNtextures*/8, &VDsimp);
+        PRs[5].init("Grass", {
+                 {&Pgrass, {//Pipeline and DSL for the first pass
+                     /*DSLgrass*/{
+                            {},
+                            {
+                                    {true, 0, {}},
+                                    {true, 1, {}}
+                            }
+                         }
+                        }}
+                  }, /*TotalNtextures*/2, &VDsimp);
+        PRs[6].init("PBR_sg", {
+							 {&P_PBR_SpecGloss, {//Pipeline and DSL for the first pass
+								 {},    /*DSLglobal*/
+								 {      /*DSLlocalPBR*/
+										{true,  0, {}},     // albedo
+										{true,  1, {}},     // normal
+										{true,  2, {}},     // specular / glossiness
+										{true,  3, {}},     // ambient occlusion
+									 },
+                                 {}   /*DSLsgAoFactors*/
 									}}
-							  }, /*TotalNtextures*/4, &VDtan);
+							  }, 4, &VDtan);
 
-		PRs[4].init("TerrainTiled", {
-							 {&PterrainTiled, {//Pipeline and DSL for the first pass
-							 	/*DSLglobal*/{},
-								 /*DSLterrainTiled*/{
-										/*t0*/{true,  0, {}}// index 0 of the "texture" field in the json file
-									 }
-									}}
-							  }, /*TotalNtextures*/1, &VDtan);
-
-		// Models, textures and Descriptors (values assigned to the uniforms)
-		
 		// sets the size of the Descriptor Set Pool
-		DPSZs.uniformBlocksInPool = 100;
-		DPSZs.texturesInPool = 100;
-		DPSZs.setsInPool = 100;
+		DPSZs.uniformBlocksInPool = 1000;
+		DPSZs.texturesInPool = 1000;
+		DPSZs.setsInPool = 1000;
 		
-std::cout << "\nLoading the scene\n\n";
+        std::cout << "\nLoading the scene\n\n";
 		if(SC.init(this, /*Npasses*/1, VDRs, PRs, "assets/models/scene.json") != 0) {
 			std::cout << "ERROR LOADING THE SCENE\n";
 			exit(0);
@@ -330,45 +443,45 @@ std::cout << "\nLoading the scene\n\n";
 			exit(0);
 		}
 
-/*
-		// initializes animations
-		for(int ian = 0; ian < N_ANIMATIONS; ian++) {
-			Anim[ian].init(*SC.As[ian]);
-		}
-		AB.init({{0,32,0.0f,0}, {0,16,0.0f,1}, {0,263,0.0f,2}, {0,83,0.0f,3}, {0,16,0.0f,4}});
-		//AB.init({{0,31,0.0f}});
-		SKA.init(Anim, N_ANIMATIONS, "Armature|mixamo.com|Layer0", 0);
-
-		// Initialize the characters
-		// Mario  e tutte le sue animazioni
-		std::vector<std::string> marioStates = {"Walking", "Running", "Idle", "Pointing", "Waving"};
-		auto char1 = std::make_shared<Character>("Mario", glm::vec3(20,20,20), AB, marioStates);
-		charManager.addChar(char1);
-*/
 		// initializes the textual output
 		txt.init(this, windowWidth, windowHeight);
 
 		// submits the main command buffer
 		submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
 
-		// Prepares for showing the FPS count
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
+
+		// Initialize PhysicsManager
+		if(!PhysicsMgr.initialize(FLY_MODE)) {
+			exit(0);
+		}
+
+		// Add static meshes for collision detection
+		PhysicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() {
 		// creates the render pass
+        std::cout << "Creating pipelines and descriptor sets\n";
 		RP.create();
 		
 		// This creates a new pipeline (with the current surface), using its shaders for the provided render pass
+        std::cout << "Creating pipelines\n";
 		Pchar.create(&RP);
 		PsimpObj.create(&RP);
 		PskyBox.create(&RP);
-		P_PBR.create(&RP);
-		PterrainTiled.create(&RP);
+        PWater.create(&RP);
+        Pgrass.create(&RP);
+		Pterrain.create(&RP);
+        P_PBR_SpecGloss.create(&RP);
+
+        std::cout << "Creating descriptor sets\n";
 
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
+
+        std::cout << "Ended creating pipelines and descriptor sets\n";
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -376,8 +489,10 @@ std::cout << "\nLoading the scene\n\n";
 		Pchar.cleanup();
 		PsimpObj.cleanup();
 		PskyBox.cleanup();
-		P_PBR.cleanup();
-		PterrainTiled.cleanup();
+        PWater.cleanup();
+        Pgrass.cleanup();
+		Pterrain.cleanup();
+        P_PBR_SpecGloss.cleanup();
 		RP.cleanup();
 
 		SC.pipelinesAndDescriptorSetsCleanup();
@@ -390,15 +505,22 @@ std::cout << "\nLoading the scene\n\n";
 		DSLlocalChar.cleanup();
 		DSLlocalSimp.cleanup();
 		DSLlocalPBR.cleanup();
+        DSLsgAoFactors.cleanup();
 		DSLskyBox.cleanup();
+        DSLwaterVert.cleanup();
+        DSLwaterFrag.cleanup();
+        DSLgrass.cleanup();
+		DSLterrain.cleanup();
+        DSLterrainFactors.cleanup();
 		DSLglobal.cleanup();
-		DSLterrainTiled.cleanup();
 		
 		Pchar.destroy();	
 		PsimpObj.destroy();
 		PskyBox.destroy();		
-		P_PBR.destroy();		
-		PterrainTiled.destroy();
+        PWater.destroy();
+        Pgrass.destroy();
+        P_PBR_SpecGloss.destroy();
+		Pterrain.destroy();
 
 		RP.destroy();
 
@@ -406,9 +528,6 @@ std::cout << "\nLoading the scene\n\n";
 		txt.localCleanup();
 
 		charManager.cleanup();
-		// for(int ian = 0; ian < N_ANIMATIONS; ian++) {
-		// 	Anim[ian].cleanup();
-		// }
 	}
 	
 	// Here it is the creation of the command buffer:
@@ -417,23 +536,19 @@ std::cout << "\nLoading the scene\n\n";
 	static void populateCommandBufferAccess(VkCommandBuffer commandBuffer, int currentImage, void *Params) {
 		// Simple trick to avoid having always 'T->'
 		// in che code that populates the command buffer!
-//std::cout << "Populating command buffer for " << currentImage << "\n";
+    std::cout << "Populating command buffer for " << currentImage << "\n";
 		CGProject *T = (CGProject *)Params;
 		T->populateCommandBuffer(commandBuffer, currentImage);
 	}
-	// This is the real place where the Command Buffer is written
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
-		
+	// This is the real place where the Command Buffer is written
 		// begin standard pass
 		RP.begin(commandBuffer, currentImage);
-
 		SC.populateCommandBuffer(commandBuffer, 0, currentImage);
-
-		RP.end(commandBuffer);
+        RP.end(commandBuffer);
 	}
 
-	// Here is where you update the uniforms.
-	// Very likely this will be where you will be writing the logic of your application.
+    // Here is where you update the uniforms, where logic of application is.
 	void updateUniformBuffer(uint32_t currentImage) {
 		static bool debounce = false;
 		static int curDebounce = 0;
@@ -442,7 +557,6 @@ std::cout << "\nLoading the scene\n\n";
 		if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
-
 
 		if(glfwGetKey(window, GLFW_KEY_1)) {
 			if(!debounce) {
@@ -478,7 +592,7 @@ std::cout << "\nLoading the scene\n\n";
 				curDebounce = GLFW_KEY_P;
 
 				debug1.z = (float)(((int)debug1.z + 1) % 65);
-//            std::cout << "Showing bone index: " << debug1.z << "\n";
+            std::cout << "Showing bone index: " << debug1.z << "\n";
 			}
 		} else {
 			if((curDebounce == GLFW_KEY_P) && debounce) {
@@ -487,13 +601,16 @@ std::cout << "\nLoading the scene\n\n";
 			}
 		}
 
+		static int curAnim = 0;
+		static AnimBlender* AB = charManager.getCharacters()[0]->getAnimBlender();
 		if(glfwGetKey(window, GLFW_KEY_O)) {
 			if(!debounce) {
 				debounce = true;
 				curDebounce = GLFW_KEY_O;
 
-				debug1.z = (float)(((int)debug1.z + 64) % 65);
-std::cout << "Showing bone index: " << debug1.z << "\n";
+				curAnim = (curAnim + 1) % 5;
+				AB->Start(curAnim, 0.5);
+				std::cout << "Playing anim: " << curAnim << "\n";
 			}
 		} else {
 			if((curDebounce == GLFW_KEY_O) && debounce) {
@@ -502,23 +619,9 @@ std::cout << "Showing bone index: " << debug1.z << "\n";
 			}
 		}
 
-		static int curAnim = 0;
-		static AnimBlender* AB = charManager.getCharacters()[0]->getAnimBlender();
 		if(glfwGetKey(window, GLFW_KEY_SPACE)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_SPACE;
-
-				curAnim = (curAnim + 1) % 5;
-				AB->Start(curAnim, 0.5);
-std::cout << "Playing anim: " << curAnim << "\n";
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_SPACE) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
+            PhysicsMgr.jumpPlayer();
+        }
 
 		// Handle the E key for Character interaction
 		glm::vec3 playerPos = cameraPos;		// TODO: sostituire con la posizione del giocatore una volta implementato il player
@@ -557,7 +660,7 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		GlobalUniformBufferObject gubo{};
 
 		gubo.lightDir = lightDir;
-		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gubo.lightColor = lightColor;
 		gubo.eyePos = cameraPos;
 
 		// defines the local parameters for the uniforms
@@ -575,54 +678,94 @@ std::cout << "Playing anim: " << curAnim << "\n";
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
 
 		int instanceId;
+        int techniqueId = 0;
 		// character
-		for(instanceId = 0; instanceId < SC.TI[0].InstanceCount; instanceId++) {
+		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
 			for(int im = 0; im < TMsp->size(); im++) {
 				uboc.mMat[im]   = SC.TI[0].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
 				uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
 				uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
-//std::cout << im << "\t";
-//printMat4("mMat", ubo.mMat[im]);
 			}
 
-			SC.TI[0].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[0].I[instanceId].DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
 		}
 
-		UniformBufferObjectSimp ubos{};	
+		UniformBufferObjectSimp ubos{};
 		// normal objects
-		for(instanceId = 0; instanceId < SC.TI[1].InstanceCount; instanceId++) {
-			ubos.mMat   = SC.TI[1].I[instanceId].Wm;
+        techniqueId++;
+		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
 			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
 
-			SC.TI[1].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[1].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
 		}
 		
 		// skybox pipeline
 		skyBoxUniformBufferObject sbubo{};
+        techniqueId++;
 		sbubo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
-		SC.TI[2].I[0].DS[0][0]->map(currentImage, &sbubo, 0);
+		SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &sbubo, 0);
 
-		// PBR objects
-		for(instanceId = 0; instanceId < SC.TI[3].InstanceCount; instanceId++) {
-			ubos.mMat   = SC.TI[3].I[instanceId].Wm;
+        // Terrain objects
+        techniqueId++;
+        TerrainFactorsUBO terrainFactorsUbo{};
+        for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+            ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            ubos.mvpMat = ViewPrj * ubos.mMat;
+            ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+
+            terrainFactorsUbo.maskBlendFactor = SC.TI[techniqueId].I[instanceId].factor1;
+            terrainFactorsUbo.tilingFactor = SC.TI[techniqueId].I[instanceId].factor2;
+
+            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+            SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[0][2]->map(currentImage, &terrainFactorsUbo, 0);  // Set 2
+        }
+
+        // Water objects
+        techniqueId++;
+        TimeUBO timeUbo{};
+        timeUbo.time = glfwGetTime();
+        ubos.mMat   = SC.TI[techniqueId].I[0].Wm;
+        ubos.mvpMat = ViewPrj * ubos.mMat;
+        ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &timeUbo, 0); // Set 0
+        SC.TI[techniqueId].I[0].DS[0][0]->map(currentImage, &ubos, 1); // Set 0
+        SC.TI[techniqueId].I[0].DS[0][1]->map(currentImage, &gubo, 0); // Set 0
+
+        // Vegetation/Grass objects
+        techniqueId++;
+        for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+            ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            ubos.mvpMat = ViewPrj * ubos.mMat;
+            ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+
+            timeUbo.time = glfwGetTime();
+
+            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+            SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &timeUbo, 1);  // Set 1
+        }
+
+        // PBR_SpecGloss objects
+        SgAoMaterialFactorsUBO sgAoUbo{};
+        techniqueId++;
+		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
 			ubos.mvpMat = ViewPrj * ubos.mMat;
 			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
 
-			SC.TI[3].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[3].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0);  // Set 1
-		}
+            sgAoUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
+            sgAoUbo.specularFactor = SC.TI[techniqueId].I[instanceId].specularFactor;
+            sgAoUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].factor1;
+            sgAoUbo.aoFactor = SC.TI[techniqueId].I[instanceId].factor2;
 
-		// TerrainTiled objects
-		for(instanceId = 0; instanceId < SC.TI[4].InstanceCount; instanceId++) {
-			ubos.mMat   = SC.TI[4].I[instanceId].Wm;
-			ubos.mvpMat = ViewPrj * ubos.mMat;
-			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
-
-			SC.TI[4].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[4].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &ubos, 0); // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][2]->map(currentImage, &sgAoUbo, 0); // Set 2
 		}
 
 		// updates the FPS
@@ -653,117 +796,95 @@ std::cout << "Playing anim: " << curAnim << "\n";
 		const float nearPlane = 0.1f;
 		const float farPlane = 500.f;
 		// Player starting point
-		const glm::vec3 StartingPosition = glm::vec3(0.0, 0.0, 5);
+		const glm::vec3 StartingPosition = physicsConfig.startPosition;
 		// Camera target height and distance
-		static float camHeight = 1.5;
-		static float camDist = 5;
+		static float camHeight = 1;
+		static float camDist = 3;
 		// Camera Pitch limits
-		const float minPitch = glm::radians(-8.75f);
-		const float maxPitch = glm::radians(60.0f);
+		const float minPitch = glm::radians(-40.0f);
+		const float maxPitch = glm::radians(80.0f);
 		// Rotation and motion speed
 		const float ROT_SPEED = glm::radians(120.0f);
-		const float MOVE_SPEED_BASE = 10.0f;
-		const float MOVE_SPEED_RUN  = 10.0f;
-		const float ZOOM_SPEED = MOVE_SPEED_BASE * 1.5f;
-		const float MAX_CAM_DIST =  7.5;
-		const float MIN_CAM_DIST =  1.5;
+		const float MOVE_SPEED_BASE = physicsConfig.moveSpeed;
+		const float MOVE_SPEED_RUN = physicsConfig.runSpeed;
+		const float JUMP_FORCE = physicsConfig.jumpForce;
+		const float MAX_CAM_DIST = 7.5;
+		const float MIN_CAM_DIST = 1.5;
 
 		// Integration with the timers and the controllers
+		// TODO: Detect running by pressing SHIFT key (currently hardcoded as walking all the time)
 		float deltaT;
 		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 		bool fire = false;
 		getSixAxis(deltaT, m, r, fire);
 		float MOVE_SPEED = fire ? MOVE_SPEED_RUN : MOVE_SPEED_BASE;
 
+		// Step the physics simulation
+		PhysicsMgr.update(deltaT);
 
-		// Game Logic implementation
-		// Current Player Position - statc variable make sure its value remain unchanged in subsequent calls to the procedure
-		static glm::vec3 Pos = StartingPosition;
-		static glm::vec3 oldPos;
-		static int currRunState = 1;
+		// Get current player position from physics body
+		glm::vec3 Pos = PhysicsMgr.getPlayerPosition();
 
-/*		camDist = camDist - m.y * ZOOM_SPEED * deltaT;
-		camDist = camDist < MIN_CAM_DIST ? MIN_CAM_DIST :
-				 (camDist > MAX_CAM_DIST ? MAX_CAM_DIST : camDist);*/
-		camDist = (MIN_CAM_DIST + MIN_CAM_DIST) / 2.0f; 
+		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
 
-		// To be done in the assignment
-		ViewPrj = glm::mat4(1);
-		World = glm::mat4(1);
-
-		oldPos = Pos;
-
-		static float Yaw = glm::radians(0.0f);
-		static float Pitch = glm::radians(0.0f);
-		static float relDir = glm::radians(0.0f);
-		static float dampedRelDir = glm::radians(0.0f);
-		static glm::vec3 dampedCamPos = StartingPosition;
-		
-		// World
-		// Position
-		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
-		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
-		Pos = Pos + MOVE_SPEED * m.x * ux * deltaT;
-		Pos = Pos - MOVE_SPEED * m.z * uz * deltaT;
-		
-		camHeight += MOVE_SPEED * m.y * deltaT;
-		// Rotation
+		// Update camera rotation
 		Yaw = Yaw - ROT_SPEED * deltaT * r.y;
 		Pitch = Pitch - ROT_SPEED * deltaT * r.x;
-		Pitch  =  Pitch < minPitch ? minPitch :
-				   (Pitch > maxPitch ? maxPitch : Pitch);
+		Pitch = Pitch < minPitch ? minPitch : (Pitch > maxPitch ? maxPitch : Pitch);
 
+		// Calculate movement direction based on camera orientation
+		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
+		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
 
+		// Calculate desired movement vector
+		glm::vec3 moveDir = MOVE_SPEED * m.x * ux - MOVE_SPEED * m.z * uz;
+        if(FLY_MODE)
+            moveDir += MOVE_SPEED * m.y * glm::vec3(0,1,0);
+
+		// Apply movement force to physics body
+		PhysicsMgr.movePlayer(moveDir, fire);
+
+		// Camera height adjustment
+		camHeight += MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
+		camHeight -= MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_E) ? 1.0f : 0.0f) * deltaT;
+		camHeight = glm::clamp(camHeight, 0.5f, 3.0f);
+
+		// Exponential smoothing factor for camera damping
 		float ef = exp(-10.0 * deltaT);
+
 		// Rotational independence from view with damping
-		if(glm::length(glm::vec3(m.x, 0.0f, m.z)) > 0.001f) {
-			relDir = Yaw + atan2(m.x, m.z);
+		if(glm::length(glm::vec3(moveDir.x, 0.0f, moveDir.z)) > 0.001f) {
+			relDir = Yaw + atan2(moveDir.x, moveDir.z);
 			dampedRelDir = dampedRelDir > relDir + 3.1416f ? dampedRelDir - 6.28f :
 						   dampedRelDir < relDir - 3.1416f ? dampedRelDir + 6.28f : dampedRelDir;
 		}
 		dampedRelDir = ef * dampedRelDir + (1.0f - ef) * relDir;
-		
-		// Final world matrix computaiton
+
+		// Final world matrix computation using physics position
 		World = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
-		
+
 		// Projection
 		glm::mat4 Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
 		Prj[1][1] *= -1;
 
 		// View
-		// Target
+		// Target position based on physics body position
 		glm::vec3 target = Pos + glm::vec3(0.0f, camHeight, 0.0f);
 
-		// Camera position, depending on Yaw parameter, but not character direction
+		// Camera position, depending on Yaw parameter
 		glm::mat4 camWorld = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
 		cameraPos = camWorld * glm::vec4(0.0f, camHeight + camDist * sin(Pitch), camDist * cos(Pitch), 1.0);
+
 		// Damping of camera
 		dampedCamPos = ef * dampedCamPos + (1.0f - ef) * cameraPos;
 
 		glm::mat4 View = glm::lookAt(dampedCamPos, target, glm::vec3(0,1,0));
 
 		ViewPrj = Prj * View;
-		
-		float vel = length(Pos - oldPos) / deltaT;
-		
-		if(vel < 0.2) {
-			if(currRunState != 1) {
-				currRunState = 1;
-			}
-		} else if(vel < 3.5) {
-			if(currRunState != 2) {
-				currRunState = 2;
-			}
-		} else {
-			if(currRunState != 3) {
-				currRunState = 3;
-			}
-		}
-		
+
 		return deltaT;
 	}
 };
-
 
 // This is the main: probably you do not need to touch this!
 int main() {

@@ -10,6 +10,22 @@ struct Instance {
 	DescriptorSet ***DS;
 	std::vector<DescriptorSetLayout *> **D;
 	int *NDs;
+
+    bool usedForPhysics;
+
+    glm::vec3 diffuseFactor;
+    glm::vec3 specularFactor;
+
+    /**
+     * Factor 1 is used for
+     *  - glossiness in PBR SpecularGlossiness
+     *  - mask blend factor in Terrain
+     * Factor 2 is used for
+     *  - ambient occlusion in PBR SpecularGlossiness
+     *  - tiling factor in Terrain
+     * */
+    float factor1;
+    float factor2;
 	
 	glm::mat4 Wm;
 	TechniqueInstances *TIp;
@@ -79,13 +95,15 @@ class Scene {
 	VertexDescriptorRef *VRef;
 	std::unordered_map<std::string, int> InstanceIds;
 
+    Instance **I_physics;
+    int InstancePhysicsCount = 0;
+
 	// Pipelines, DSL and Vertex Formats
 	std::unordered_map<std::string, TechniqueRef *> TechniqueIds;
 	int TechniqueInstanceCount = 0;
 	TechniqueInstances *TI;
 	std::unordered_map<std::string, VertexDescriptor *> VDIds;
 	int Npasses;
-
 
 	int init(BaseProject *_BP,  int _Npasses, std::vector<VertexDescriptorRef>  &VDRs, std::vector<TechniqueRef> &PRs, std::string file);
 
@@ -261,6 +279,38 @@ std::cout << "#" << NTextures;
 std::cout << " " << is[j]["texture"][h] << "(" << TI[k].I[j].Tid[h] << ")";
 				}
 std::cout << "}\n";
+
+                if(is[j].contains("physics") && is[j]["physics"].get<bool>()) {
+                    TI[k].I[j].usedForPhysics = true;
+                } else {
+                    TI[k].I[j].usedForPhysics = false;
+                }
+
+                //TODO: pensa se lasciare così o gestire in qualche altro modo con array o che so io...
+                // Check optional PBR SpecularGlossiness parameters
+                if (is[j].contains("diffuseFactor"))
+                    for (int d = 0; d < 3; ++d)
+                        TI[k].I[j].diffuseFactor[d] = is[j]["diffuseFactor"][d];
+                else
+                    TI[k].I[j].diffuseFactor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // Default diffuse factor
+                if (is[j].contains("specularFactor"))
+                    for (int d = 0; d < 3; ++d)
+                        TI[k].I[j].specularFactor[d] = is[j]["specularFactor"][d];
+                else
+                    TI[k].I[j].specularFactor = glm::vec3(1.0f, 1.0f, 1.0f); // Default specular factor
+                if (is[j].contains("glossinessFactor"))
+                    TI[k].I[j].factor1 = is[j]["glossinessFactor"];
+                else if( is[j].contains("maskBlendFactor") )
+                    TI[k].I[j].factor1 = is[j]["maskBlendFactor"];
+                else
+                    TI[k].I[j].factor1 = 0.5f; // Default glossiness factor
+                if (is[j].contains("aoFactor"))
+                    TI[k].I[j].factor2 = is[j]["aoFactor"];
+                else if( is[j].contains("tilingFactor") )
+                    TI[k].I[j].factor2 = is[j]["tilingFactor"];
+                else
+                    TI[k].I[j].factor2 = 1.0f; // Default ambient occlusion factor
+
 				nlohmann::json TMjson = is[j]["transform"];
 				if(TMjson.is_null()) {
 std::cout << "Node has no transform: seek for translation, rotation and scaling\n";
@@ -365,6 +415,52 @@ std::cout << "Creating instances\n";
 		}
 std::cout << i << " instances created\n";
 
+std::cout << "Creating physics-only instances\n";
+
+        nlohmann::json jsonInstancesPhysics = js["instances_no_visible"];
+        InstancePhysicsCount = jsonInstancesPhysics.size();
+		I_physics =  (Instance **)calloc(InstancePhysicsCount, sizeof(Instance*));
+
+        for(int j = 0; j < InstancePhysicsCount; j++) {
+            I_physics[j] = (Instance*) calloc(1, sizeof(Instance));
+
+            I_physics[j]->id = new std::string(jsonInstancesPhysics[j]["id"]);
+            I_physics[j]->Mid = MeshIds[jsonInstancesPhysics[j]["model"]];
+            I_physics[j]->usedForPhysics = true;
+
+            glm::vec3 trT = glm::vec3(0.0f);
+            glm::mat4 trR = glm::mat4(1.0f);
+            glm::vec3 trS = glm::vec3(1.0f);
+            nlohmann::json Tr_Tjson = jsonInstancesPhysics[j]["translate"];
+            if(!Tr_Tjson.is_null()) {
+                trT.x = Tr_Tjson[0];
+                trT.y = Tr_Tjson[1];
+                trT.z = Tr_Tjson[2];
+            }
+            nlohmann::json Tr_REjson = jsonInstancesPhysics[j]["eulerAngles"];
+            if(!Tr_REjson.is_null()) {
+                trR = glm::rotate(glm::mat4(1.0f),
+                                  glm::radians((float)Tr_REjson[1]),
+                                  glm::vec3(0.0f,1.0f,0.0f)) *
+                      glm::rotate(glm::mat4(1.0f),
+                                  glm::radians((float)Tr_REjson[0]),
+                                  glm::vec3(1.0f,0.0f,0.0f)) *
+                      glm::rotate(glm::mat4(1.0f),
+                                  glm::radians((float)Tr_REjson[2]),
+                                  glm::vec3(0.0f,0.0f,1.0f));
+            }
+            nlohmann::json Tr_Sjson = jsonInstancesPhysics[j]["scale"];
+            if(!Tr_Sjson.is_null()) {
+                trS.x = Tr_Sjson[0];
+                trS.y = Tr_Sjson[1];
+                trS.z = Tr_Sjson[2];
+            }
+            I_physics[j]->Wm = glm::translate(glm::mat4(1.0f), trT) *
+                                 trR *
+                                 glm::scale(glm::mat4(1.0f), trS);
+		}
+std::cout << " Physics-only instances created\n";
+
 
 /*		} catch (const nlohmann::json::exception& e) {
 		std::cout << "\n\n\nException while parsing JSON file: " << file << "\n";
@@ -383,7 +479,7 @@ void Scene::pipelinesAndDescriptorSetsInit() {
 	for(int i = 0; i < InstanceCount; i++) {
 //std::cout << "I: " << i << ", NTx: " << I[i]->NTx << ", NDs: " << I[i]->NDs << ", nPasses: " << Npasses << "\n";
 
-		I[i]->DS = (DescriptorSet ***)calloc(Npasses, sizeof(DescriptorSet **));
+        I[i]->DS = (DescriptorSet ***)calloc(Npasses, sizeof(DescriptorSet **));
 		for(int ipas = 0; ipas < Npasses; ipas++) {
 //std::cout << "DSs for pass " << ipas << ": " << I[i]->NDs[ipas] << "\n";
 			I[i]->DS[ipas] = (DescriptorSet **)calloc(I[i]->NDs[ipas], sizeof(DescriptorSet *));

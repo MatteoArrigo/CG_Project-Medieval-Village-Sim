@@ -164,9 +164,9 @@ class Model {
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
-	VertexDescriptor *VD;
 
 	public:
+	VertexDescriptor *VD;
 	glm::mat4 Wm;
 	std::vector<unsigned char> vertices{};
 	std::vector<uint32_t> indices{};
@@ -2851,7 +2851,10 @@ void AssetFile::initGLTF(std::string file) {
 				continue;
 			} else {
 				std::cout << "Primitive: " << PrimCount << ", Material: " <<
-					primitive.material << " -> " << model.materials[primitive.material].name <<"\n";
+					primitive.material;
+                if(primitive.material > -1)
+                    std::cout << " -> " << model.materials[primitive.material].name;
+                std::cout <<"\n";
 			}
 			GLTFmeshes[mesh.name].push_back(&primitive);
 			PrimCount++;
