@@ -1,42 +1,42 @@
 #pragma once
-#include "npc.hpp"
+#include "character.hpp"
 #include <vector>
 #include <memory>
 #include <glm/glm.hpp>
 
-class NPCManager {
+class CharManager {
 public:
 
-    void addNPC(const std::shared_ptr<NPC>& npc) {
-        npcs.push_back(npc);
+    void addChar(const std::shared_ptr<Character>& character) {
+        characters.push_back(character);
     }
 
-    std::shared_ptr<NPC> getNearestNPC(const glm::vec3& playerPos, float maxDistance) const {
-        std::shared_ptr<NPC> nearest = nullptr;
+    std::shared_ptr<Character> getNearestCharacter(const glm::vec3& playerPos, float maxDistance) const {
+        std::shared_ptr<Character> nearest = nullptr;
         float minDist = maxDistance;
-        for (const auto& npc : npcs) {
-            float dist = glm::distance(npc->getPosition(), playerPos);
+        for (const auto& charac : characters) {
+            float dist = glm::distance(charac->getPosition(), playerPos);
             if (dist < minDist) {
                 minDist = dist;
-                nearest = npc;
+                nearest = charac;
             }
         }
         return nearest;
     }
 
     void updateAll() {
-        // Aggiorna lo stato di tutti gli NPC, se necessario
+        // Aggiorna lo stato di tutti gli Character, se necessario
     }
 
-    const std::vector<std::shared_ptr<NPC>>& getNPCs() const {
-        return npcs;
+    const std::vector<std::shared_ptr<Character>>& getCharacters() const {
+        return characters;
     }
 
     int init(std::string file, AssetFile** af) {
         nlohmann::json sceneJson;
         std::ifstream ifs(file);
         if (!ifs.is_open()) {
-            std::cout << "Error! NPC file >" << file << "< not found!";
+            std::cout << "Error! Character file >" << file << "< not found!";
             exit(-1);
         }
         try {
@@ -48,17 +48,18 @@ public:
             std::cout << std::flush;
             return 1;
         }
-        if (!sceneJson.contains("npcs") || !sceneJson["npcs"].is_array()) return -1;
+        if (!sceneJson.contains("characters") || !sceneJson["characters"].is_array()) return -1;
 
         int skinId = 0; // Default skin ID, can be modified if needed
-        for (const auto& npcJson : sceneJson["npcs"]) {
-            std::string name = npcJson.value("name", "Unknown");
-            auto posArr = npcJson.value("position", std::vector<float>{0,0,0});
+        for (const auto& charJson : sceneJson["characters"]) {
+            std::string name = charJson.value("name", "Unknown");
+            auto posArr = charJson.value("position", std::vector<float>{0,0,0});
+            // TODO: get position from the scene file (cook-torranceChar instances)
             glm::vec3 pos = glm::vec3(posArr[0], posArr[1], posArr[2]);
-            auto animList = npcJson.value("animList", std::vector<std::string>{});
-            auto npcStates = npcJson.value("npcStates", std::vector<std::string>{});
-            auto startEndFrames = npcJson.value("startEndFrames", std::vector<std::vector<int>>{});
-            std::string baseTrack = npcJson.value("BaseTrackName", "");
+            auto animList = charJson.value("animList", std::vector<std::string>{});
+            auto charStates = charJson.value("charStates", std::vector<std::string>{});
+            auto startEndFrames = charJson.value("startEndFrames", std::vector<std::vector<int>>{});
+            std::string baseTrack = charJson.value("BaseTrackName", "");
 
             // Inizializza Animations
             int animCount = static_cast<int>(animList.size());
@@ -93,9 +94,9 @@ public:
             SKA->init(Anims[skinId].data(), animCount, baseTrack, skinId);
             skinId++;
 
-            // Crea NPC e aggiungi
-            auto npc = std::make_shared<NPC>(name, pos, ab, SKA, npcStates);
-            addNPC(npc);
+            // Crea Character e aggiungi
+            auto charac = std::make_shared<Character>(name, pos, ab, SKA, charStates);
+            addChar(charac);
         }
         return 0;
     }
@@ -115,12 +116,12 @@ public:
         //     delete[] Anim;
         //     Anim = nullptr;
         // }
-        // npcs.clear();
+        // characters.clear();
     }
 
 
 
 private:
-    std::vector<std::shared_ptr<NPC>> npcs;
-    std::vector<std::vector<Animations>> Anims; // Per cleanuppare le animazioni degli NPC
+    std::vector<std::shared_ptr<Character>> characters;
+    std::vector<std::vector<Animations>> Anims; // Per cleanuppare le animazioni degli Character
 };

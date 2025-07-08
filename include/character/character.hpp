@@ -4,9 +4,9 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 
-class NPC {
+class Character {
 public:
-    NPC(const std::string& name, const glm::vec3& pos, std::shared_ptr<AnimBlender> AB, std::shared_ptr<SkeletalAnimation> SKA, const std::vector<std::string>& stateNames);
+    Character(const std::string& name, const glm::vec3& pos, std::shared_ptr<AnimBlender> AB, std::shared_ptr<SkeletalAnimation> SKA, const std::vector<std::string>& stateNames);
 
     // Stato e posizione
     void setPosition(const glm::vec3& pos);
@@ -36,7 +36,7 @@ public:
     void setSkeletalAnimation(const SkeletalAnimation& SKAx) { *SKA.get() = SKAx; }
     SkeletalAnimation* getSkeletalAnimation() { return SKA.get(); }
 
-    std::string npcStateToString(const std::string& stateName) const;
+    std::string charStateToString(const std::string& stateName) const;
     std::vector<glm::mat4>* getTransformMatrices();
 
 private:
@@ -55,25 +55,25 @@ private:
 };
 
 // Implementazione
-NPC::NPC(const std::string& name, const glm::vec3& pos, std::shared_ptr<AnimBlender> AB, std::shared_ptr<SkeletalAnimation> SKA, const std::vector<std::string>& stateNames)
+Character::Character(const std::string& name, const glm::vec3& pos, std::shared_ptr<AnimBlender> AB, std::shared_ptr<SkeletalAnimation> SKA, const std::vector<std::string>& stateNames)
     : name(name), position(pos), stateNames(stateNames), currentStateIdx(getStateIndex("Idle")), currentDialogue(0), AB(AB), SKA(SKA) {}
 
-void NPC::setPosition(const glm::vec3& pos) { position = pos; }
-glm::vec3 NPC::getPosition() const { return position; }
+void Character::setPosition(const glm::vec3& pos) { position = pos; }
+glm::vec3 Character::getPosition() const { return position; }
 
-void NPC::setState(const std::string& stateName) {
+void Character::setState(const std::string& stateName) {
     auto it = std::find(stateNames.begin(), stateNames.end(), stateName);
     if (it != stateNames.end()) {
         currentStateIdx = static_cast<int>(std::distance(stateNames.begin(), it));
     }
 }
-std::string NPC::getState() const {
+std::string Character::getState() const {
     if (currentStateIdx >= 0 && currentStateIdx < (int)stateNames.size())
         return stateNames[currentStateIdx];
     return "Unknown";
 }
 
-int NPC::getStateIndex(const std::string& stateName) const {
+int Character::getStateIndex(const std::string& stateName) const {
 for (size_t i = 0; i < stateNames.size(); ++i) {
         if (stateNames[i] == stateName) {
             return static_cast<int>(i);
@@ -82,28 +82,28 @@ for (size_t i = 0; i < stateNames.size(); ++i) {
     return -1; // Stato non valido
 }
 
-int NPC::getStateIndex() const {
+int Character::getStateIndex() const {
     return currentStateIdx;
 }
-std::vector<std::string> NPC::getStateNames() const {
+std::vector<std::string> Character::getStateNames() const {
     return stateNames;
 }
 
-void NPC::setDialogues(const std::vector<std::string>& d) { dialogues = d; currentDialogue = 0; }
-std::string NPC::getCurrentDialogue() const {
+void Character::setDialogues(const std::vector<std::string>& d) { dialogues = d; currentDialogue = 0; }
+std::string Character::getCurrentDialogue() const {
     if (dialogues.empty()) return "";
     return dialogues[currentDialogue];
 }
-void NPC::nextDialogue() {
+void Character::nextDialogue() {
     if (!dialogues.empty() && currentDialogue + 1 < dialogues.size())
         ++currentDialogue;
 }
 
-bool NPC::canInteract(float playerDistance) const {
+bool Character::canInteract(float playerDistance) const {
     return playerDistance < 2.0f && getState() == "Idle";
 }
 
-void NPC::interact() {
+void Character::interact() {
     if (getState() == "Idle") {
         setState("Waving");
         // Trova l'indice dello stato "Waving" e avvia l'animazione corrispondente
@@ -116,13 +116,13 @@ void NPC::interact() {
     }
 }
 
-std::string NPC::getName() const { return name; }
+std::string Character::getName() const { return name; }
 
-std::string NPC::npcStateToString(const std::string& stateName) const {
+std::string Character::charStateToString(const std::string& stateName) const {
     return stateName;
 }
 
-std::vector<glm::mat4>* NPC::getTransformMatrices() {
+std::vector<glm::mat4>* Character::getTransformMatrices() {
     SKA->Sample(*AB.get());
     return SKA->getTransformMatrices();
 }

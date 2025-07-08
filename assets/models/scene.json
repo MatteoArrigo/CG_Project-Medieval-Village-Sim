@@ -13,14 +13,14 @@
 
 		{"id":  "baseplate", "file":  "assets/models/Baseplate.gltf", "format":"GLTF"}
 	],
-	"npcs": [
+	"characters": [
 		{
-			"id": "npc1",
+			"id": "char1",
 			"name": "Mario",
 			"position": [20, 20, 20],
 			"animList": ["hm", "a1", "a2", "a3", "a4"],
 			"startEndFrames": [[0,32], [0,16], [0,263], [0,83], [0,16]],
-			"npcStates": ["Walking", "Running", "Idle", "Pointing", "Waving"],
+			"charStates": ["Walking", "Running", "Idle", "Pointing", "Waving"],
 			"BaseTrackName": "Armature|mixamo.com|Layer0"
 		}
 	],
