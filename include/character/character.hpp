@@ -23,7 +23,6 @@ public:
     void nextDialogue();
 
     // Interazione
-    bool canInteract(float playerDistance) const;
     void interact();
 
     // Nome
@@ -99,9 +98,6 @@ void Character::nextDialogue() {
         ++currentDialogue;
 }
 
-bool Character::canInteract(float playerDistance) const {
-    return playerDistance < 2.0f && getState() == "Idle";
-}
 
 void Character::interact() {
     if (getState() == "Idle") {

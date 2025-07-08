@@ -15,7 +15,7 @@
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
-const bool FLY_MODE = false;
+const bool FLY_MODE = true;
 
 // The uniform buffer object used in this example
 struct VertexChar {
@@ -630,8 +630,9 @@ class CGProject : public BaseProject {
 				debounce = true;
 				curDebounce = GLFW_KEY_E;
 
-				auto nearest = charManager.getNearestCharacter(playerPos, 2.0f);
-				if (nearest && nearest->canInteract(glm::distance(nearest->getPosition(), playerPos))) {
+				auto nearest = charManager.getNearestCharacter(playerPos);
+				// glm::distance(nearest->getPosition(), playerPos))
+				if (nearest) {
 					nearest->interact();
 					txt.print(0.5f, 0.1f, nearest->getCurrentDialogue(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
 					std::cout << "Character in state : " << nearest->getState() << "\n";

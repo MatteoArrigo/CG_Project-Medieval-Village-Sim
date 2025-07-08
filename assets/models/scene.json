@@ -28,6 +28,8 @@
 		}
 	],
 	"models": [
+		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
+		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
 		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
 		{"id": "water_grid", "VD": "VDsimp", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
 
@@ -391,6 +393,7 @@
 		{"id": "Meadow_Grass_01_Var1_LOD2-00", "VD": "VDtan", "model": "Meadow_Grass_01_Var1_LOD2", "node": "Meadow_Grass_01_Var1_LOD2", "meshId": 0, "asset": "vegetation", "format": "ASSET"}
 	],
 	"textures": [
+		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png", "format": "C"},
 		{"id": "pnois", "texture": "assets/textures/Perlin_noise.png", "format": "C"},
 		{"id": "main", "texture": "assets/textures/textures0.png", "format": "C"},
 		{"id": "skybox", "texture": "assets/textures/skybox.jpg", "format": "C"},

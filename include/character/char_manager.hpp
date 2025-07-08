@@ -11,12 +11,13 @@ public:
         characters.push_back(character);
     }
 
-    std::shared_ptr<Character> getNearestCharacter(const glm::vec3& playerPos, float maxDistance) const {
+    // Restituisce il Character interactable più vicino alla posizione del giocatore, entro una distanza massima
+    std::shared_ptr<Character> getNearestCharacter(const glm::vec3& playerPos) const {
         std::shared_ptr<Character> nearest = nullptr;
         float minDist = maxDistance;
         for (const auto& charac : characters) {
             float dist = glm::distance(charac->getPosition(), playerPos);
-            if (dist < minDist) {
+            if (dist < minDist && charac->getState() == "Idle") {
                 minDist = dist;
                 nearest = charac;
             }
@@ -63,9 +64,6 @@ public:
 
             // Inizializza Animations
             int animCount = static_cast<int>(animList.size());
-            // Animations Anim[animCount];
-            // std::vector<Animations> Anim(animCount);
-            std::cout << "DAWdadwad \n";
             // Inizializza Anims[skinId] come un vettore di Animations di dimensione animCount
             if (Anims.size() <= skinId) {
                 Anims.resize(skinId + 1);
@@ -98,6 +96,7 @@ public:
             auto charac = std::make_shared<Character>(name, pos, ab, SKA, charStates);
             addChar(charac);
         }
+        std::cout << "Characters initialization finished \n";
         return 0;
     }
 
@@ -124,4 +123,5 @@ public:
 private:
     std::vector<std::shared_ptr<Character>> characters;
     std::vector<std::vector<Animations>> Anims; // Per cleanuppare le animazioni degli Character
+    float maxDistance = 7.5f; // Distanza massima per considerare un Character "vicino"
 };
