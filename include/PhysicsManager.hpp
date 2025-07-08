@@ -24,7 +24,7 @@ struct PlayerConfig {
     float capsuleRadius = 0.3f;
     float capsuleHeight = 1.6f;
     float mass = 80.0f;
-    glm::vec3 startPosition = glm::vec3(20, 20, 20);
+    glm::vec3 startPosition = glm::vec3(30,10,15);
 
     float moveSpeed = 2.3f;
     float runSpeed = 3.5f;

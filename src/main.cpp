@@ -478,11 +478,12 @@ class CGProject : public BaseProject {
         P_PBR_SpecGloss.create(&RP);
 
         std::cout << "Creating descriptor sets\n";
+
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
 
-        std::cout << "pipelinesAndDescriptorSetsInit done\n";
-    }
+        std::cout << "Ended creating pipelines and descriptor sets\n";
+	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsCleanup() {
