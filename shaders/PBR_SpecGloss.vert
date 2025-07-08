@@ -8,9 +8,13 @@ layout(binding = 0, set = 1) uniform UniformBufferObject {
 } ubo;
 
 layout(binding = 5, set = 1) uniform ShadowUBO {
-	mat4 lightVP;  // Light's view-projection matrix (orthographic)
-	mat4 model;    // Model matrix of the object (not strictly needed here)
-} shadowUbo;
+	mat4 lightVP;
+	/** Debug vector for shadow map rendering.
+	 * If debug.x == 1.0, the terrain renders only white if lit and black if in shadow
+	 * If debug.y == 1.0, the light's clip space is visualized instead of the basic perspective view
+	 */
+	vec4 debug;
+} shadowClipUbo;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNorm;
@@ -27,8 +31,10 @@ layout(location = 3) out vec4 fragTan;
 // or the normal perspective view
 
 void main() {
-//	gl_Position = shadowUbo.lightVP * shadowUbo.model * vec4(inPosition, 1.0);
-	gl_Position = ubo.mvpMat * vec4(inPosition, 1.0);
+	if(shadowClipUbo.debug.y == 1.0)
+		gl_Position = shadowClipUbo.lightVP * ubo.mMat * vec4(inPosition, 1.0);
+	else
+		gl_Position = ubo.mvpMat * vec4(inPosition, 1.0);
 	fragPos = (ubo.mMat * vec4(inPosition, 1.0)).xyz;
 	fragNorm = normalize((ubo.nMat * vec4(inNorm, 0.0)).xyz);
 	fragUV = inUV;

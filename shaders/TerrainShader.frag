@@ -34,7 +34,8 @@ layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNorm;
 layout(location = 2) in vec2 fragUV;
 layout(location = 3) in vec4 fragTan;
-layout(location = 4) in vec4 fragPosLightSpace;  // NEW: position in light space
+layout(location = 4) in vec4 fragPosLightSpace;
+layout(location = 5) in vec4 debug;
 
 layout(location = 0) out vec4 outColor;
 
@@ -151,44 +152,45 @@ float DistributionBlinnPhong(vec3 N, vec3 H, float glossiness) {
 }
 
 void main() {
-    mat3 TBN = computeTBN();
-    vec3 N = getNormalFromMap(TBN, mNormalMap, tNormalMap);
+    if(debug.x == 1.0) {
+        float shadow = ShadowCalculation(fragPosLightSpace);
+        outColor = vec4(shadow, shadow, shadow, 1.0);
+    } else {
 
-    vec4 albedoTex = getBlendedTexture(mAlbedoMap, tAlbedoMap);
-    vec4 sgTex     = getBlendedTexture(mSGMap, tSGMap);
+        mat3 TBN = computeTBN();
+        vec3 N = getNormalFromMap(TBN, mNormalMap, tNormalMap);
 
-    vec3 albedo = albedoTex.rgb * DIFFUSE_FACTOR;
-    vec3 specularColor = sgTex.rgb * SPECULAR_FACTOR;
-    float glossiness = sgTex.a * GLOSSINESS_FACTOR;
-    float shininess = max(glossiness * 256.0, 1.0);
+        vec4 albedoTex = getBlendedTexture(mAlbedoMap, tAlbedoMap);
+        vec4 sgTex = getBlendedTexture(mSGMap, tSGMap);
 
-    vec3 V = normalize(gubo.eyePos - fragPos);
-    vec3 L = normalize(gubo.lightDir);
-    vec3 H = normalize(V + L);
+        vec3 albedo = albedoTex.rgb * DIFFUSE_FACTOR;
+        vec3 specularColor = sgTex.rgb * SPECULAR_FACTOR;
+        float glossiness = sgTex.a * GLOSSINESS_FACTOR;
+        float shininess = max(glossiness * 256.0, 1.0);
 
-    float NdotL = max(dot(N, L), 0.0);
-    float NdotV = max(dot(N, V), 0.0);
-    float NdotH = max(dot(N, H), 0.0);
-    float VdotH = max(dot(V, H), 0.0);
+        vec3 V = normalize(gubo.eyePos - fragPos);
+        vec3 L = normalize(gubo.lightDir);
+        vec3 H = normalize(V + L);
 
-    vec3 F = fresnelSchlick(VdotH, specularColor);
-    float specularTerm = pow(NdotH, shininess);
-    vec3 specular = F * specularTerm;
+        float NdotL = max(dot(N, L), 0.0);
+        float NdotV = max(dot(N, V), 0.0);
+        float NdotH = max(dot(N, H), 0.0);
+        float VdotH = max(dot(V, H), 0.0);
 
-    float oneMinusSpec = 1.0 - max(max(specularColor.r, specularColor.g), specularColor.b);
-    vec3 diffuse = albedo * oneMinusSpec / PI;
+        vec3 F = fresnelSchlick(VdotH, specularColor);
+        float specularTerm = pow(NdotH, shininess);
+        vec3 specular = F * specularTerm;
 
-    float ao = getCombinedAO();
-    vec3 lightColor = gubo.lightColor.rgb;
+        float oneMinusSpec = 1.0 - max(max(specularColor.r, specularColor.g), specularColor.b);
+        vec3 diffuse = albedo * oneMinusSpec / PI;
 
-    float shadow = ShadowCalculation(fragPosLightSpace);
+        float ao = getCombinedAO();
+        vec3 lightColor = gubo.lightColor.rgb;
 
-//    vec3 ambient = vec3(AO_FACTOR) * albedo * ao;
-//    vec3 color = (diffuse + specular) * lightColor * NdotL * shadow + ambient;
+        float shadow = ShadowCalculation(fragPosLightSpace);
 
-    /*FIXME: Debug version, visualize only
-            white (if terrain hit by light) or
-            black (if in shadow -->  terrain not hit by light) */
-    vec3 color = vec3(shadow);
-    outColor = vec4(color, 1.0);
+        vec3 ambient = vec3(AO_FACTOR) * albedo * ao;
+        vec3 color = (diffuse + specular) * lightColor * NdotL * shadow + ambient;
+        outColor = vec4(color, 1.0);
+    }
 }

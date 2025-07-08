@@ -13,20 +13,14 @@
 //TODO generale: Ripulisci e Commenta tutto il main
 
 /*TODO:
-    - Ripulisci il codice, lasciando lo shader del terreno così come è
-    non aggiungere altri elementi da scene per ora, concentrati solo sul codice
-    Fregatene della visione ortografica della luce, per ora
-    Se c'è bisogno di altri PshadowMap null per altre tecniche, aggiungili
-    Rivedi gli shader aggiunti per terrain e pbr, capisci se servono veramente o no
     - quando ridimensiono la finestra crasha, perchè?
-    - sistema fatto che shadowUBO.model e ubo.mMat sono uguali
     - aggiusta character che non viene renderizzato
     - prova a gestire meglio il sample della shadow map in terrain shader, soprattuto per
        le coordinate che escono fuori dal light clip space e per il bias term (magari rendilo dinamico...)
-    - Fai commit a parte per una modalità ortografica dal punto di vista della luce
-    - Commit finale con giusto rendering interpolando le ombre nel terreno
     - Pensa se aggiungere supporto alle ombre anche su altre tecniche
     - attenziona il fatto che le ombre hanno i bordi jagged (seghettati)
+    - Alcune mesh come vegetation hanno maskMode alpha, quindi l'ombra dovrebbe esserci
+        solo per i punti con la texture.a > 0.5, come gestire questo?
 */
 
 /** If true, gravity and inertia are disabled
@@ -79,17 +73,25 @@ struct UniformBufferObjectSimp {
 	alignas(16) glm::mat4 nMat;
 };
 
-struct ShadowUBO {
+struct ShadowMapUBO {
 	alignas(16) glm::mat4 lightVP;
 	alignas(16) glm::mat4 model;
 };
-struct ShadowCharUBO {
+struct ShadowMapUBOChar {
 	alignas(16) glm::mat4 lightVP;
 	alignas(16) glm::mat4 model[65];
+};
+struct ShadowClipUBO {
+	alignas(16) glm::mat4 lightVP;
+	alignas(16) glm::vec4 debug;
 };
 
 struct skyBoxUniformBufferObject {
 	alignas(16) glm::mat4 mvpMat;
+};
+
+struct DebugUBO {
+    alignas(16) glm::vec4 debug;
 };
 
 struct TimeUBO {
@@ -185,6 +187,7 @@ class CGProject : public BaseProject {
     const float MIN_CAM_DIST = 1.5;
 
 
+//    const glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
     const glm::vec4 lightColor = glm::vec4(1.0f, 0.4f, 0.4f, 1.0f);
     /**
      * Matrix defining the light rotation to apply to +z axis to get the light direction.
@@ -193,7 +196,7 @@ class CGProject : public BaseProject {
      *  - applied in its inverse form to compute the light projection matrix for shadow map
      */
     const glm::mat4 lightRotation = glm::rotate(glm::mat4(1), glm::radians(-29.0f),
-        glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-45.0f),
+        glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-30.0f),
          glm::vec3(1.0f,0.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(0.0f),
          glm::vec3(0.0f,0.0f,1.0f));
     /**
@@ -206,7 +209,7 @@ class CGProject : public BaseProject {
      */
     const float lightWorldLeft = -150.0f, lightWorldRight = 150.0f;
     const float lightWorldBottom = lightWorldLeft * 1.0f, lightWorldTop = lightWorldRight * 1.0f;     // Now the shadow map is square (2048x2048)
-    const float lightWorldNear = -100.0f, lightWorldFar = 100.0f;
+    const float lightWorldNear = -150.0f, lightWorldFar = 200.0f;
     /**
      * Actual projection matrix used to render the scene from light pov, in shadow mapping render pass
      */
@@ -215,6 +218,12 @@ class CGProject : public BaseProject {
 
     //TODO: capisci se togliere o usare
 	glm::vec4 debug1 = glm::vec4(0);
+
+    /** Debug vector present in DSL for shadow map. Basic version is vec4(0,0,0,0)
+     * if debugLightView.x == 1.0, the terrain renders only white if lit and black if in shadow
+     * if debugLightView.y == 1.0, the light's clip space is visualized instead of the basic perspective view
+     */
+    glm::vec4 debugLightView = glm::vec4(0.0);
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -263,10 +272,10 @@ class CGProject : public BaseProject {
 
 		// --------- DSL INITIALIZATION ---------
 		DSLshadowMap.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowUBO), 1}
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowMapUBO), 1}
         });
         DSLshadowMapChar.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowCharUBO), 1}
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowMapUBOChar), 1}
         });
 		DSLglobal.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, sizeof(GlobalUniformBufferObject), 1}
@@ -282,11 +291,13 @@ class CGProject : public BaseProject {
         });
 		DSLskyBox.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(skyBoxUniformBufferObject), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DebugUBO), 1},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
 		});
 		DSLwaterVert.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO), 1},
 			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp),1},
+			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO),1},
 		});
         DSLwaterFrag.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(GlobalUniformBufferObject), 1},
@@ -302,33 +313,34 @@ class CGProject : public BaseProject {
         DSLgrass.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
 			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO), 1},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1}
+			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1}
 		});
         DSLterrain.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
-            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
-            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
-            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
-            {6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5, 1},
-            {7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1},
-            {8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7, 1},
-            {9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 8, 1},
-            {10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 9, 1},
-            {11, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,           1},
+            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,           1},
+            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,           1},
+            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,           1},
+            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4,           1},
+            {6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5,           1},
+            {7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6,           1},
+            {8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7,           1},
+            {9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 8,           1},
+            {10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 9,          1},
+            {11, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
         });
         DSLterrainFactors.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TerrainFactorsUBO), 1},
         });
 		DSLlocalPBR.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
-            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
-            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
-            {5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,                     1},
+            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,                     1},
+            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,                     1},
+            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,                     1},
+            {5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO),            1},
         });
         DSLsgAoFactors.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SgAoMaterialFactorsUBO), 1},
@@ -520,7 +532,7 @@ class CGProject : public BaseProject {
 		DPSZs.setsInPool = 1000;
 		
         std::cout << "\nLoading the scene\n\n";
-		if(SC.init(this, /*Npasses*/2, VDRs, PRs, "assets/models/scene_reduced.json") != 0) {
+		if(SC.init(this, 2, VDRs, PRs, "assets/models/scene.json") != 0) {
 			std::cout << "ERROR LOADING THE SCENE\n";
 			exit(0);
 		}
@@ -652,12 +664,10 @@ class CGProject : public BaseProject {
 		static bool debounce = false;
 		static int curDebounce = 0;
 
-        //TODO: ripulisci e personalizza questa sezione con i pulsanti premuti
-        // per ora solo barra spaziatrice usata per il salto è ok
-        // In particolare: "Detect running by pressing SHIFT key (currently hardcoded as walking all the time)"
+        // TODO Detect running by pressing SHIFT key (currently hardcoded as walking all the time)
 
         // Handle of command keys
-        {        // handle the ESC key to exit the app
+        {
             if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
                 glfwSetWindowShouldClose(window, GL_TRUE);
             }
@@ -666,64 +676,39 @@ class CGProject : public BaseProject {
                 if (!debounce) {
                     debounce = true;
                     curDebounce = GLFW_KEY_1;
+                    std::cout << "Toggling debug light view\n";
 
-                    debug1.x = 1.0 - debug1.x;
+                    debugLightView.x = 1.0 - debugLightView.x;
                 }
-            } else {
-                if ((curDebounce == GLFW_KEY_1) && debounce) {
-                    debounce = false;
-                    curDebounce = 0;
-                }
+            } else if (curDebounce == GLFW_KEY_1 && debounce) {
+                debounce = false;
+                curDebounce = 0;
+                std::cout << "Debug light view toggled\n";
             }
-
             if (glfwGetKey(window, GLFW_KEY_2)) {
                 if (!debounce) {
                     debounce = true;
                     curDebounce = GLFW_KEY_2;
 
-                    debug1.y = 1.0 - debug1.y;
+                    debugLightView.y = 1.0 - debugLightView.y;
                 }
-            } else {
-                if ((curDebounce == GLFW_KEY_2) && debounce) {
-                    debounce = false;
-                    curDebounce = 0;
-                }
+            } else if (curDebounce == GLFW_KEY_2 && debounce) {
+                debounce = false;
+                curDebounce = 0;
             }
 
-            if (glfwGetKey(window, GLFW_KEY_P)) {
-                if (!debounce) {
-                    debounce = true;
-                    curDebounce = GLFW_KEY_P;
-
-                    debug1.z = (float) (((int) debug1.z + 1) % 65);
-                    std::cout << "Showing bone index: " << debug1.z << "\n";
-                }
-            } else {
-                if ((curDebounce == GLFW_KEY_P) && debounce) {
-                    debounce = false;
-                    curDebounce = 0;
-                }
-            }
-
-            if (glfwGetKey(window, GLFW_KEY_O)) {
-                if (!debounce) {
-                    debounce = true;
-                    curDebounce = GLFW_KEY_O;
-
-                    debug1.z = (float) (((int) debug1.z + 64) % 65);
-                    std::cout << "Showing bone index: " << debug1.z << "\n";
-                }
-            } else {
-                if ((curDebounce == GLFW_KEY_O) && debounce) {
-                    debounce = false;
-                    curDebounce = 0;
-                }
-            }
-
-            static int curAnim = 0;
             if (glfwGetKey(window, GLFW_KEY_SPACE)) {
-                PhysicsMgr.jumpPlayer();
+                if (!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_SPACE;
+
+                    PhysicsMgr.jumpPlayer();
+                }
+            } else if (curDebounce == GLFW_KEY_SPACE && debounce) {
+                debounce = false;
+                curDebounce = 0;
             }
+
         }
 
 		// moves the view
@@ -735,6 +720,8 @@ class CGProject : public BaseProject {
 	
 
         // ----- UPDATE UNIFORMS -----
+        //TODO per ora le prime 2 tecniche, che non stiamo usando, non hanno implementato
+        // il passaggio a visione ortografica quando premo 2
 
         // Common uniforms and general variables
         int instanceId;
@@ -744,9 +731,14 @@ class CGProject : public BaseProject {
             .lightColor = lightColor,
             .eyePos = cameraPos
         };
-        ShadowUBO shadowUbo{
+        ShadowMapUBO shadowUbo{
             .lightVP = lightVP
         };
+        ShadowClipUBO shadowClipUbo{
+            .lightVP = lightVP,
+            .debug = debugLightView
+        };
+        DebugUBO debugUbo{debugLightView};
         UniformBufferObjectSimp ubos{};
         TimeUBO timeUbo{.time = static_cast<float>(glfwGetTime())};
 //        TimeUBO timeUbo{.time = glfwGetTime()};
@@ -756,8 +748,8 @@ class CGProject : public BaseProject {
 		UniformBufferObjectChar uboc{
             .debug1 = debug1
         };
-        ShadowCharUBO shadowCharUbo {
-            .lightVP = lightVP
+        ShadowMapUBOChar shadowCharUbo {
+            .lightVP = lightVP,
         };
 		SKA.Sample(AB);
 		std::vector<glm::mat4> *TMsp = SKA.getTransformMatrices();
@@ -797,6 +789,7 @@ class CGProject : public BaseProject {
 		    .mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f))
         };
 		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &sbubo, 0);
+		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &debugUbo, 1);
 
         // TECHNIQUE Terrain
         techniqueId++;
@@ -814,7 +807,7 @@ class CGProject : public BaseProject {
             SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0);  // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowUbo, 11);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 11);
             SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &terrainFactorsUbo, 0);  // Set 2
         }
 
@@ -825,6 +818,7 @@ class CGProject : public BaseProject {
         ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
         SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &timeUbo, 0);
         SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &ubos, 1);
+        SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &shadowClipUbo, 2);
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &gubo, 0);
 
         // TECHNIQUE Vegetation/Grass
@@ -837,9 +831,10 @@ class CGProject : public BaseProject {
             shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
 
             SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
-            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0);  // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &timeUbo, 1);  // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &timeUbo, 1);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 2);
         }
 
         // TECHNIQUE PBR_SpecGloss
@@ -860,7 +855,7 @@ class CGProject : public BaseProject {
             SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0); // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowUbo, 5); // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 5); // Set 1
             SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &sgAoUbo, 0); // Set 2
         }
 

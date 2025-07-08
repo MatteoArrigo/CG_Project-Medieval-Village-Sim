@@ -7,10 +7,15 @@ layout(binding = 0, set = 1) uniform UniformBufferObject {
 	mat4 nMat;
 } ubo;
 
-layout(binding = 11, set = 1) uniform ShadowUBO {
+layout(binding = 11, set = 1) uniform ShaodowClipUBO {
 	mat4 lightVP;
-	mat4 model;
-} shadowUbo;
+
+	/** Debug vector for shadow map rendering.
+	 * If debug.x == 1.0, the terrain renders only white if lit and black if in shadow
+	 * If debug.y == 1.0, the light's clip space is visualized instead of the basic perspective view
+	 */
+	vec4 debug;
+} shadowClipUbo;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNorm;
@@ -22,19 +27,19 @@ layout(location = 1) out vec3 fragNorm;
 layout(location = 2) out vec2 fragUV;
 layout(location = 3) out vec4 fragTan;
 layout(location = 4) out vec4 fragPosLightSpace;	// Needed to sample shadow map
+layout(location = 5) out vec4 debug; // Debug output
 
-
-// FIXME
-// For now, comment a line and the comment the other to choose the light's view
-// or the normal perspective view
 
 void main() {
-//	gl_Position = shadowUbo.lightVP * shadowUbo.model * vec4(inPosition, 1.0);
-	gl_Position = ubo.mvpMat * vec4(inPosition, 1.0);
+	if(shadowClipUbo.debug.y == 1.0)
+		gl_Position = shadowClipUbo.lightVP * ubo.mMat * vec4(inPosition, 1.0);
+	else
+		gl_Position = ubo.mvpMat * vec4(inPosition, 1.0);
 	fragPos = (ubo.mMat * vec4(inPosition, 1.0)).xyz;
 	fragNorm = normalize((ubo.nMat * vec4(inNorm, 0.0)).xyz);
 	fragUV = inUV;
 	fragTan = vec4(normalize(mat3(ubo.mMat) * inTangent.xyz), inTangent.w);
 
-	fragPosLightSpace = shadowUbo.lightVP * shadowUbo.model * vec4(inPosition, 1.0);
+	fragPosLightSpace = shadowClipUbo.lightVP * ubo.mMat * vec4(inPosition, 1.0);
+	debug = shadowClipUbo.debug;
 }

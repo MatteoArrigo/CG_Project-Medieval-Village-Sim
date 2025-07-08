@@ -44,6 +44,15 @@ layout(set = 0, binding = 1) uniform UniformBufferObject {
     mat4 nMat;
 } ubo;
 
+layout(binding = 2, set = 0) uniform ShaodowClipUBO {
+    mat4 lightVP;
+
+/** Debug vector for shadow map rendering.
+	 * If debug.x == 1.0, the terrain renders only white if lit and black if in shadow
+	 * If debug.y == 1.0, the light's clip space is visualized instead of the basic perspective view
+	 */
+    vec4 debug;
+} shadowClipUbo;
 /**
     Parameters for the wave function representing the vertical displacement of the water surface.
     - `amplitude`: Amplitude of the wave (max displacement).
@@ -93,7 +102,10 @@ void main() {
 
     // Transform position to clip space
     // This is the final position that will be used for rendering
-    gl_Position = ubo.mvpMat * vec4(pos, 1.0);
+    if( shadowClipUbo.debug.y == 1.0)
+        gl_Position = shadowClipUbo.lightVP * ubo.mMat * vec4(pos, 1.0);
+    else
+        gl_Position = ubo.mvpMat * vec4(pos, 1.0);
 
     // Calculate UV coordinates for animated normal mapping
     // These UVs are offset by the position and scaled by time to create a dynamic effect

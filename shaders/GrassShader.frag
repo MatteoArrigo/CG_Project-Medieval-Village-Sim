@@ -34,8 +34,8 @@ layout(location = 4) in vec3 fragBitangent;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 2, set = 1) uniform sampler2D albedoMap;
-layout(binding = 3, set = 1) uniform sampler2D normalMap;
+layout(binding = 3, set = 1) uniform sampler2D albedoMap;
+layout(binding = 4, set = 1) uniform sampler2D normalMap;
 
 layout(binding = 0, set = 0) uniform GlobalUniformBufferObject {
     vec3 lightDir;

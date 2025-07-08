@@ -56,6 +56,16 @@ layout(binding = 1, set = 1) uniform TimeUBO {
     float time;
 } timeUBO;
 
+layout(binding = 2, set = 1) uniform ShaodowClipUBO {
+    mat4 lightVP;
+
+/** Debug vector for shadow map rendering.
+	 * If debug.x == 1.0, the terrain renders only white if lit and black if in shadow
+	 * If debug.y == 1.0, the light's clip space is visualized instead of the basic perspective view
+	 */
+    vec4 debug;
+} shadowClipUbo;
+
 // Wind parameters
 const vec3 windDir = normalize(vec3(1.0, 0.0, 1.0));  // Wind blowing along +X (you can rotate this)
 const float frequency = 2.0;                         // Speed of swaying
@@ -82,5 +92,8 @@ void main() {
     fragTangent = normalize((ubo.nMat * vec4(localTangent, 0.0)).xyz);
     fragBitangent = normalize((ubo.nMat * vec4(localBitangent, 0.0)).xyz);
 
-    gl_Position = ubo.mvpMat * vec4(pos, 1.0);
+    if(shadowClipUbo.debug.y == 1.0)
+        gl_Position = shadowClipUbo.lightVP * ubo.mMat * vec4(pos, 1.0);
+    else
+        gl_Position = ubo.mvpMat * vec4(pos, 1.0);
 }
