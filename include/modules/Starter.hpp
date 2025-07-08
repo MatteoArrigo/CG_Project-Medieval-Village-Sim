@@ -2851,7 +2851,10 @@ void AssetFile::initGLTF(std::string file) {
 				continue;
 			} else {
 				std::cout << "Primitive: " << PrimCount << ", Material: " <<
-					primitive.material << " -> " << model.materials[primitive.material].name <<"\n";
+					primitive.material;
+                if(primitive.material > -1)
+                    std::cout << " -> " << model.materials[primitive.material].name;
+                std::cout <<"\n";
 			}
 			GLTFmeshes[mesh.name].push_back(&primitive);
 			PrimCount++;

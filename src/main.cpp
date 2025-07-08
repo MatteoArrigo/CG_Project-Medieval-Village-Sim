@@ -10,6 +10,9 @@
 #include "modules/Animations.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
+#include "character/char_manager.hpp"
+#include "character/character.hpp"
+
 //TODO generale: Ripulisci e Commenta tutto il main
 
 /*TODO:
@@ -129,25 +132,15 @@ class CGProject : public BaseProject {
 	RenderPass RPshadow, RP;
 	Pipeline Pchar, PsimpObj, PskyBox, Pterrain, P_PBR_SpecGloss, PWater, Pgrass;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
-	//*DBG*/Pipeline PDebug;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Scene SC;
 	std::vector<VertexDescriptorRef>  VDRs;
 	std::vector<TechniqueRef> PRs;
-	//*DBG*/Model MS;
-	//*DBG*/DescriptorSet SSD;
 
 	// PhysicsManager for collision detection
 	PhysicsManager PhysicsMgr;
 	PlayerConfig physicsConfig;
-
-	// To support animation
-	#define N_ANIMATIONS 1
-
-	AnimBlender AB;
-	Animations Anim[N_ANIMATIONS];
-	SkeletalAnimation SKA;
 
 	// to provide textual feedback
 	TextMaker txt;
@@ -215,15 +208,16 @@ class CGProject : public BaseProject {
      */
     glm::mat4 lightVP;
     //TODO: capisci se i bounds trovati per ortho vanno sempre bene o devono essere dinamici
-
-    //TODO: capisci se togliere o usare
-	glm::vec4 debug1 = glm::vec4(0);
-
     /** Debug vector present in DSL for shadow map. Basic version is vec4(0,0,0,0)
      * if debugLightView.x == 1.0, the terrain renders only white if lit and black if in shadow
      * if debugLightView.y == 1.0, the light's clip space is visualized instead of the basic perspective view
      */
     glm::vec4 debugLightView = glm::vec4(0.0);
+
+	glm::vec4 debug1 = glm::vec4(0);
+
+	// To manage NPSs
+	CharManager charManager;
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -432,9 +426,6 @@ class CGProject : public BaseProject {
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLglobal, &DSLterrain, &DSLterrainFactors});
 		P_PBR_SpecGloss.init(this, &VDtan, "shaders/PBR_SpecGloss.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
 
-//        std::cout << "Shadow image format: " << RPshadow.attachments[0].properties->format << std::endl;
-//        std::cout << "Image usage: " << RPshadow.attachments[0].properties->usage << std::endl;
-
 
         // --------- TECHNIQUES INITIALIZATION ---------
         PRs.resize(7);
@@ -537,18 +528,18 @@ class CGProject : public BaseProject {
 			exit(0);
 		}
 
-		// initializes animations
-		for(int ian = 0; ian < N_ANIMATIONS; ian++) {
-			Anim[ian].init(*SC.As[ian]);
+		// Characters and animations initialization
+		if (charManager.init("assets/models/scene.json", SC.As) != 0) {
+			std::cout << "ERROR LOADING CHARACTERs\n";
+			exit(0);
 		}
-		AB.init({{0,32,0.0f,0}});
-		SKA.init(Anim, N_ANIMATIONS, "Armature|mixamo.com|Layer0", 0);
+
+		// initializes the textual output
+		txt.init(this, windowWidth, windowHeight);
 
 		// submits the main command buffer
 		submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
 
-		// initializes the textual output and Prepares for showing the FPS count
-		txt.init(this, windowWidth, windowHeight);
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
 
 		// Initialize PhysicsManager
@@ -580,6 +571,7 @@ class CGProject : public BaseProject {
         PshadowMapWater.create(&RPshadow);
 
         std::cout << "Creating descriptor sets\n";
+
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
 
@@ -619,7 +611,7 @@ class CGProject : public BaseProject {
 		DSLglobal.cleanup();
         DSLshadowMap.cleanup();
         DSLshadowMapChar.cleanup();
-		
+
 		Pchar.destroy();	
 		PsimpObj.destroy();
 		PskyBox.destroy();		
@@ -638,11 +630,9 @@ class CGProject : public BaseProject {
 		SC.localCleanup();	
 		txt.localCleanup();
 
-		for(auto & ian : Anim) {
-			ian.cleanup();
-		}
+		charManager.cleanup();
 	}
-	
+
 	static void populateCommandBufferAccess(VkCommandBuffer commandBuffer, int currentImage, void *Params) {
 		// Simple trick to avoid having always 'T->' in the code that populates the command buffer!
         std::cout << "Populating command buffer for " << currentImage << "\n";
@@ -702,22 +692,81 @@ class CGProject : public BaseProject {
                     debounce = true;
                     curDebounce = GLFW_KEY_SPACE;
 
-                    PhysicsMgr.jumpPlayer();
-                }
-            } else if (curDebounce == GLFW_KEY_SPACE && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }
+				debug1.z = (float)(((int)debug1.z + 1) % 65);
+            std::cout << "Showing bone index: " << debug1.z << "\n";
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_P) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
 
+		static int curAnim = 0;
+		static AnimBlender* AB = charManager.getCharacters()[0]->getAnimBlender();
+		if(glfwGetKey(window, GLFW_KEY_O)) {
+			if(!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_O;
+
+				curAnim = (curAnim + 1) % 5;
+				AB->Start(curAnim, 0.5);
+				std::cout << "Playing anim: " << curAnim << "\n";
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_O) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+
+        if (glfwGetKey(window, GLFW_KEY_SPACE)) {
+            if (!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_SPACE;
+
+                PhysicsMgr.jumpPlayer();
+            }
+        } else if (curDebounce == GLFW_KEY_SPACE && debounce) {
+            debounce = false;
+            curDebounce = 0;
         }
+
+		// Handle the E key for Character interaction
+		glm::vec3 playerPos = cameraPos;		// TODO: sostituire con la posizione del giocatore una volta implementato il player
+		if(glfwGetKey(window, GLFW_KEY_E)) {
+			if(!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_E;
+
+				auto nearest = charManager.getNearestCharacter(playerPos);
+				// glm::distance(nearest->getPosition(), playerPos))
+				if (nearest) {
+					nearest->interact();
+					txt.print(0.5f, 0.1f, nearest->getCurrentDialogue(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+					std::cout << "Character in state : " << nearest->getState() << "\n";
+				}
+				else {
+					std::cout << "No Character nearby to interact with.\n";
+				}
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_E) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
 
 		// moves the view
 		float deltaT = GameLogic();
 
 		// updated the animation
 		const float SpeedUpAnimFact = 0.85f;
-		AB.Advance(deltaT * SpeedUpAnimFact);
-	
+		AB->Advance(deltaT * SpeedUpAnimFact);
+		// defines the global parameters for the uniform
+		const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(1.0f,0.0f,0.0f));
+		const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+
 
         // ----- UPDATE UNIFORMS -----
         //TODO per ora le prime 2 tecniche, che non stiamo usando, non hanno implementato
@@ -743,6 +792,7 @@ class CGProject : public BaseProject {
         TimeUBO timeUbo{.time = static_cast<float>(glfwGetTime())};
 //        TimeUBO timeUbo{.time = glfwGetTime()};
 
+
 		// TECHNIQUE Character
         techniqueId++;
 		UniformBufferObjectChar uboc{
@@ -751,11 +801,12 @@ class CGProject : public BaseProject {
         ShadowMapUBOChar shadowCharUbo {
             .lightVP = lightVP,
         };
-		SKA.Sample(AB);
-		std::vector<glm::mat4> *TMsp = SKA.getTransformMatrices();
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
+		static SkeletalAnimation* SKA = charManager.getCharacters()[0]->getSkeletalAnimation();
+		SKA->Sample(*AB);
+		std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
 
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
 			for(int im = 0; im < TMsp->size(); im++) {

@@ -71,10 +71,10 @@ void PhysicsManager::createTerrain() {
     btTriangleMesh* terrainTriMesh = new btTriangleMesh();
 
     float size = terrainConfig.size;
-    btVector3 A(-size, 0, -size);
-    btVector3 B(+size, 0, -size);
-    btVector3 C(+size, 0, +size);
-    btVector3 D(-size, 0, +size);
+    btVector3 A(-size, -1.8, -size);
+    btVector3 B(+size, -1.8, -size);
+    btVector3 C(+size, -1.8, +size);
+    btVector3 D(-size, -1.8, +size);
 
     // Add triangles
     terrainTriMesh->addTriangle(A, B, C);
@@ -270,9 +270,34 @@ PhysicsObject* PhysicsManager::addStaticSphere(const glm::vec3& position, float 
     return result;
 }
 
-void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount) {
 
+btTransform glmMat4ToBtTransform(const glm::mat4& mat) {
+    btMatrix3x3 basis(
+            mat[0][0], mat[0][1], mat[0][2],
+            mat[1][0], mat[1][1], mat[1][2],
+            mat[2][0], mat[2][1], mat[2][2]
+    );
+    btVector3 origin(mat[3][0], mat[3][1], mat[3][2]);
+    btTransform transform;
+    transform.setBasis(basis);
+    transform.setOrigin(origin);
+    return transform;
+}
+
+//TODO: discuti
+// Se si usano tutte le mesh per le collision, compaiono oggetti invisibili sulle boardwalk...
+// Secondo me sono mesh per cui non viene calcolato bene il posizionamento
+// Per ora ho risolto usando solo gli edifici e il boardwalk per le collision
+// Il problema specifico delle boardwalk sembra essere dato dalle fence
+
+void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount) {
     for (int instanceIdx=0; instanceIdx<instanceCount; instanceIdx++) {
+
+        // Skip instances that are not used for physics
+        if(!instanceRefs[instanceIdx]->usedForPhysics) {
+            continue;
+        }
+
         // retrieve instance and model references
         int modelIdx = instanceRefs[instanceIdx]->Mid;
         if (modelIdx < 0 || modelIdx >= instanceCount) {
@@ -281,9 +306,6 @@ void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs,
         }
         const Instance* instanceRef = instanceRefs[instanceIdx];
         const Model* modelRef = modelRefs[modelIdx];
-
-        // retrieve the translation inside the scene of the current model
-        glm::vec3 position = glm::vec3(instanceRef->Wm[3]);
 
         const Model &model = *modelRef;
         const std::vector<unsigned char> &vertices = model.vertices;
@@ -323,12 +345,9 @@ void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs,
             auto obj = std::make_unique<PhysicsObject>();
             obj->shape = new btBvhTriangleMeshShape(mesh, true);
 
-            btTransform transform;
-            transform.setIdentity();
-            transform.setOrigin(glmToBt(position));
+            btTransform transform = glmMat4ToBtTransform(instanceRef->Wm);
 
             obj->motionState = new btDefaultMotionState(transform);
-            obj->initialPosition = position;
             btRigidBody::btRigidBodyConstructionInfo info(0.0f, obj->motionState, obj->shape);
             obj->body = new btRigidBody(info);
             dynamicsWorld->addRigidBody(obj->body);
