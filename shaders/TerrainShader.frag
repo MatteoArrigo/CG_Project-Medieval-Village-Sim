@@ -10,6 +10,7 @@
  *   - fragNorm: Fragment normal
  *   - fragUV: Fragment UV coordinates
  *   - fragTan: Fragment tangent (xyz) and handedness (w)
+ *   - fragPosLightSpace: Coordinate in light clip space, used to sample the shadow map.
  *
 *  Texture samplers:
 *    - mAlbedoMap, tAlbedoMap: Albedo (base color) maps for main and terrain
@@ -33,6 +34,7 @@ layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNorm;
 layout(location = 2) in vec2 fragUV;
 layout(location = 3) in vec4 fragTan;
+layout(location = 4) in vec4 fragPosLightSpace;  // NEW: position in light space
 
 layout(location = 0) out vec4 outColor;
 
@@ -49,13 +51,7 @@ layout(binding = 7, set = 1) uniform sampler2D tSGMap;
 layout(binding = 8, set = 1) uniform sampler2D aoMap;
 layout(binding = 9, set = 1) uniform sampler2D aoMapHighPassed;
 
-/**
-DEBUG VERSION
-There's an additional sampler2D set to read the depth buffer written in shadow pass
-It should print the constant color (0.1) written during that pass
-*/
-
-layout(binding = 10, set = 1) uniform sampler2D prova;
+layout(binding = 10, set = 1) uniform sampler2D shadowMap;
 
 layout(binding = 0, set = 0) uniform GlobalUniformBufferObject {
     vec3 lightDir;
@@ -76,6 +72,41 @@ const vec3  DIFFUSE_FACTOR     = vec3(0.5);   // full albedo color
 const vec3  SPECULAR_FACTOR    = vec3(0.05);  // very low specular (non-metal)
 const float GLOSSINESS_FACTOR  = 0.25;        // rough surface
 const float AO_FACTOR          = 0.4;         // full ambient occlusion
+
+/**
+ * Calculates the shadow factor for the current fragment using the shadow map.
+ * This function determines whether the fragment is in shadow by comparing its depth
+ * from the light's perspective to the closest depth stored in the shadow map.
+ *
+ * Steps:
+ *    1. Converts the fragment's position from light space clip coordinates to normalized device coordinates (NDC).
+ *    2. Maps NDC coordinates from [-1, 1] to UV coordinates in [0, 1] for texture sampling.
+ *    3. Checks if the projected coordinates are outside the shadow map bounds; if so, returns 1.0 (fully lit).
+ *    4. Samples the shadow map at the projected UV to get the closest depth to the light.
+ *    5. Compares the current fragment's depth (with a small bias to prevent shadow acne) to the closest depth.
+ *       - If the fragment is further than the closest depth, it is in shadow (returns 0.0).
+ *       - Otherwise, it is lit (returns 1.0).
+ *
+ * @param fragPosLightSpace vec4 - The fragment's position in light space (clip coordinates).
+ * @return float - Shadow factor: 1.0 if lit, 0.0 if in shadow.
+ */
+const float shadowBias = 0.001; // Bias to avoid shadow acne
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    // Convert from light space clip coordinates to normalized device coordinates (NDC)
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // Convert NDC [-1,1] to UV coordinates [0,1]
+    projCoords.xy = projCoords.xy * 0.5 + 0.5;
+    // Discard fragments outside shadow map bounds
+    if (projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
+        return 1.0;  // fully lit, outside shadow map
+
+    float closestDepth = texture(shadowMap, projCoords.xy).r;   // Read closest depth from shadow map
+    float currentDepth = projCoords.z;                          // Current fragment depth from light's POV
+    float shadow = (currentDepth - shadowBias > closestDepth) ? 0.0 : 1.0;      // Shadow comparison
+
+    return shadow;
+}
 
 // Function to get the mask blend factor based on the mask texture
 // The mask texture's alpha channel is used to blend between the main and terrain textures.
@@ -150,11 +181,14 @@ void main() {
     float ao = getCombinedAO();
     vec3 lightColor = gubo.lightColor.rgb;
 
-    vec3 ambient = vec3(AO_FACTOR) * albedo * ao;
-    vec3 color = (diffuse + specular) * lightColor * NdotL + ambient;
+    float shadow = ShadowCalculation(fragPosLightSpace);
 
-//    outColor = vec4(color, 1.0);
+//    vec3 ambient = vec3(AO_FACTOR) * albedo * ao;
+//    vec3 color = (diffuse + specular) * lightColor * NdotL * shadow + ambient;
 
-    vec3 a = texture(prova, fragUV).rgb;
-    outColor = vec4(a.r, a.r, a.r,1.0); // For testing purposes, outputting depth value
+    /*FIXME: Debug version, visualize only
+            white (if terrain hit by light) or
+            black (if in shadow -->  terrain not hit by light) */
+    vec3 color = vec3(shadow);
+    outColor = vec4(color, 1.0);
 }
