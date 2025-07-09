@@ -65,8 +65,26 @@ public:
 
         for (const auto& charJson : sceneJson["characters"]) {
             std::string name = charJson.value("name", "Unknown");
-            auto posArr = charJson.value("position", std::vector<float>{0,0,0});
-            // TODO: get position from the scene file (cook-torranceChar instances)
+            std::vector<float> posArr;
+            std::string posId = charJson.value("instanceIdForPosition", "");
+            // Get position from the scene file (cook-torranceChar instances)
+            if (posId == "") {
+                posArr = std::vector<float>{0,0,0};
+            } else {
+                for (const auto& techniqueJson : sceneJson["instances"]) {
+                    for (const auto& elementJson : techniqueJson["elements"]) {
+                        if (elementJson["id"] == posId) {
+                            if (elementJson.contains("translate")) {
+                                posArr = elementJson["translate"].get<std::vector<float>>();
+                            } else {
+                                posArr = std::vector<float>{0, 0, 0}; // Default position
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
             glm::vec3 pos = glm::vec3(posArr[0], posArr[1], posArr[2]);
             auto animList = charJson.value("animList", std::vector<std::string>{});
             auto assetFilesList = sceneJson["assetfiles"];

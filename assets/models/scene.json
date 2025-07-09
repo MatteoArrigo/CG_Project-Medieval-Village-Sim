@@ -1,10 +1,10 @@
 {
 	"assetfiles": [
-		{"id": "hm", "file": "assets/models/uomo.gltf", "format":"GLTF"},
-		{"id": "a1", "file": "assets/models/running.gltf", "format":"GLTF"},
-		{"id": "a2", "file": "assets/models/idle.gltf", "format":"GLTF"},
-		{"id": "a3", "file": "assets/models/pointing.gltf", "format":"GLTF"},
-		{"id": "a4", "file": "assets/models/waving.gltf", "format":"GLTF"},
+		{"id": "hm", "file": "assets/models/Characters/Uomo/uomo.gltf", "format":"GLTF"},
+		{"id": "a1", "file": "assets/models/Characters/Uomo/running.gltf", "format":"GLTF"},
+		{"id": "a2", "file": "assets/models/Characters/Uomo/idle.gltf", "format":"GLTF"},
+		{"id": "a3", "file": "assets/models/Characters/Uomo/pointing.gltf", "format":"GLTF"},
+		{"id": "a4", "file": "assets/models/Characters/Uomo/waving.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 
@@ -20,7 +20,7 @@
 		{
 			"id": "char1",
 			"name": "Mario",
-			"position": [20, 20, 20],
+			"instanceIdForPosition": "hm0",
 			"animList": ["hm", "a1", "a2", "a3", "a4"],
 			"startEndFrames": [[0,32], [0,16], [0,263], [0,83], [0,16]],
 			"charStates": ["Walking", "Running", "Idle", "Pointing", "Waving"],
@@ -544,10 +544,10 @@
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
 			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
-				"translate": [20, 20, 20]
+				"translate": [10, 20, 10]
 			},
 			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
-				"translate": [20, 20, 20]
+				"translate": [10, 20, 10]
 			}
 		]},
 		{"technique": "CookTorranceNoiseSimp", "elements": [
