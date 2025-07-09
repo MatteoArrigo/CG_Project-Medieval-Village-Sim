@@ -33,7 +33,8 @@ public:
         return characters;
     }
 
-    int init(std::string file, AssetFile** af) {
+    int init(std::string file, Scene SC) {
+        AssetFile** af = SC.As;
         nlohmann::json sceneJson;
         std::ifstream ifs(file);
         if (!ifs.is_open()) {
@@ -52,12 +53,51 @@ public:
         if (!sceneJson.contains("characters") || !sceneJson["characters"].is_array()) return -1;
 
         int skinId = 0; // Default skin ID, can be modified if needed
+
+        // Crea una mappa stringa (id asset file) -> indice nell'array degli AssetFile
+        std::unordered_map<std::string, int> assetFileIdToIndex;
+        int assetFileIdx = 0;
+        for (const auto& assetFile : sceneJson["assetfiles"]) {
+            if (assetFile.contains("id")) {
+                assetFileIdToIndex.insert({assetFile["id"].get<std::string>(), assetFileIdx});
+            }
+            assetFileIdx++;
+        }
+
+        // Trova le instances di Character
+        std::unordered_map<std::string, Instance*> instanceIdToInstanceRef;
+        for (auto kv : SC.InstanceIds) {
+            Instance *inst = SC.I[kv.second];
+            instanceIdToInstanceRef.insert({kv.first, inst});
+        }
+
         for (const auto& charJson : sceneJson["characters"]) {
             std::string name = charJson.value("name", "Unknown");
-            auto posArr = charJson.value("position", std::vector<float>{0,0,0});
-            // TODO: get position from the scene file (cook-torranceChar instances)
+            std::vector<std::string> instancesIds = charJson.value("instanceIds", std::vector<std::string>{});
+            std::vector<float> posArr;
+            // Il la prima instance definisce la posizione del Character
+            std::string posId = instancesIds[0];
+            // Get position from the scene file (cook-torranceChar instances)
+            if (posId == "") {
+                posArr = std::vector<float>{0,0,0};
+            } else {
+                for (const auto& techniqueJson : sceneJson["instances"]) {
+                    for (const auto& elementJson : techniqueJson["elements"]) {
+                        if (elementJson["id"] == posId) {
+                            if (elementJson.contains("translate")) {
+                                posArr = elementJson["translate"].get<std::vector<float>>();
+                            } else {
+                                posArr = std::vector<float>{0, 0, 0}; // Default position
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
             glm::vec3 pos = glm::vec3(posArr[0], posArr[1], posArr[2]);
             auto animList = charJson.value("animList", std::vector<std::string>{});
+            auto assetFilesList = sceneJson["assetfiles"];
             auto charStates = charJson.value("charStates", std::vector<std::string>{});
             auto startEndFrames = charJson.value("startEndFrames", std::vector<std::vector<int>>{});
             std::string baseTrack = charJson.value("BaseTrackName", "");
@@ -70,10 +110,18 @@ public:
             }
             Anims[skinId].resize(animCount);
             for (int ian = 0; ian < animCount; ian++) {
-                //Anim[ian].init(*af[ian]);
-                // std::cout << "ALAKAZAM \n";
-                Anims[skinId][ian].init(*af[ian]);
-                // std::cout << "NOPERS \n";
+
+                // Trova l'AssetFile corrispondente all'ID dell'animazione
+                const std::string& idToSeek = animList[ian];
+                if (assetFileIdToIndex.find(idToSeek) != assetFileIdToIndex.end()) {
+                    assetFileIdx = assetFileIdToIndex[idToSeek];
+                } else {
+                    std::cout << "Error! Animation ID >" << idToSeek << "< not found in asset files list.\n";
+                    return -1;
+                }
+
+                Anims[skinId][ian].init(*af[assetFileIdx]);
+                std::cout << "ANIM " << ian << " of char " << skinId << " initialized with asset file: " << assetFilesList[assetFileIdx]["id"] << "\n";
             }
 
             // Inizializza AnimBlender
@@ -89,12 +137,19 @@ public:
 
             // Inizializza SkeletalAnimation
             auto SKA = std::make_shared<SkeletalAnimation>();
-            SKA->init(Anims[skinId].data(), animCount, baseTrack, skinId);
+            SKA->init(Anims[skinId].data(), animCount, baseTrack);
             skinId++;
 
             // Crea Character e aggiungi
             auto charac = std::make_shared<Character>(name, pos, ab, SKA, charStates);
             addChar(charac);
+
+            // Aggiunta riferimento instances al charcter
+            std::vector<Instance*> charInstances;
+            for (const auto& instanceId : instancesIds) {
+                charInstances.push_back(instanceIdToInstanceRef[instanceId]);
+            }
+            charac->setInstances(charInstances);
         }
         std::cout << "Characters initialization finished \n";
         return 0;

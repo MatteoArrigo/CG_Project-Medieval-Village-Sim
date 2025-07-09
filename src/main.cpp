@@ -438,7 +438,7 @@ class CGProject : public BaseProject {
 		}
 
 		// Characters and animations initialization
-		if (charManager.init("assets/models/scene.json", SC.As) != 0) {
+		if (charManager.init("assets/models/scene.json", SC) != 0) {
 			std::cout << "ERROR LOADING CHARACTERs\n";
 			exit(0);
 		}
@@ -651,9 +651,6 @@ class CGProject : public BaseProject {
 		// moves the view
 		float deltaT = GameLogic();
 
-		// updated the animation
-		const float SpeedUpAnimFact = 0.85f;
-		AB->Advance(deltaT * SpeedUpAnimFact);
 		// defines the global parameters for the uniform
 		const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(1.0f,0.0f,0.0f));
 		const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
@@ -667,31 +664,38 @@ class CGProject : public BaseProject {
 		// defines the local parameters for the uniforms
 		UniformBufferObjectChar uboc{};	
 		uboc.debug1 = debug1;
-
-		static SkeletalAnimation* SKA = charManager.getCharacters()[0]->getSkeletalAnimation();
-		SKA->Sample(*AB);
-		std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
-
-//printMat4("TF[55]", (*TMsp)[55]);
 		
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) * 
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
 
-		int instanceId;
-        int techniqueId = 0;
-		// character
-		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
-			for(int im = 0; im < TMsp->size(); im++) {
-				uboc.mMat[im]   = SC.TI[0].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
-				uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
-				uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
-			}
 
-			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[techniqueId].I[instanceId].DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
+		// Skeletal Animation sampling and animation update
+		const float SpeedUpAnimFact = 0.85f;
+		for (std::shared_ptr<Character> C : charManager.getCharacters()) {
+			SkeletalAnimation* SKA = C->getSkeletalAnimation();
+			AnimBlender* AB = C->getAnimBlender();
+			// updated the animation
+			AB->Advance(deltaT * SpeedUpAnimFact);
+
+			// Skeletal Sampling
+			SKA->Sample(*AB);
+			std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
+			for (Instance* I : C->getInstances()) {
+				// CookTorrance technique ubo update
+				for(int im = 0; im < TMsp->size(); im++) {
+					uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+					uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
+					uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
+				}
+
+				I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+				I->DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
+			}
 		}
 
+		int instanceId;
+		int techniqueId = 0;
 		UniformBufferObjectSimp ubos{};
 		// normal objects
         techniqueId++;

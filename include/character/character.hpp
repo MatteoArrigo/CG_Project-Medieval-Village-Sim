@@ -35,6 +35,9 @@ public:
     void setSkeletalAnimation(const SkeletalAnimation& SKAx) { *SKA.get() = SKAx; }
     SkeletalAnimation* getSkeletalAnimation() { return SKA.get(); }
 
+    void setInstances(const std::vector<Instance*>& inst) { instances = inst; }
+    std::vector<Instance*>& getInstances() { return instances; }
+
     std::string charStateToString(const std::string& stateName) const;
     std::vector<glm::mat4>* getTransformMatrices();
 
@@ -51,6 +54,7 @@ private:
     size_t currentDialogue;
     std::shared_ptr<AnimBlender> AB;
     std::shared_ptr<SkeletalAnimation> SKA;
+    std::vector<Instance*> instances;
 };
 
 // Implementazione
