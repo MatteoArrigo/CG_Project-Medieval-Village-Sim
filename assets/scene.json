@@ -2019,7 +2019,7 @@
 				"scale": [2.210635185241699, 2.2106356620788574, 2.2106356620788574]}
 		]},
 
-		{"technique": "PBR_sg", "elements":  [
+		{"technique": "Buildings", "elements":  [
 			{"id": "build_boat_01-00.00", "model": "build_boat_01-00", "texture": ["build_boat_01_a", "build_boat_01_n", "build_boat_01_sg", "build_boat_01_o"],
 				"translate": [73.84013366699219, 2.2529194355010986, 33.53003692626953],
 				"eulerAngles": [-9.50358644374407e-09, -134.03944162851658, -0.625381446329164],
@@ -3201,7 +3201,6 @@
 				"physics": true
 			},
 
-
 			{"id": "prop_boardwalk_01-00.00", "model": "prop_boardwalk_01-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
 				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5},
@@ -3237,8 +3236,10 @@
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
 				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
 				"physics": false
-			},
+			}
+		]},
 
+		{"technique": "Props", "elements":  [
 			{"id": "pf_bucket_01-00.00", "model": "pf_bucket_01-00", "texture": ["prop_bucket_01_a", "prop_bucket_01_n", "prop_bucket_01_sg", "prop_bucket_01_o"],
 				"translate": [-19.41000747680664, 5.410999774932861, -3.8410043716430664],
 				"eulerAngles": [-174.6775522409562, -14.304023828717229, -6.755495709636262],

@@ -10,7 +10,8 @@
 		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
 		{"id":  "water", "file":  "assets/models/Water.gltf", "format":"GLTF"},
 
-		{"id":  "vegetation", "file":  "assets/models/Vegetation.gltf", "format": "GLTF"}
+		{"id":  "vegetation", "file":  "assets/models/Vegetation.gltf", "format": "GLTF"},
+		{"id": "village_props", "file": "assets/models/Props.gltf", "format":"GLTF"}
 	],
 	"characters": [
 		{
@@ -45,7 +46,8 @@
 
 		{"id": "Fern_Var3_LOD0-00", "VD": "VDtan", "model": "Fern_Var3_LOD0", "node": "Fern_Var3_LOD0", "meshId": 0, "asset": "vegetation", "format": "ASSET"},
 		{"id": "Fern_Var3_LOD1-00", "VD": "VDtan", "model": "Fern_Var3_LOD1", "node": "Fern_Var3_LOD1", "meshId": 0, "asset": "vegetation", "format": "ASSET"},
-		{"id": "Fern_Var3_LOD2-00", "VD": "VDtan", "model": "Fern_Var3_LOD2", "node": "Fern_Var3_LOD2", "meshId": 0, "asset": "vegetation", "format": "ASSET"}
+		{"id": "Fern_Var3_LOD2-00", "VD": "VDtan", "model": "Fern_Var3_LOD2", "node": "Fern_Var3_LOD2", "meshId": 0, "asset": "vegetation", "format": "ASSET"},
+		{"id": "pf_boulder_01-00", "VD": "VDtan", "model": "pf_boulder_01", "node": "pf_boulder_01", "meshId": 0, "asset": "village_props", "format": "ASSET"}
 	],
 	"textures": [
 		{"id": "white", "texture": "assets/textures/white.png", "format": "C"},
@@ -101,10 +103,10 @@
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
 			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
-				"translate": [40, 6.5, 6]
+				"translate": [38, 7, 7]
 			},
 			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
-				"translate": [40, 6.5, 6]
+				"translate": [38, 7, 7]
 			}
 		]},
 		{"technique": "CookTorranceNoiseSimp", "elements": [
@@ -175,7 +177,7 @@
 
 		]},
 
-		{"technique": "PBR_sg", "elements": [
+		{"technique": "Buildings", "elements": [
 
 			{"id": "build_bighouse_01-00.00", "model": "build_bighouse_01-00", "texture": ["build_building_01_a", "build_building_01_n", "build_building_01_sg", "build_building_01_o"],
 				"translate": [-6.95001220703125, 4.925300121307373, -4.930023193359375],
@@ -251,6 +253,13 @@
 				"eulerAngles": [1.912460542799584, 124.84694558778355, 0.03178229628629763],
 				"diffuseFactor": [0.743349731, 0.743349731, 0.743349731], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.05400000140070915, "aoFactor": 0.30000001192092896}
 
+		]},
+
+		{"technique": "Props", "elements": [
+			{"id": "pf_boulder_01-00.00", "model": "pf_boulder_01-00", "texture": ["white", "void", "void", "void"],
+				"translate": [40, 6.0, 5],
+				"eulerAngles": [-5.212581126204228, -136.45907810400575, -3.2761096167843298],
+				"diffuseFactor": [0.432035774, 0.432035774, 0.432035774], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.1340000033378601}
 		]}
 	]
 }

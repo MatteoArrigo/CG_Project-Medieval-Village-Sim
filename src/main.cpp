@@ -121,7 +121,7 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDskyBox;
 	VertexDescriptor VDtan;
 	RenderPass RPshadow, RP;
-	Pipeline Pchar, PsimpObj, PskyBox, Pterrain, P_PBR_SpecGloss, PWater, Pgrass;
+	Pipeline Pchar, PsimpObj, PskyBox, PWater, Pgrass, Pterrain, Pprops, Pbuildings;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -171,8 +171,7 @@ class CGProject : public BaseProject {
     const float MIN_CAM_DIST = 1.5;
 
 
-//    const glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    const glm::vec4 lightColor = glm::vec4(1.0f, 0.4f, 0.4f, 1.0f);
+    const glm::vec4 lightColor = glm::vec4(1.0f, 0.7f, 0.7f, 1.0f);
     /**
      * Matrix defining the light rotation to apply to +z axis to get the light direction.
      * It is used
@@ -420,11 +419,12 @@ class CGProject : public BaseProject {
 
         Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLglobal, &DSLgrass});
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLglobal, &DSLterrain, &DSLterrainFactors});
-		P_PBR_SpecGloss.init(this, &VDtan, "shaders/PBR_SpecGloss.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
+		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
+		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
 
 
         // --------- TECHNIQUES INITIALIZATION ---------
-        PRs.resize(7);
+        PRs.resize(8);
 		PRs[0].init("CookTorranceChar", {
             {&PshadowMapChar, {{
                 {true, 0, {} },     // Shadow map UBO
@@ -503,11 +503,27 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 2, &VDtan);
-        PRs[6].init("PBR_sg", {
+        PRs[6].init("Buildings", {
             {&PshadowMap, {{
                 {true, 0, {} },     // Shadow map UBO
             }} },
-            {&P_PBR_SpecGloss, {
+            {&Pbuildings, {
+                {},
+                {
+                    {true,  0, {}},     // albedo
+                    {true,  1, {}},     // normal
+                    {true,  2, {}},     // specular / glossiness
+                    {true,  3, {}},     // ambient occlusion
+                        {false,  -1, RPshadow.attachments[0].getViewAndSampler() }
+                },
+                {}
+            }}
+        }, 4, &VDtan);
+        PRs[7].init("Props", {
+            {&PshadowMap, {{
+                {true, 0, {} },     // Shadow map UBO
+            }} },
+            {&Pprops, {
                 {},
                 {
                     {true,  0, {}},     // albedo
@@ -572,7 +588,8 @@ class CGProject : public BaseProject {
         PWater.create(&RP);
         Pgrass.create(&RP);
 		Pterrain.create(&RP);
-        P_PBR_SpecGloss.create(&RP);
+        Pprops.create(&RP);
+        Pbuildings.create(&RP);
         PshadowMap.create(&RPshadow);
         PshadowMapChar.create(&RPshadow);
         PshadowMapSky.create(&RPshadow);
@@ -593,7 +610,8 @@ class CGProject : public BaseProject {
         PWater.cleanup();
         Pgrass.cleanup();
 		Pterrain.cleanup();
-        P_PBR_SpecGloss.cleanup();
+        Pprops.cleanup();
+        Pbuildings.cleanup();
         PshadowMap.cleanup();
         PshadowMapChar.cleanup();
         PshadowMapSky.cleanup();
@@ -625,7 +643,8 @@ class CGProject : public BaseProject {
 		PskyBox.destroy();
         PWater.destroy();
         Pgrass.destroy();
-        P_PBR_SpecGloss.destroy();
+        Pprops.destroy();
+        Pbuildings.destroy();
 		Pterrain.destroy();
         PshadowMap.destroy();
         PshadowMapChar.destroy();
@@ -898,9 +917,30 @@ class CGProject : public BaseProject {
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 2);
         }
 
-        // TECHNIQUE PBR_SpecGloss
+        // TECHNIQUE Buildings (PBR)
         techniqueId++;
         SgAoMaterialFactorsUBO sgAoUbo{};
+        for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+            ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            ubos.mvpMat = ViewPrj * ubos.mMat;
+            ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+
+            sgAoUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
+            sgAoUbo.specularFactor = SC.TI[techniqueId].I[instanceId].specularFactor;
+            sgAoUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].factor1;
+            sgAoUbo.aoFactor = SC.TI[techniqueId].I[instanceId].factor2;
+
+            shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
+
+            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0); // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 6); // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &sgAoUbo, 0); // Set 2
+        }
+
+        // TECHNIQUE Props (PBR)
+        techniqueId++;
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
             ubos.mvpMat = ViewPrj * ubos.mMat;
