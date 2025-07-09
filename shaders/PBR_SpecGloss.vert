@@ -7,7 +7,7 @@ layout(binding = 0, set = 1) uniform UniformBufferObject {
 	mat4 nMat;
 } ubo;
 
-layout(binding = 5, set = 1) uniform ShadowUBO {
+layout(binding = 6, set = 1) uniform ShadowUBO {
 	mat4 lightVP;
 	/** Debug vector for shadow map rendering.
 	 * If debug.x == 1.0, the terrain renders only white if lit and black if in shadow
@@ -26,6 +26,9 @@ layout(location = 1) out vec3 fragNorm;
 layout(location = 2) out vec2 fragUV;
 layout(location = 3) out vec4 fragTan;
 
+layout(location = 4) out vec4 fragPosLightSpace;
+layout(location = 5) out vec4 debug;
+
 // FIXME
 // For now, comment a line and the comment the other to choose the light's view
 // or the normal perspective view
@@ -39,4 +42,7 @@ void main() {
 	fragNorm = normalize((ubo.nMat * vec4(inNorm, 0.0)).xyz);
 	fragUV = inUV;
 	fragTan = vec4(normalize(mat3(ubo.mMat) * inTangent.xyz), inTangent.w);
+
+	fragPosLightSpace = shadowClipUbo.lightVP * ubo.mMat * vec4(inPosition, 1.0);
+	debug = shadowClipUbo.debug;
 }

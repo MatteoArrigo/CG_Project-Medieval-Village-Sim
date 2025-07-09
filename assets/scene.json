@@ -545,10 +545,10 @@
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
 			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
-				"translate": [20, 20, 20]
+				"translate": [40, 6.5, 6]
 			},
 			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
-				"translate": [20, 20, 20]
+				"translate": [40, 6.5, 6]
 			}
 		]},
 		{"technique": "CookTorranceNoiseSimp", "elements": [

@@ -336,7 +336,8 @@ class CGProject : public BaseProject {
             {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,                     1},
             {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,                     1},
             {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,                     1},
-            {5, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO),            1},
+            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4,                     1},
+            {6, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO),            1},
         });
         DSLsgAoFactors.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SgAoMaterialFactorsUBO), 1},
@@ -519,6 +520,7 @@ class CGProject : public BaseProject {
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}},     // ambient occlusion
+                        {false,  -1, RPshadow.attachments[0].getViewAndSampler() }
                 },
                 {}
             }}
@@ -920,7 +922,7 @@ class CGProject : public BaseProject {
             SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0); // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 5); // Set 1
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 6); // Set 1
             SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &sgAoUbo, 0); // Set 2
         }
 

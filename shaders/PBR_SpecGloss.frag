@@ -35,6 +35,9 @@ layout(location = 1) in vec3 fragNorm;
 layout(location = 2) in vec2 fragUV;
 layout(location = 3) in vec4 fragTan;
 
+layout(location = 4) in vec4 fragPosLightSpace;
+layout(location = 5) in vec4 debug;
+
 layout(location = 0) out vec4 outColor;
 
 // Global UBO (set=0)
@@ -50,6 +53,8 @@ layout(binding = 2, set = 1) uniform sampler2D normalMap;
 layout(binding = 3, set = 1) uniform sampler2D specGlossMap;
 layout(binding = 4, set = 1) uniform sampler2D aoMap;  // ambient occlusion map
 
+layout(binding = 5, set = 1) uniform sampler2D shadowMap;
+
 // Material factors (set=2)
 layout(binding = 0, set = 2) uniform SgAoMaterialFactors {
     vec3 diffuseFactor;      // (RGB)
@@ -59,6 +64,42 @@ layout(binding = 0, set = 2) uniform SgAoMaterialFactors {
 } matFactors;
 
 const float PI = 3.14159265359;
+
+
+/**
+ * Calculates the shadow factor for the current fragment using the shadow map.
+ * This function determines whether the fragment is in shadow by comparing its depth
+ * from the light's perspective to the closest depth stored in the shadow map.
+ *
+ * Steps:
+ *    1. Converts the fragment's position from light space clip coordinates to normalized device coordinates (NDC).
+ *    2. Maps NDC coordinates from [-1, 1] to UV coordinates in [0, 1] for texture sampling.
+ *    3. Checks if the projected coordinates are outside the shadow map bounds; if so, returns 1.0 (fully lit).
+ *    4. Samples the shadow map at the projected UV to get the closest depth to the light.
+ *    5. Compares the current fragment's depth (with a small bias to prevent shadow acne) to the closest depth.
+ *       - If the fragment is further than the closest depth, it is in shadow (returns 0.0).
+ *       - Otherwise, it is lit (returns 1.0).
+ *
+ * @param fragPosLightSpace vec4 - The fragment's position in light space (clip coordinates).
+ * @return float - Shadow factor: 1.0 if lit, 0.0 if in shadow.
+ */
+const float shadowBias = 0.001; // Bias to avoid shadow acne
+float ShadowCalculation(vec4 fragPosLightSpace)
+{
+    // Convert from light space clip coordinates to normalized device coordinates (NDC)
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // Convert NDC [-1,1] to UV coordinates [0,1]
+    projCoords.xy = projCoords.xy * 0.5 + 0.5;
+    // Discard fragments outside shadow map bounds
+    if (projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
+    return 1.0;  // fully lit, outside shadow map
+
+    float closestDepth = texture(shadowMap, projCoords.xy).r;   // Read closest depth from shadow map
+    float currentDepth = projCoords.z;                          // Current fragment depth from light's POV
+    float shadow = (currentDepth - shadowBias > closestDepth) ? 0.0 : 1.0;      // Shadow comparison
+
+    return shadow;
+}
 
 mat3 computeTBN(vec3 N, vec3 T, float tangentW) {
     vec3 B = cross(N, T) * tangentW;
@@ -135,9 +176,10 @@ void main() {
 
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
-
     float NdotL = max(dot(Nmap, L), 0.0);
-    vec3 Lo = (kD * diffuseColor / PI + specular) * radiance * NdotL;
+    float shadow = ShadowCalculation(fragPosLightSpace);
+
+    vec3 Lo = (kD * diffuseColor / PI + specular) * radiance * NdotL * shadow;
 
     // Minimal ambient approximation
     vec3 ambient = matFactors.aoFactor * ao * diffuseColor;
