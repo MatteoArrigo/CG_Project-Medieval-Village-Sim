@@ -33,7 +33,8 @@ public:
         return characters;
     }
 
-    int init(std::string file, AssetFile** af) {
+    int init(std::string file, Scene SC) {
+        AssetFile** af = SC.As;
         nlohmann::json sceneJson;
         std::ifstream ifs(file);
         if (!ifs.is_open()) {
@@ -63,8 +64,16 @@ public:
             assetFileIdx++;
         }
 
+        // Trova le instances di Character
+        std::unordered_map<std::string, Instance*> instanceIdToInstanceRef;
+        for (auto kv : SC.InstanceIds) {
+            Instance *inst = SC.I[kv.second];
+            instanceIdToInstanceRef.insert({kv.first, inst});
+        }
+
         for (const auto& charJson : sceneJson["characters"]) {
             std::string name = charJson.value("name", "Unknown");
+            std::vector<std::string> instancesIds = charJson.value("instanceIds", std::vector<std::string>{});
             std::vector<float> posArr;
             std::string posId = charJson.value("instanceIdForPosition", "");
             // Get position from the scene file (cook-torranceChar instances)
@@ -133,6 +142,13 @@ public:
             // Crea Character e aggiungi
             auto charac = std::make_shared<Character>(name, pos, ab, SKA, charStates);
             addChar(charac);
+
+            // Aggiunta riferimento instances al charcter
+            std::vector<Instance*> charInstances;
+            for (const auto& instanceId : instancesIds) {
+                charInstances.push_back(instanceIdToInstanceRef[instanceId]);
+            }
+            charac->setInstances(charInstances);
         }
         std::cout << "Characters initialization finished \n";
         return 0;
