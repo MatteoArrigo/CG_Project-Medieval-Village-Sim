@@ -15,17 +15,12 @@
 
 //TODO generale: Ripulisci e Commenta tutto il main
 
-/*TODO:
-    - Pensa se aggiungere supporto alle ombre anche su altre tecniche
-    - attenziona il fatto che le ombre hanno i bordi jagged (seghettati)
-*/
-
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = true;
 
-const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
+const std::string SCENE_FILEPATH = "assets/scene.json";
 
 // The uniform buffer object used in this example
 struct VertexChar {
@@ -199,11 +194,12 @@ class CGProject : public BaseProject {
     const float lightWorldLeft = -110.0f, lightWorldRight = 110.0f;
     const float lightWorldBottom = lightWorldLeft * 1.0f+50, lightWorldTop = lightWorldRight * 1.0f-50;     // Now the shadow map is square (2048x2048)
     const float lightWorldNear = -150.0f, lightWorldFar = 200.0f;
+    //TODO: capisci se i bounds trovati per ortho vanno sempre bene o devono essere dinamici
+    // Tipo se devono variare con la player position
     /**
      * Actual projection matrix used to render the scene from light pov, in shadow mapping render pass
      */
     glm::mat4 lightVP;
-    //TODO: capisci se i bounds trovati per ortho vanno sempre bene o devono essere dinamici
     /** Debug vector present in DSL for shadow map. Basic version is vec4(0,0,0,0)
      * if debugLightView.x == 1.0, the terrain renders only white if lit and black if in shadow
      * if debugLightView.y == 1.0, the light's clip space is visualized instead of the basic perspective view
@@ -236,7 +232,7 @@ class CGProject : public BaseProject {
 		// Update Render Pass
 		RP.width = w;
 		RP.height = h;
-        // Note: the shadow render pass has fixed square resolution (2048x2048), doesn't need to be resized
+        // Note: the shadow render pass has fixed square resolution (4096x4096), doesn't need to be resized
 
 		// updates the textual output
 		txt.resizeScreen(w, h);
@@ -259,9 +255,6 @@ class CGProject : public BaseProject {
                 glm::scale(glm::mat4(1.0), glm::vec3(1.0f, -1.0f, 0.5f));       // scale of axis y and z
         glm::mat4 lightProj = vulkanCorrection * glm::ortho(lightWorldLeft, lightWorldRight, lightWorldBottom, lightWorldTop, lightWorldNear, lightWorldFar);
         lightVP = lightProj * glm::inverse(lightRotation); // inverse because we need to invert the rotation of the world scene to get the light's view
-        // TODO: per ora la zona proiettata per il light clip space è fissa
-        // Ma si potrebbe rendere dinamica, almeno traslando rispetto la player position
-
 
 		// --------- DSL INITIALIZATION ---------
 		DSLshadowMap.init(this, {
@@ -387,8 +380,9 @@ class CGProject : public BaseProject {
         /* RP 1: used for shadow map, rendered from light point of view
          * The options set, different by default ones, are for writing a depth buffer instead of color
          * All related options are set in the RenderPass::getStandardAttchmentsProperties specifing AT_DEPTH_ONLY
-         *      (e.g. depth write enabled, color write disabled, initial clear value in stencil of 1.0, ...)  */
-        RPshadow.init(this, 2048, 2048,-1,
+         *      (e.g. depth write enabled, color write disabled, initial clear value in stencil of 1.0, ...)
+         * Since count=-1, the swapChain size is set as for main RP, updating shadows at each frame */
+        RPshadow.init(this, 4096, 4096,-1,
                       RenderPass::getStandardAttchmentsProperties(StockAttchmentsConfiguration::AT_DEPTH_ONLY, this),
                       RenderPass::getStandardDependencies(StockAttchmentsDependencies::ATDEP_DEPTH_TRANS), true);
 		/* RP 2: used for the main rendering
@@ -654,7 +648,7 @@ class CGProject : public BaseProject {
 		T->populateCommandBuffer(commandBuffer, currentImage);
 	}
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
-        //TODO: chatgpt usa solo imageId=0 per RPshadow, ma così sembra funzionare... capisci meglio
+        //NOTE: shadow render pass has equal swap chain size of main pass, hence the same currentImage
         RPshadow.begin(commandBuffer, currentImage);
         SC.populateCommandBuffer(commandBuffer, 0, currentImage);
         RPshadow.end(commandBuffer);
@@ -784,8 +778,6 @@ class CGProject : public BaseProject {
 
 
         // ----- UPDATE UNIFORMS -----
-        //TODO per ora le prime 2 tecniche, che non stiamo usando, non hanno implementato
-        // il passaggio a visione ortografica quando premo 2
 
         // Common uniforms and general variables
         int instanceId;
@@ -838,6 +830,8 @@ class CGProject : public BaseProject {
 		}
 
 		// TECHNIQUE Simple objects
+        // TODO: capisci se mantenere o meno
+        //  se la tiene, aggiungi passaggio a visione ortografica
         techniqueId++;
 		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
 			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;

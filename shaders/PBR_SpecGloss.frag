@@ -69,21 +69,26 @@ const float PI = 3.14159265359;
 /**
  * Calculates the shadow factor for the current fragment using the shadow map.
  * This function determines whether the fragment is in shadow by comparing its depth
- * from the light's perspective to the closest depth stored in the shadow map.
+ * from the light's perspective to the nearby closest depths stored in the shadow map.
+ * It uses Percentage Closer Filtering (PCF) to smooth the shadow edges by sampling multiple'
+ * points around the fragment's projected position in the shadow map.
  *
- * Steps:
- *    1. Converts the fragment's position from light space clip coordinates to normalized device coordinates (NDC).
- *    2. Maps NDC coordinates from [-1, 1] to UV coordinates in [0, 1] for texture sampling.
- *    3. Checks if the projected coordinates are outside the shadow map bounds; if so, returns 1.0 (fully lit).
- *    4. Samples the shadow map at the projected UV to get the closest depth to the light.
- *    5. Compares the current fragment's depth (with a small bias to prevent shadow acne) to the closest depth.
- *       - If the fragment is further than the closest depth, it is in shadow (returns 0.0).
- *       - Otherwise, it is lit (returns 1.0).
+* Steps (with PCF):
+*    1. Converts the fragment's position from light space clip coordinates to normalized device coordinates (NDC).
+*    2. Maps NDC coordinates from [-1, 1] to UV coordinates in [0, 1] for texture sampling.
+*    3. Checks if the projected coordinates are outside the shadow map bounds; if so, returns 1.0 (fully lit).
+*    4. Uses Percentage Closer Filtering (PCF) by sampling multiple points around the projected UV in the shadow map.
+*    5. For each sample, compares the current fragment's depth (with a small bias to prevent shadow acne) to the closest depth.
+*       - If the fragment is further than the closest depth, it is in shadow for that sample.
+*    6. Averages the results of all samples to smooth shadow edges and returns the final shadow factor.
  *
  * @param fragPosLightSpace vec4 - The fragment's position in light space (clip coordinates).
  * @return float - Shadow factor: 1.0 if lit, 0.0 if in shadow.
  */
 const float shadowBias = 0.001; // Bias to avoid shadow acne
+const int pcfRadius = 1; // Radius for PCF sampling
+const int pcfStride = 1; // Radius for PCF sampling
+const int pcfNSamples = 9; // number of samples considered in PCF sampling
 float ShadowCalculation(vec4 fragPosLightSpace)
 {
     // Convert from light space clip coordinates to normalized device coordinates (NDC)
@@ -94,11 +99,22 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     if (projCoords.x < 0.0 || projCoords.x > 1.0 || projCoords.y < 0.0 || projCoords.y > 1.0)
     return 1.0;  // fully lit, outside shadow map
 
-    float closestDepth = texture(shadowMap, projCoords.xy).r;   // Read closest depth from shadow map
     float currentDepth = projCoords.z;                          // Current fragment depth from light's POV
-    float shadow = (currentDepth - shadowBias > closestDepth) ? 0.0 : 1.0;      // Shadow comparison
 
-    return shadow;
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));  // Get texel size in UV space
+
+    // Perform PCF sampling, controlled by pcfRadius and pcfStride
+    for (int x = -pcfRadius; x <= pcfRadius; x+=pcfStride) {
+        for (int y = -pcfRadius; y <= pcfRadius; y+=pcfStride) {
+            vec2 offset = vec2(x, y) * texelSize;
+            float sampleDepth = texture(shadowMap, projCoords.xy + offset).r;
+            shadow += currentDepth > sampleDepth + shadowBias ? 1.0 : 0.0;
+            // 1 if is in shadow --> I'm counting how many considered samples are in shadow
+        }
+    }
+    shadow /= pcfNSamples;  // Normalize to [0,1] --> is percentage of samples in shadow
+    return 1-shadow;        // Actual factor must be inverted, 1.0 if fully lit, 0.0 if fully in shadow
 }
 
 mat3 computeTBN(vec3 N, vec3 T, float tangentW) {
