@@ -75,7 +75,8 @@ public:
             std::string name = charJson.value("name", "Unknown");
             std::vector<std::string> instancesIds = charJson.value("instanceIds", std::vector<std::string>{});
             std::vector<float> posArr;
-            std::string posId = charJson.value("instanceIdForPosition", "");
+            // Il la prima instance definisce la posizione del Character
+            std::string posId = instancesIds[0];
             // Get position from the scene file (cook-torranceChar instances)
             if (posId == "") {
                 posArr = std::vector<float>{0,0,0};

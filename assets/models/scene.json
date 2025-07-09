@@ -20,7 +20,6 @@
 		{
 			"id": "char1",
 			"name": "Mario",
-			"instanceIdForPosition": "hm0",
 			"instanceIds": ["hm0", "hm1"],
 			"animList": ["hm", "a1", "a2", "a3", "a4"],
 			"startEndFrames": [[0,32], [0,16], [0,263], [0,83], [0,16]],
@@ -30,7 +29,6 @@
 		{
 			"id": "char2",
 			"name": "Luigi",
-			"instanceIdForPosition": "hm2",
 			"instanceIds": ["hm2", "hm3"],
 			"animList": ["a1", "a2"],
 			"startEndFrames": [[0,16], [0,263]],
