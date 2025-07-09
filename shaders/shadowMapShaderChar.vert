@@ -18,6 +18,8 @@ layout(location = 2) in vec2 inUV;
 layout(location = 3) in uvec4 inJointIndex;
 layout(location = 4) in vec4 inJointWeight;
 
+layout(location = 0) out vec2 fragUV;
+
 layout(binding = 0, set = 0) uniform UniformBufferObject {
     mat4 lightVP;       // Light's view-projection matrix (orthographic)
     mat4 model[65];     // Model matrix of the object

@@ -8,6 +8,16 @@ layout(binding = 0, set = 1) uniform UniformBufferObject {
 	mat4 nMat[65];
 } ubo;
 
+layout(binding = 2, set = 1) uniform ShaodowClipUBO {
+	mat4 lightVP;
+
+/** Debug vector for shadow map rendering.
+	 * If debug.x == 1.0, the terrain renders only white if lit and black if in shadow
+	 * If debug.y == 1.0, the light's clip space is visualized instead of the basic perspective view
+	 */
+	vec4 debug;
+} shadowClipUbo;
+
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNorm;
@@ -26,29 +36,35 @@ void main() {
 		fragPos = (ubo.mMat[0] * vec4(inPosition, 1.0)).xyz;
 		fragNorm = (ubo.nMat[0] * vec4(inNorm, 0.0)).xyz;
 	} else {
-		gl_Position = inJointWeight.x * 
-					  ubo.mvpMat[inJointIndex.x] * vec4(inPosition, 1.0);
-		fragPos = inJointWeight.x * 
-				  (ubo.mMat[inJointIndex.x] * vec4(inPosition, 1.0)).xyz;
-		fragNorm = inJointWeight.x * 
-				   (ubo.nMat[inJointIndex.x] * vec4(inNorm, 0.0)).xyz;
-		
-		gl_Position += inJointWeight.y * 
-					  ubo.mvpMat[inJointIndex.y] * vec4(inPosition, 1.0);
-		fragPos += inJointWeight.y * 
+		if(shadowClipUbo.debug.y == 1.0)
+			gl_Position = inJointWeight.x * shadowClipUbo.lightVP * ubo.mMat[inJointIndex.x] * vec4(inPosition, 1.0);
+		else
+			gl_Position = inJointWeight.x * ubo.mvpMat[inJointIndex.x] * vec4(inPosition, 1.0);
+		fragPos = inJointWeight.x * (ubo.mMat[inJointIndex.x] * vec4(inPosition, 1.0)).xyz;
+		fragNorm = inJointWeight.x * (ubo.nMat[inJointIndex.x] * vec4(inNorm, 0.0)).xyz;
+
+		if(shadowClipUbo.debug.y == 1.0)
+			gl_Position += inJointWeight.y * shadowClipUbo.lightVP * ubo.mMat[inJointIndex.y] * vec4(inPosition, 1.0);
+		else
+			gl_Position += inJointWeight.y * ubo.mvpMat[inJointIndex.y] * vec4(inPosition, 1.0);
+		fragPos += inJointWeight.y *
 				  (ubo.mMat[inJointIndex.y] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.y * 
 				   (ubo.nMat[inJointIndex.y] * vec4(inNorm, 0.0)).xyz;
 		
-		gl_Position += inJointWeight.z * 
-					  ubo.mvpMat[inJointIndex.z] * vec4(inPosition, 1.0);
+		if(shadowClipUbo.debug.y == 1.0)
+			gl_Position += inJointWeight.z * shadowClipUbo.lightVP * ubo.mMat[inJointIndex.z] * vec4(inPosition, 1.0);
+		else
+			gl_Position += inJointWeight.z * ubo.mvpMat[inJointIndex.z] * vec4(inPosition, 1.0);
 		fragPos += inJointWeight.z * 
 				  (ubo.mMat[inJointIndex.z] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.z * 
 				   (ubo.nMat[inJointIndex.z] * vec4(inNorm, 0.0)).xyz;
 		
-		gl_Position += inJointWeight.w * 
-					  ubo.mvpMat[inJointIndex.w] * vec4(inPosition, 1.0);
+		if(shadowClipUbo.debug.y == 1.0)
+			gl_Position += inJointWeight.w * shadowClipUbo.lightVP * ubo.mMat[inJointIndex.w] * vec4(inPosition, 1.0);
+		else
+			gl_Position += inJointWeight.w * ubo.mvpMat[inJointIndex.w] * vec4(inPosition, 1.0);
 		fragPos += inJointWeight.w * 
 				  (ubo.mMat[inJointIndex.w] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.w * 

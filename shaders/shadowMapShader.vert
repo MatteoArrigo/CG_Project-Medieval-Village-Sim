@@ -22,6 +22,8 @@ layout(location = 1) in vec3 inNorm;
 layout(location = 2) in vec2 inUV;
 layout(location = 3) in vec4 inTangent;
 
+layout(location = 0) out vec2 fragUV;
+
 /**
 * Uniform buffer object for passing transformation matrices.
 * This includes the light's view-projection matrix and the model matrix.
@@ -34,4 +36,5 @@ layout(binding = 0, set = 0) uniform UniformBufferObject {
 void main() {
     // Transform vertex position from model space to light clip space
     gl_Position = ubo.lightVP * ubo.model * vec4(inPosition, 1.0);
+    fragUV = inUV;
 }

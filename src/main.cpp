@@ -16,20 +16,16 @@
 //TODO generale: Ripulisci e Commenta tutto il main
 
 /*TODO:
-    - quando ridimensiono la finestra crasha, perchè?
-    - aggiusta character che non viene renderizzato
-    - prova a gestire meglio il sample della shadow map in terrain shader, soprattuto per
-       le coordinate che escono fuori dal light clip space e per il bias term (magari rendilo dinamico...)
     - Pensa se aggiungere supporto alle ombre anche su altre tecniche
     - attenziona il fatto che le ombre hanno i bordi jagged (seghettati)
-    - Alcune mesh come vegetation hanno maskMode alpha, quindi l'ombra dovrebbe esserci
-        solo per i punti con la texture.a > 0.5, come gestire questo?
 */
 
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = true;
+
+const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
 
 // The uniform buffer object used in this example
 struct VertexChar {
@@ -200,8 +196,8 @@ class CGProject : public BaseProject {
     /**
      * Parameters used for orthogonal projection of the scene from light pov, in shadow mapping render pass
      */
-    const float lightWorldLeft = -150.0f, lightWorldRight = 150.0f;
-    const float lightWorldBottom = lightWorldLeft * 1.0f, lightWorldTop = lightWorldRight * 1.0f;     // Now the shadow map is square (2048x2048)
+    const float lightWorldLeft = -110.0f, lightWorldRight = 110.0f;
+    const float lightWorldBottom = lightWorldLeft * 1.0f+50, lightWorldTop = lightWorldRight * 1.0f-50;     // Now the shadow map is square (2048x2048)
     const float lightWorldNear = -150.0f, lightWorldFar = 200.0f;
     /**
      * Actual projection matrix used to render the scene from light pov, in shadow mapping render pass
@@ -221,15 +217,16 @@ class CGProject : public BaseProject {
 
     // Here you set the main application parameters
 	void setWindowParameters() {
-		// window size, titile and initial background
-		windowWidth = 1000;
-		windowHeight = 750;
+		// window size, title
+//		windowWidth = 1920;
+//		windowHeight = 1080;
+		windowWidth = 1500;
+		windowHeight = 1000;
 		windowTitle = "CGProject - Medieval Village Sim";
     	windowResizable = GLFW_FALSE;
-        // TODO: da fixare, se imposto resizable, quando faccio resize l'app crasha
 
 		// Initial aspect ratio
-		Ar = 4.0f / 3.0f;
+		Ar = (float)windowWidth / (float)windowHeight;
 	}
 	
 	// What to do when the window changes size
@@ -261,22 +258,27 @@ class CGProject : public BaseProject {
                 glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.5f)) *   // translation of axis z
                 glm::scale(glm::mat4(1.0), glm::vec3(1.0f, -1.0f, 0.5f));       // scale of axis y and z
         glm::mat4 lightProj = vulkanCorrection * glm::ortho(lightWorldLeft, lightWorldRight, lightWorldBottom, lightWorldTop, lightWorldNear, lightWorldFar);
-        lightVP = lightProj * glm::inverse(lightRotation);
+        lightVP = lightProj * glm::inverse(lightRotation); // inverse because we need to invert the rotation of the world scene to get the light's view
+        // TODO: per ora la zona proiettata per il light clip space è fissa
+        // Ma si potrebbe rendere dinamica, almeno traslando rispetto la player position
 
 
 		// --------- DSL INITIALIZATION ---------
 		DSLshadowMap.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowMapUBO), 1}
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowMapUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
         DSLshadowMapChar.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowMapUBOChar), 1}
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowMapUBOChar), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
 		DSLglobal.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, sizeof(GlobalUniformBufferObject), 1}
         });
 		DSLlocalChar.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectChar), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
         });
 		DSLlocalSimp.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
@@ -392,11 +394,10 @@ class CGProject : public BaseProject {
 		 * Now default options of starter.hpp are used, so it will write color and depth  */
         RP.init(this);
 		RP.properties[0].clearValue = {0.0f,0.9f,1.0f,1.0f};
-
-        /* Actual creation of the Render Passes
-         * It is done here to be sure the attachment of RPshadow is created and can be linked as input in RP */
+        /* Actual creation of the Render Pass for shadow mapping.
+            It is done here to be sure the attachment of RPshadow is created and can be linked as input in RP */
         RPshadow.create();
-        RP.create();
+
 
         PshadowMap.init(this, &VDtan, "shaders/shadowMapShader.vert.spv", "shaders/shadowMapShader.frag.spv", {&DSLshadowMap});
         PshadowMap.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);  // or VK_COMPARE_OP_LESS
@@ -408,8 +409,8 @@ class CGProject : public BaseProject {
         PshadowMapChar.setCullMode(VK_CULL_MODE_BACK_BIT);
         PshadowMapChar.setPolygonMode(VK_POLYGON_MODE_FILL);
 
-        PshadowMapSky.init(this, &VDskyBox, "shaders/shadowMapShaderSky.vert.spv", "shaders/shadowMapShader.frag.spv", {});
-        PshadowMapWater.init(this, &VDsimp, "shaders/shadowMapShaderWater.vert.spv", "shaders/shadowMapShader.frag.spv", {});
+        PshadowMapSky.init(this, &VDskyBox, "shaders/shadowMapShaderSky.vert.spv", "shaders/shadowMapShaderEmpty.frag.spv", {});
+        PshadowMapWater.init(this, &VDsimp, "shaders/shadowMapShaderWater.vert.spv", "shaders/shadowMapShaderEmpty.frag.spv", {});
 
 		Pchar.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterCookTorrance.frag.spv", {&DSLglobal, &DSLlocalChar});
 		PsimpObj.init(this, &VDsimp, "shaders/GeneralSimplePosNormUV.vert.spv", "shaders/GeneralCookTorrance.frag.spv", {&DSLglobal, &DSLlocalSimp});
@@ -430,7 +431,9 @@ class CGProject : public BaseProject {
         // --------- TECHNIQUES INITIALIZATION ---------
         PRs.resize(7);
 		PRs[0].init("CookTorranceChar", {
-            {&PshadowMapChar, {{}} },
+            {&PshadowMapChar, {{
+                {true, 0, {} },     // Shadow map UBO
+            }} },
             {&Pchar, {
                 {},
                 {
@@ -457,7 +460,9 @@ class CGProject : public BaseProject {
             }}
         }, 1, &VDskyBox);
         PRs[3].init("Terrain", {
-            {&PshadowMap, {{}} },
+            {&PshadowMap, {{
+                {true, 1, {} },     // Shadow map UBO
+            }} },
             {&Pterrain,   {
                 {},
                 {
@@ -492,7 +497,9 @@ class CGProject : public BaseProject {
             }}
         }, 8, &VDsimp);
         PRs[5].init("Grass", {
-            {&PshadowMap, {{}} },
+            {&PshadowMap, {{
+                {true, 0, {} },     // Shadow map UBO
+            }} },
             {&Pgrass,     {
                 {},
                 {
@@ -502,7 +509,9 @@ class CGProject : public BaseProject {
             }}
         }, 2, &VDtan);
         PRs[6].init("PBR_sg", {
-            {&PshadowMap, {{}} },
+            {&PshadowMap, {{
+                {true, 0, {} },     // Shadow map UBO
+            }} },
             {&P_PBR_SpecGloss, {
                 {},
                 {
@@ -523,13 +532,13 @@ class CGProject : public BaseProject {
 		DPSZs.setsInPool = 1000;
 		
         std::cout << "\nLoading the scene\n\n";
-		if(SC.init(this, 2, VDRs, PRs, "assets/models/scene.json") != 0) {
+		if(SC.init(this, 2, VDRs, PRs, SCENE_FILEPATH) != 0) {
 			std::cout << "ERROR LOADING THE SCENE\n";
 			exit(0);
 		}
 
 		// Characters and animations initialization
-		if (charManager.init("assets/models/scene.json", SC.As) != 0) {
+		if (charManager.init(SCENE_FILEPATH, SC.As) != 0) {
 			std::cout << "ERROR LOADING CHARACTERs\n";
 			exit(0);
 		}
@@ -556,6 +565,9 @@ class CGProject : public BaseProject {
 		// creates the render pass
         std::cout << "Creating pipelines and descriptor sets\n";
         // Render passes already created in localInit()
+
+        // Creation of RPshadow must be done before the pipelines, because they use it
+        RP.create();
 
         std::cout << "Creating pipelines\n";
 		Pchar.create(&RP);
@@ -612,9 +624,9 @@ class CGProject : public BaseProject {
         DSLshadowMap.cleanup();
         DSLshadowMapChar.cleanup();
 
-		Pchar.destroy();	
+		Pchar.destroy();
 		PsimpObj.destroy();
-		PskyBox.destroy();		
+		PskyBox.destroy();
         PWater.destroy();
         Pgrass.destroy();
         P_PBR_SpecGloss.destroy();
@@ -692,15 +704,16 @@ class CGProject : public BaseProject {
                     debounce = true;
                     curDebounce = GLFW_KEY_SPACE;
 
-				debug1.z = (float)(((int)debug1.z + 1) % 65);
-            std::cout << "Showing bone index: " << debug1.z << "\n";
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_P) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
+                    debug1.z = (float) (((int) debug1.z + 1) % 65);
+                    std::cout << "Showing bone index: " << debug1.z << "\n";
+                }
+            } else {
+                if ((curDebounce == GLFW_KEY_P) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
+        }
 
 		static int curAnim = 0;
 		static AnimBlender* AB = charManager.getCharacters()[0]->getAnimBlender();
@@ -816,9 +829,10 @@ class CGProject : public BaseProject {
                 shadowCharUbo.model[im] = SC.TI[techniqueId].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
 			}
 
-			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowCharUbo, 0); // Set 0
-			SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &uboc, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowCharUbo, 0);
+			SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0);
+			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &uboc, 0);
+			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 2);
 		}
 
 		// TECHNIQUE Simple objects

@@ -1,10 +1,10 @@
 {
 	"assetfiles": [
-		{"id": "hm", "file": "assets/models/uomo.gltf", "format":"GLTF"},
-		{"id": "a1", "file": "assets/models/running.gltf", "format":"GLTF"},
-		{"id": "a2", "file": "assets/models/idle.gltf", "format":"GLTF"},
-		{"id": "a3", "file": "assets/models/pointing.gltf", "format":"GLTF"},
-		{"id": "a4", "file": "assets/models/waving.gltf", "format":"GLTF"},
+		{"id": "hm", "file": "assets/models/npc_test/uomo.gltf", "format":"GLTF"},
+		{"id": "a1", "file": "assets/models/npc_test/running.gltf", "format":"GLTF"},
+		{"id": "a2", "file": "assets/models/npc_test/idle.gltf", "format":"GLTF"},
+		{"id": "a3", "file": "assets/models/npc_test/pointing.gltf", "format":"GLTF"},
+		{"id": "a4", "file": "assets/models/npc_test/waving.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 
