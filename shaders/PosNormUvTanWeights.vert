@@ -1,11 +1,13 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#define MAX_ANIMATION_JOINTS 100
 
 layout(binding = 0, set = 1) uniform UniformBufferObject {
 	vec4 debug1;
-	mat4 mvpMat[65];
-	mat4 mMat[65];
-	mat4 nMat[65];
+	mat4 mvpMat[MAX_ANIMATION_JOINTS];
+	mat4 mMat[MAX_ANIMATION_JOINTS];
+	mat4 nMat[MAX_ANIMATION_JOINTS];
+	int jointsCount;
 } ubo;
 
 
@@ -19,8 +21,20 @@ layout(location = 0) out vec3 fragPos;
 layout(location = 1) out vec3 fragNorm;
 layout(location = 2) out vec2 fragUV;
 layout(location = 3) out vec2 debug2;
+layout(location = 4) out int toBeDiscarded;
 
 void main() {
+	if (
+		inJointIndex.x >= ubo.jointsCount ||
+		inJointIndex.y >= ubo.jointsCount ||
+		inJointIndex.z >= ubo.jointsCount ||
+		inJointIndex.w >= ubo.jointsCount
+	) {
+		toBeDiscarded = 1;
+		return;
+	} else {
+		toBeDiscarded = 0;
+	}
 	if(ubo.debug1.x == 1.0f) {
 		gl_Position = ubo.mvpMat[0] * vec4(inPosition, 1.0);
 		fragPos = (ubo.mMat[0] * vec4(inPosition, 1.0)).xyz;
