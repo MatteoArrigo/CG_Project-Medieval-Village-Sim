@@ -12,6 +12,8 @@
 #include "character/char_manager.hpp"
 #include "character/character.hpp"
 
+#define MAX_ANIMATION_JOINTS 100
+
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
@@ -60,9 +62,10 @@ struct GlobalUniformBufferObject {
 
 struct UniformBufferObjectChar {
 	alignas(16) glm::vec4 debug1;
-	alignas(16) glm::mat4 mvpMat[100];
-	alignas(16) glm::mat4 mMat[100];
-	alignas(16) glm::mat4 nMat[100];
+	alignas(16) glm::mat4 mvpMat[MAX_ANIMATION_JOINTS];
+	alignas(16) glm::mat4 mMat[MAX_ANIMATION_JOINTS];
+	alignas(16) glm::mat4 nMat[MAX_ANIMATION_JOINTS];
+	alignas(4) int jointsCount;
 };
 
 struct UniformBufferObjectSimp {
@@ -745,6 +748,8 @@ class CGProject : public BaseProject {
 						uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
 						uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
 					}
+					uboc.jointsCount = TMsp->size();
+
 					I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
 					I->DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
 				} else if(techniqueName == "PBR_sg_char") {
@@ -755,6 +760,7 @@ class CGProject : public BaseProject {
 						uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
 						uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
 					}
+					uboc.jointsCount = TMsp->size();
 
 					sgAoUboChar.diffuseFactor = I->diffuseFactor;
 					sgAoUboChar.specularFactor = I->specularFactor;

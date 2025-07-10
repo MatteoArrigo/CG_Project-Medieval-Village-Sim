@@ -7048,7 +7048,7 @@
 				"id": "player",
 				"model": "player",
 				"texture": ["player_d", "player_n", "player_s", "void"],
-				"translate": [0.0, 0.0, 0.0],
+				"translate": [15.0, 15.0, 15.0],
 				"scale": [10.0, 10.0, 10.0]
 			}
 		]}
