@@ -3,9 +3,9 @@
 
 layout(binding = 0, set = 1) uniform UniformBufferObject {
     vec4 debug1;
-    mat4 mvpMat[65];
-    mat4 mMat[65];
-    mat4 nMat[65];
+    mat4 mvpMat[100];
+    mat4 mMat[100];
+    mat4 nMat[100];
 } ubo;
 
 layout(location = 0) in vec3 inPosition;
@@ -50,5 +50,15 @@ void main() {
         (ubo.nMat[inJointIndex.w] * vec4(inNorm, 0.0)).xyz;
 
     fragUV = inUV;
-    fragTan = inTangent;
+    // Compute tangent vector
+    // fragTan = vec4(normalize(mat3(ubo.mMat[inJointIndex.x]) * inTangent.xyz), inTangent.w);
+    // fragTan = inTangent;
+    // Trasforma la tangente con skinning, come la normale
+    vec3 tan = vec3(0.0);
+    tan += inJointWeight.x * (mat3(ubo.mMat[inJointIndex.x]) * inTangent.xyz);
+    tan += inJointWeight.y * (mat3(ubo.mMat[inJointIndex.y]) * inTangent.xyz);
+    tan += inJointWeight.z * (mat3(ubo.mMat[inJointIndex.z]) * inTangent.xyz);
+    tan += inJointWeight.w * (mat3(ubo.mMat[inJointIndex.w]) * inTangent.xyz);
+    tan = normalize(tan);
+    fragTan = vec4(tan, inTangent.w);
 }

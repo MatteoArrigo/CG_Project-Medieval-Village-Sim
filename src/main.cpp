@@ -60,9 +60,9 @@ struct GlobalUniformBufferObject {
 
 struct UniformBufferObjectChar {
 	alignas(16) glm::vec4 debug1;
-	alignas(16) glm::mat4 mvpMat[65];
-	alignas(16) glm::mat4 mMat[65];
-	alignas(16) glm::mat4 nMat[65];
+	alignas(16) glm::mat4 mvpMat[100];
+	alignas(16) glm::mat4 mMat[100];
+	alignas(16) glm::mat4 nMat[100];
 };
 
 struct UniformBufferObjectSimp {
@@ -646,7 +646,7 @@ class CGProject : public BaseProject {
 				debounce = true;
 				curDebounce = GLFW_KEY_P;
 
-				debug1.z = (float)(((int)debug1.z + 1) % 65);
+				debug1.z = (float)(((int)debug1.z + 1) % 100);
             std::cout << "Showing bone index: " << debug1.z << "\n";
 			}
 		} else {
@@ -749,21 +749,21 @@ class CGProject : public BaseProject {
 					I->DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
 				} else if(techniqueName == "PBR_sg_char") {
 					// PBR_SpecGloss_char technique ubo update
-					// SgAoMaterialFactorsUBO sgAoUboChar{};
-					// for(int im = 0; im < TMsp->size(); im++) {
-					// 	uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
-					// 	uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
-					// 	uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
-					// }
-					//
-					// sgAoUboChar.diffuseFactor = I->diffuseFactor;
-					// sgAoUboChar.specularFactor = I->specularFactor;
-					// sgAoUboChar.glossinessFactor = I->factor1;
-					// sgAoUboChar.aoFactor = I->factor2;
-					//
-					// I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-					// I->DS[0][1]->map(currentImage, &uboc, 0); // Set 1
-					// I->DS[0][2]->map(currentImage, &sgAoUboChar, 0); // Set 2
+					SgAoMaterialFactorsUBO sgAoUboChar{};
+					for(int im = 0; im < TMsp->size(); im++) {
+						uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+						uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
+						uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
+					}
+
+					sgAoUboChar.diffuseFactor = I->diffuseFactor;
+					sgAoUboChar.specularFactor = I->specularFactor;
+					sgAoUboChar.glossinessFactor = I->factor1;
+					sgAoUboChar.aoFactor = I->factor2;
+
+					I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+					I->DS[0][1]->map(currentImage, &uboc, 0); // Set 1
+					I->DS[0][2]->map(currentImage, &sgAoUboChar, 0); // Set 2
 				} else {
 					std::cout << "ERROR: Unknown technique for character: " << *(I->TIp->T->id) << "\n";
 				}
