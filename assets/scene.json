@@ -6,6 +6,8 @@
 		{"id": "a3", "file": "assets/models/Characters/Uomo/pointing.gltf", "format":"GLTF"},
 		{"id": "a4", "file": "assets/models/Characters/Uomo/waving.gltf", "format":"GLTF"},
 
+		{"id": "player", "file": "assets/models/Characters/Player/Player.gltf", "format":"GLTF"},
+
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 
 		{"id": "village_props", "file": "assets/models/Props.gltf", "format":"GLTF"},
@@ -34,11 +36,21 @@
 			"startEndFrames": [[0,16], [0,263]],
 			"charStates": ["Running", "Idle"],
 			"BaseTrackName": "Armature|mixamo.com|Layer0"
+		},
+		{
+			"id": "player",
+			"name": "Player",
+			"instanceIds": ["player"],
+			"animList": ["player"],
+			"startEndFrames": [[0,32]],
+			"charStates": ["Walking"],
+			"BaseTrackName": "Armature|mixamo.com|Layer0"
 		}
 	],
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
 		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
+		{"id": "player",  "VD": "VDcharTan",  "model": "Paladin_J_Nordstrom", "node": "Paladin_J_Nordstrom", "meshId": 0, "asset": "player", "format":"ASSET"},
 		{"id": "skybox", "VD": "VDpos", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
 		{"id": "water_grid", "VD": "VDnormUV", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
 
@@ -409,6 +421,9 @@
 		{"id": "white", "texture": "assets/textures/white.png", "format": "C"},
 		{"id": "transparent", "texture": "assets/textures/transparent.png", "format": "C"},
 
+        {"id": "player_d",    "texture": "assets/textures/player/Paladin_diffuse.png", "format": "C"},
+		{"id": "player_n",    "texture": "assets/textures/player/Paladin_normal.png", "format": "D"},
+		{"id": "player_s",    "texture": "assets/textures/player/Paladin_specular.png", "format": "D"},
         {"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png", "format": "C"},
 
 		{"id": "terrain_01_m", "texture": "assets/textures/terrain/terrain_01_m.png", "format": "D"},
@@ -570,7 +585,6 @@
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
 		]},
-
 		{"technique": "Terrain", "elements": [
 			{"id": "Baseplate-00.00", "model": "Baseplate-00", "texture": [
 				"void", "void", "void", "void",
@@ -7027,6 +7041,15 @@
 				"translate": [25.229076385498047, 5.213664531707764, 32.19197082519531],
 				"eulerAngles": [3.9376240076288345, 52.19641950249228, 12.265161812886484],
 				"diffuseFactor": [0.9911022, 0.9911022, 0.9911022], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0}
+		]},
+		{"technique": "PBR_sg_char", "elements":  [
+			{
+				"id": "player",
+				"model": "player",
+				"texture": ["player_d", "player_n", "player_s", "void"],
+				"translate": [15.0, 15.0, 15.0],
+				"scale": [10.0, 10.0, 10.0]
+			}
 		]}
 	]
 

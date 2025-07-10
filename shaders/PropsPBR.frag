@@ -34,6 +34,7 @@ layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNorm;
 layout(location = 2) in vec2 fragUV;
 layout(location = 3) in vec4 fragTan;
+layout(location = 4) flat in int toBeDiscarded;
 
 layout(location = 4) in vec4 fragPosLightSpace;
 layout(location = 5) in vec4 debug;
@@ -105,6 +106,10 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 }
 
 void main() {
+    if (toBeDiscarded == 1) {
+        discard;
+    }
+
     // Texture sampling
     vec4 texDiffuse  = texture(albedoMap, fragUV);
     vec4 texSpecGloss = texture(specGlossMap, fragUV);

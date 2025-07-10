@@ -52,6 +52,16 @@ struct VertexTan {
 	glm::vec4 tan;
 };
 
+//TODO: fondi con VertexChar
+struct VertexCharTan {
+	glm::vec3 pos;
+	glm::vec3 norm;
+	glm::vec2 UV;
+	glm::vec4 tan;
+	glm::uvec4 jointIndices;
+	glm::vec4 weights;
+};
+
 #define MAX_POINT_LIGHTS 10
 struct LightModelUBO {
 	alignas(16) glm::vec3 lightDir;
@@ -69,6 +79,7 @@ struct GeomCharUBO {
 	alignas(16) glm::mat4 mvpMat[N_JOINTS];
 	alignas(16) glm::mat4 mMat[N_JOINTS];
 	alignas(16) glm::mat4 nMat[N_JOINTS];
+    alignas(4) int jointsCount;
 };
 
 struct GeomUBO {
@@ -124,6 +135,9 @@ class CGProject : public BaseProject {
     // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
 
+    //TODO: rinomina
+    DescriptorSetLayout DSLlocalPBRChar;
+
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
 	VertexDescriptor VDnormUV;
@@ -132,6 +146,7 @@ class CGProject : public BaseProject {
 	RenderPass RPshadow, RP;
 	Pipeline Pchar, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
+    Pipeline P_PBR_SpecGloss_char;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Scene SC;
@@ -339,6 +354,20 @@ class CGProject : public BaseProject {
         });
 
 
+
+        		DSLlocalPBRChar.init(this, {
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectChar), 1},
+					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
+					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
+					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1}
+				  });
+
+
+
+
+
+
         // --------- VERTEX DESCRIPTORS INITIALIZATION ---------
         VDchar.init(this, {
                 {0, sizeof(VertexChar), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -370,12 +399,31 @@ class CGProject : public BaseProject {
                 {0, 3, VK_FORMAT_R32G32B32A32_SFLOAT,   offsetof(VertexTan, tan),   sizeof(glm::vec4), TANGENT}
         });
 
-        // Specification of names and mappings of VDs for scene.json
-		VDRs.resize(4);
-		VDRs[0].init("VDchar",  &VDchar);
-		VDRs[1].init("VDnormUV",&VDnormUV);
-		VDRs[2].init("VDpos",   &VDpos);
-		VDRs[3].init("VDtan",   &VDtan);
+        //TODO da rivedere
+		VDcharTan.init(this,
+			{
+					{0, sizeof(VertexCharTan), VK_VERTEX_INPUT_RATE_VERTEX}
+			}, {
+				  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexCharTan, pos),
+						 sizeof(glm::vec3), POSITION},
+				  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexCharTan, norm),
+						 sizeof(glm::vec3), NORMAL},
+				  {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexCharTan, UV),
+						 sizeof(glm::vec2), UV},
+				  {0, 3, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexCharTan, tan),
+						 sizeof(glm::vec4), TANGENT},
+					{0, 4, VK_FORMAT_R32G32B32A32_UINT, offsetof(VertexCharTan, jointIndices),
+					sizeof(glm::uvec4), JOINTINDEX},
+					{0, 5, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexCharTan, weights),
+					sizeof(glm::vec4), JOINTWEIGHT}
+			});
+
+		VDRs.resize(5);
+		VDRs[0].init("VDchar",   &VDchar);
+		VDRs[1].init("VDnormUV",   &VDnormUV);
+		VDRs[2].init("VDpos", &VDpos);
+		VDRs[3].init("VDtan",    &VDtan);
+		VDRs[4].init("VDcharTan",&VDcharTan);
 
 
         // --------- RENDER PASSES INITIALIZATION ---------
@@ -424,8 +472,10 @@ class CGProject : public BaseProject {
 		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
 
 
+		P_PBR_SpecGloss_char.init(this, &VDcharTan, "shaders/SimplePosNormUvTanChar.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBRChar, &DSLsgAoFactors});
+
         // --------- TECHNIQUES INITIALIZATION ---------
-        PRs.resize(7);
+        PRs.resize(8);
 		PRs[0].init("CookTorranceChar", {
             {&PshadowMapChar, {{
                 {true, 0, {} },     // Shadow map UBO
@@ -529,6 +579,22 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 4, &VDtan);
+        //TODO: da rivedere
+        PRs[7].init("PBR_sg_char", {
+            {&PshadowMap, {{
+                {true, 0, {} },     // Shadow map UBO
+            }} },
+            {&P_PBR_SpecGloss_char, {
+                {},
+                {},
+                {
+                    {true,  0, {}},     // albedo
+                    {true,  1, {}},     // normal
+                    {true,  2, {}},     // specular / glossiness
+                    {true,  3, {}}     // ambient occlusion
+                }
+            }}
+        }, 4, &VDcharTan);
 
 
         // --------- SCENE INITIALIZATION ---------
@@ -599,6 +665,8 @@ class CGProject : public BaseProject {
         std::cout << "\t11: Creating PshadowMapWater\n";
         PshadowMapWater.create(&RPshadow);
 
+        		P_PBR_SpecGloss_char.create(&RP);
+
         std::cout << "Creating descriptor sets\n";
 
 		SC.pipelinesAndDescriptorSetsInit();
@@ -622,6 +690,9 @@ class CGProject : public BaseProject {
 		RPshadow.cleanup();
         RP.cleanup();
 
+
+        		P_PBR_SpecGloss_char.cleanup();
+
 		SC.pipelinesAndDescriptorSetsCleanup();
 		txt.pipelinesAndDescriptorSetsCleanup();
 	}
@@ -640,6 +711,12 @@ class CGProject : public BaseProject {
         DSLshadowMap.cleanup();
         DSLshadowMapChar.cleanup();
 
+
+
+        		DSLlocalPBRChar.cleanup();
+
+
+
 		Pchar.destroy();
 		Pskybox.destroy();
         Pwater.destroy();
@@ -651,6 +728,12 @@ class CGProject : public BaseProject {
         PshadowMapChar.destroy();
         PshadowMapSky.destroy();
         PshadowMapWater.destroy();
+
+
+        		P_PBR_SpecGloss_char.destroy();
+
+
+
 
         RPshadow.destroy();
 		RP.destroy();
@@ -731,6 +814,11 @@ class CGProject : public BaseProject {
         //NOTE on code style: write all uniform variables in the following section
         // and assign the constant values across the different model during initialization
 
+		GlobalUniformBufferObject gubo{};
+		gubo.lightDir = lightDir;
+		gubo.lightColor = lightColor;
+		gubo.eyePos = cameraPos;
+
         // Common uniforms and general variables
 		LightModelUBO lightUbo{
             .lightDir = lightDir,
@@ -758,6 +846,11 @@ class CGProject : public BaseProject {
         };
         TerrainFactorsUBO terrainFactorsUbo{};
         PbrFactorsUBO pbrUbo{};
+		// defines the local parameters for the uniforms
+		UniformBufferObjectChar uboc{};
+		UniformBufferObjectSimp ubos{};
+		uboc.debug1 = debug1;
+
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
@@ -774,18 +867,44 @@ class CGProject : public BaseProject {
 			SKA->Sample(*AB);
 			std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
 			for (Instance* I : C->getInstances()) {
-                for(int im = 0; im < TMsp->size(); im++) {
-                    geomCharUbo.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
-                    geomCharUbo.mvpMat[im] = ViewPrj * geomCharUbo.mMat[im];
-                    geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
-                    shadowMapUboChar.model[im] = I->Wm * AdaptMat * (*TMsp)[im];
-                }
+				std::string techniqueName = *(I->TIp->T->id);
+				if (techniqueName == "CookTorranceChar") {
+					// CookTorrance technique ubo update
+					for(int im = 0; im < TMsp->size(); im++) {
+						geomCharUbo.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+						geomCharUbo.mvpMat[im] = ViewPrj * geomCharUbo.mMat[im];
+						geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
+                        shadowMapUboChar.model[im] = I->Wm * AdaptMat * (*TMsp)[im];
+					}
+					geomCharUbo.jointsCount = TMsp->size();
 
-                I->DS[0][0]->map(currentImage, &shadowMapUboChar, 0);
-                I->DS[1][0]->map(currentImage, &lightUbo, 0);
-                I->DS[1][1]->map(currentImage, &geomCharUbo, 0);
-                I->DS[1][1]->map(currentImage, &shadowClipUbo, 1);
-            }
+                    I->DS[0][0]->map(currentImage, &shadowMapUboChar, 0);
+                    I->DS[1][0]->map(currentImage, &lightUbo, 0);
+                    I->DS[1][1]->map(currentImage, &geomCharUbo, 0);
+                    I->DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+				} else if(techniqueName == "PBR_sg_char") {
+                    //TODO: rivedi
+					// PBR_SpecGloss_char technique ubo update
+					SgAoMaterialFactorsUBO sgAoUboChar{};
+					for(int im = 0; im < TMsp->size(); im++) {
+						uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+						uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
+						uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
+					}
+					uboc.jointsCount = TMsp->size();
+
+					sgAoUboChar.diffuseFactor = I->diffuseFactor;
+					sgAoUboChar.specularFactor = I->specularFactor;
+					sgAoUboChar.glossinessFactor = I->factor1;
+					sgAoUboChar.aoFactor = I->factor2;
+
+					I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+					I->DS[0][1]->map(currentImage, &uboc, 0); // Set 1
+					I->DS[0][2]->map(currentImage, &sgAoUboChar, 0); // Set 2
+				} else {
+					std::cout << "ERROR: Unknown technique for character: " << *(I->TIp->T->id) << "\n";
+				}
+			}
 		}
 
 		int instanceId;
