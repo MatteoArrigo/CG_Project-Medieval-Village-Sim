@@ -727,7 +727,6 @@ class CGProject : public BaseProject {
 
 		// Skeletal Animation sampling and animation update
 		const float SpeedUpAnimFact = 0.85f;
-		std::cout << "Loading animated char assets" << "\n";
 		for (std::shared_ptr<Character> C : charManager.getCharacters()) {
 			SkeletalAnimation* SKA = C->getSkeletalAnimation();
 			AnimBlender* AB = C->getAnimBlender();
@@ -750,21 +749,21 @@ class CGProject : public BaseProject {
 					I->DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
 				} else if(techniqueName == "PBR_sg_char") {
 					// PBR_SpecGloss_char technique ubo update
-					SgAoMaterialFactorsUBO sgAoUboChar{};
-					for(int im = 0; im < TMsp->size(); im++) {
-						uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
-						uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
-						uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
-					}
-
-					sgAoUboChar.diffuseFactor = I->diffuseFactor;
-					sgAoUboChar.specularFactor = I->specularFactor;
-					sgAoUboChar.glossinessFactor = I->factor1;
-					sgAoUboChar.aoFactor = I->factor2;
-
-					I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-					I->DS[0][1]->map(currentImage, &uboc, 0); // Set 1
-					I->DS[0][2]->map(currentImage, &sgAoUboChar, 0); // Set 2
+					// SgAoMaterialFactorsUBO sgAoUboChar{};
+					// for(int im = 0; im < TMsp->size(); im++) {
+					// 	uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+					// 	uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
+					// 	uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
+					// }
+					//
+					// sgAoUboChar.diffuseFactor = I->diffuseFactor;
+					// sgAoUboChar.specularFactor = I->specularFactor;
+					// sgAoUboChar.glossinessFactor = I->factor1;
+					// sgAoUboChar.aoFactor = I->factor2;
+					//
+					// I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+					// I->DS[0][1]->map(currentImage, &uboc, 0); // Set 1
+					// I->DS[0][2]->map(currentImage, &sgAoUboChar, 0); // Set 2
 				} else {
 					std::cout << "ERROR: Unknown technique for character: " << *(I->TIp->T->id) << "\n";
 				}
