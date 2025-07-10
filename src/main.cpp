@@ -187,7 +187,7 @@ class CGProject : public BaseProject {
      *  - applied to +z axis to compute light direction
      *  - applied in its inverse form to compute the light projection matrix for shadow map
      */
-    const glm::mat4 lightRotation = glm::rotate(glm::mat4(1), glm::radians(-29.0f),
+    const glm::mat4 lightRotation = glm::rotate(glm::mat4(1), glm::radians(-31.0f),
         glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-30.0f),
          glm::vec3(1.0f,0.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(0.0f),
          glm::vec3(0.0f,0.0f,1.0f));
@@ -547,7 +547,7 @@ class CGProject : public BaseProject {
 		}
 
 		// Characters and animations initialization
-		if (charManager.init(SCENE_FILEPATH, SC.As) != 0) {
+		if (charManager.init(SCENE_FILEPATH, SC) != 0) {
 			std::cout << "ERROR LOADING CHARACTERs\n";
 			exit(0);
 		}
@@ -777,9 +777,6 @@ class CGProject : public BaseProject {
 		// moves the view
 		float deltaT = GameLogic();
 
-		// updated the animation
-		const float SpeedUpAnimFact = 0.85f;
-		AB->Advance(deltaT * SpeedUpAnimFact);
 		// defines the global parameters for the uniform
 		const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(1.0f,0.0f,0.0f));
 		const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
@@ -790,8 +787,6 @@ class CGProject : public BaseProject {
         // and assign the constant values across the different model during initialization
 
         // Common uniforms and general variables
-        int instanceId;
-        int techniqueId = -1;
 		LightModelUBO lightUbo{
             .lightDir = lightDir,
             .lightColor = lightColor,
@@ -823,25 +818,33 @@ class CGProject : public BaseProject {
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
 
 		// TECHNIQUE Character
-        techniqueId++;
-		static SkeletalAnimation* SKA = charManager.getCharacters()[0]->getSkeletalAnimation();
-		SKA->Sample(*AB);
-		std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
-        for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
-			for(int im = 0; im < TMsp->size(); im++) {
-                geomCharUbo.mMat[im]   = SC.TI[techniqueId].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
-                geomCharUbo.mvpMat[im] = ViewPrj * geomCharUbo.mMat[im];
-                geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
-                shadowMapUboChar.model[im] = SC.TI[techniqueId].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
-			}
+        const float SpeedUpAnimFact = 0.85f;
+        for (std::shared_ptr<Character> C : charManager.getCharacters()) {
+			SkeletalAnimation* SKA = C->getSkeletalAnimation();
+			AnimBlender* AB = C->getAnimBlender();
+			// updated the animation
+			AB->Advance(deltaT * SpeedUpAnimFact);
 
-			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowMapUboChar, 0);
-			SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
-			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomCharUbo, 0);
-			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+			// Skeletal Sampling
+			SKA->Sample(*AB);
+			std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
+			for (Instance* I : C->getInstances()) {
+                for(int im = 0; im < TMsp->size(); im++) {
+                    geomCharUbo.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+                    geomCharUbo.mvpMat[im] = ViewPrj * geomCharUbo.mMat[im];
+                    geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
+                    shadowMapUboChar.model[im] = I->Wm * AdaptMat * (*TMsp)[im];
+                }
+
+                I->DS[0][0]->map(currentImage, &shadowMapUboChar, 0);
+                I->DS[1][0]->map(currentImage, &lightUbo, 0);
+                I->DS[1][1]->map(currentImage, &geomCharUbo, 0);
+                I->DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+            }
 		}
 
-        // TECHNIQUE SkyBox
+		int instanceId;
+		int techniqueId = 0;
         techniqueId++;
 		geomSkyboxUbo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
 		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &geomSkyboxUbo, 0);
