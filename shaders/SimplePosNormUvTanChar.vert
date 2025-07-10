@@ -50,10 +50,7 @@ void main() {
         (ubo.nMat[inJointIndex.w] * vec4(inNorm, 0.0)).xyz;
 
     fragUV = inUV;
-    // Compute tangent vector
-    // fragTan = vec4(normalize(mat3(ubo.mMat[inJointIndex.x]) * inTangent.xyz), inTangent.w);
-    // fragTan = inTangent;
-    // Trasforma la tangente con skinning, come la normale
+
     vec3 tan = vec3(0.0);
     tan += inJointWeight.x * (mat3(ubo.mMat[inJointIndex.x]) * inTangent.xyz);
     tan += inJointWeight.y * (mat3(ubo.mMat[inJointIndex.y]) * inTangent.xyz);
