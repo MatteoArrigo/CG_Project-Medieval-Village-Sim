@@ -64,7 +64,7 @@ public:
             assetFileIdx++;
         }
 
-        // Trova le instances di Character
+        // Crea una mappa stringa (id instance) -> riferimento all'istanza di Instance
         std::unordered_map<std::string, Instance*> instanceIdToInstanceRef;
         for (auto kv : SC.InstanceIds) {
             Instance *inst = SC.I[kv.second];
@@ -74,23 +74,16 @@ public:
         for (const auto& charJson : sceneJson["characters"]) {
             std::string name = charJson.value("name", "Unknown");
             std::vector<std::string> instancesIds = charJson.value("instanceIds", std::vector<std::string>{});
-            std::vector<float> posArr;
+            std::vector<float> posArr {0, 0, 0}; // Default position
             // Il la prima instance definisce la posizione del Character
             std::string posId = instancesIds[0];
             // Get position from the scene file (cook-torranceChar instances)
-            if (posId == "") {
-                posArr = std::vector<float>{0,0,0};
-            } else {
-                for (const auto& techniqueJson : sceneJson["instances"]) {
-                    for (const auto& elementJson : techniqueJson["elements"]) {
-                        if (elementJson["id"] == posId) {
-                            if (elementJson.contains("translate")) {
-                                posArr = elementJson["translate"].get<std::vector<float>>();
-                            } else {
-                                posArr = std::vector<float>{0, 0, 0}; // Default position
-                            }
-                            break;
-                        }
+            for (const auto& techniqueJson : sceneJson["instances"]) {
+                for (const auto& elementJson : techniqueJson["elements"]) {
+                    if (elementJson["id"] == posId) {
+                        if (elementJson.contains("translate"))
+                            posArr = elementJson["translate"].get<std::vector<float>>();
+                        break;
                     }
                 }
             }
@@ -147,7 +140,11 @@ public:
             // Aggiunta riferimento instances al charcter
             std::vector<Instance*> charInstances;
             for (const auto& instanceId : instancesIds) {
-                charInstances.push_back(instanceIdToInstanceRef[instanceId]);
+                if (instanceIdToInstanceRef.find(instanceId) != instanceIdToInstanceRef.end()) {
+                    charInstances.push_back(instanceIdToInstanceRef.at(instanceId));
+                } else {
+                    std::cout << "Instance with ID: " << instanceId << " not found in scene.\n";
+                }
             }
             charac->setInstances(charInstances);
         }
