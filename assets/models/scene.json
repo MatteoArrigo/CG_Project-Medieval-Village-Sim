@@ -50,7 +50,7 @@
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
 		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
-		{"id": "player",  "VD": "VDcharTan",  "model": "Paladin_J_Nordstrom_Helmet", "node": "Paladin_J_Nordstrom_Helmet", "meshId": 0, "asset": "player", "format":"ASSET"},
+		{"id": "player",  "VD": "VDcharTan",  "model": "Paladin_J_Nordstrom", "node": "Paladin_J_Nordstrom", "meshId": 0, "asset": "player", "format":"ASSET"},
 		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
 		{"id": "water_grid", "VD": "VDsimp", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
 
