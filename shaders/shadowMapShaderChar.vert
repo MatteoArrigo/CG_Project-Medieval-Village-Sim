@@ -20,7 +20,7 @@ layout(location = 4) in vec4 inJointWeight;
 
 layout(location = 0) out vec2 fragUV;
 
-#define MAX_JOINTS 65
+#define MAX_JOINTS 100
 layout(set = 0, binding = 0) uniform ShdaowMapUBOChar {
     mat4 lightVP;
     mat4 model[MAX_JOINTS];

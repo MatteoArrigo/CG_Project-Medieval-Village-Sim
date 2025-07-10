@@ -4,14 +4,11 @@
 #include <json.hpp>
 
 #include <PhysicsManager.hpp>
-//#include "modules/Starter.hpp"
-//#include "modules/Scene.hpp"
 #include "modules/TextMaker.hpp"
 #include "modules/Animations.hpp"
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
 #include "character/char_manager.hpp"
 #include "character/character.hpp"
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 //TODO generale: Ripulisci e Commenta tutto il main
 
@@ -23,14 +20,14 @@
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
-const bool FLY_MODE = false;
-
-const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
+const bool FLY_MODE = true;
+const std::string SCENE_FILEPATH = "assets/scene.json";
 
 struct VertexChar {
 	glm::vec3 pos;
 	glm::vec3 norm;
 	glm::vec2 UV;
+    glm::vec4 tan;
 	glm::uvec4 jointIndices;
 	glm::vec4 weights;
 };
@@ -52,16 +49,6 @@ struct VertexTan {
 	glm::vec4 tan;
 };
 
-//TODO: fondi con VertexChar
-struct VertexCharTan {
-	glm::vec3 pos;
-	glm::vec3 norm;
-	glm::vec2 UV;
-	glm::vec4 tan;
-	glm::uvec4 jointIndices;
-	glm::vec4 weights;
-};
-
 #define MAX_POINT_LIGHTS 10
 struct LightModelUBO {
 	alignas(16) glm::vec3 lightDir;
@@ -73,12 +60,12 @@ struct LightModelUBO {
 	alignas(16) glm::vec4 pointLightColors[MAX_POINT_LIGHTS];
 };
 
-#define N_JOINTS 65
+#define MAX_JOINTS 100
 struct GeomCharUBO {
 	alignas(16) glm::vec4 debug1;
-	alignas(16) glm::mat4 mvpMat[N_JOINTS];
-	alignas(16) glm::mat4 mMat[N_JOINTS];
-	alignas(16) glm::mat4 nMat[N_JOINTS];
+	alignas(16) glm::mat4 mvpMat[MAX_JOINTS];
+	alignas(16) glm::mat4 mMat[MAX_JOINTS];
+	alignas(16) glm::mat4 nMat[MAX_JOINTS];
     alignas(4) int jointsCount;
 };
 
@@ -94,7 +81,7 @@ struct ShadowMapUBO {
 };
 struct ShadowMapUBOChar {
 	alignas(16) glm::mat4 lightVP;
-	alignas(16) glm::mat4 model[N_JOINTS];
+	alignas(16) glm::mat4 model[MAX_JOINTS];
 };
 struct ShadowClipUBO {
 	alignas(16) glm::mat4 lightVP;
@@ -135,18 +122,14 @@ class CGProject : public BaseProject {
     // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
 
-    //TODO: rinomina
-    DescriptorSetLayout DSLlocalPBRChar;
-
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
 	VertexDescriptor VDnormUV;
 	VertexDescriptor VDpos;
 	VertexDescriptor VDtan;
 	RenderPass RPshadow, RP;
-	Pipeline Pchar, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings;
+	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
-    Pipeline P_PBR_SpecGloss_char;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Scene SC;
@@ -354,20 +337,6 @@ class CGProject : public BaseProject {
         });
 
 
-
-        		DSLlocalPBRChar.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectChar), 1},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
-					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
-					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1}
-				  });
-
-
-
-
-
-
         // --------- VERTEX DESCRIPTORS INITIALIZATION ---------
         VDchar.init(this, {
                 {0, sizeof(VertexChar), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -375,8 +344,9 @@ class CGProject : public BaseProject {
                 {0, 0, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(VertexChar, pos),            sizeof(glm::vec3),  POSITION},
                 {0, 1, VK_FORMAT_R32G32B32_SFLOAT,    offsetof(VertexChar, norm),           sizeof(glm::vec3),  NORMAL},
                 {0, 2, VK_FORMAT_R32G32_SFLOAT,       offsetof(VertexChar, UV),             sizeof(glm::vec2),  UV},
-                {0, 3, VK_FORMAT_R32G32B32A32_UINT,   offsetof(VertexChar, jointIndices),   sizeof(glm::uvec4), JOINTINDEX},
-                {0, 4, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexChar, weights),        sizeof(glm::vec4),  JOINTWEIGHT}
+                {0, 3, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexChar, tan),            sizeof(glm::vec4),  TANGENT},
+                {0, 4, VK_FORMAT_R32G32B32A32_UINT,   offsetof(VertexChar, jointIndices),   sizeof(glm::uvec4), JOINTINDEX},
+                {0, 5, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexChar, weights),        sizeof(glm::vec4),  JOINTWEIGHT}
         });
         VDpos.init(this, {
                 {0, sizeof(VertexPos), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -399,31 +369,11 @@ class CGProject : public BaseProject {
                 {0, 3, VK_FORMAT_R32G32B32A32_SFLOAT,   offsetof(VertexTan, tan),   sizeof(glm::vec4), TANGENT}
         });
 
-        //TODO da rivedere
-		VDcharTan.init(this,
-			{
-					{0, sizeof(VertexCharTan), VK_VERTEX_INPUT_RATE_VERTEX}
-			}, {
-				  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexCharTan, pos),
-						 sizeof(glm::vec3), POSITION},
-				  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexCharTan, norm),
-						 sizeof(glm::vec3), NORMAL},
-				  {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexCharTan, UV),
-						 sizeof(glm::vec2), UV},
-				  {0, 3, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexCharTan, tan),
-						 sizeof(glm::vec4), TANGENT},
-					{0, 4, VK_FORMAT_R32G32B32A32_UINT, offsetof(VertexCharTan, jointIndices),
-					sizeof(glm::uvec4), JOINTINDEX},
-					{0, 5, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexCharTan, weights),
-					sizeof(glm::vec4), JOINTWEIGHT}
-			});
-
-		VDRs.resize(5);
-		VDRs[0].init("VDchar",   &VDchar);
-		VDRs[1].init("VDnormUV",   &VDnormUV);
-		VDRs[2].init("VDpos", &VDpos);
-		VDRs[3].init("VDtan",    &VDtan);
-		VDRs[4].init("VDcharTan",&VDcharTan);
+		VDRs.resize(4);
+		VDRs[0].init("VDchar",  &VDchar);
+		VDRs[1].init("VDnormUV",&VDnormUV);
+		VDRs[2].init("VDpos",   &VDpos);
+		VDRs[3].init("VDtan",   &VDtan);
 
 
         // --------- RENDER PASSES INITIALIZATION ---------
@@ -466,17 +416,15 @@ class CGProject : public BaseProject {
         Pwater.setTransparency(true);
 
 		Pchar.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterCookTorrance.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLchar});
+		PcharPbr.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLpbr});
         Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
 		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
 		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
 
-
-		P_PBR_SpecGloss_char.init(this, &VDcharTan, "shaders/SimplePosNormUvTanChar.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBRChar, &DSLsgAoFactors});
-
         // --------- TECHNIQUES INITIALIZATION ---------
         PRs.resize(8);
-		PRs[0].init("CookTorranceChar", {
+		PRs[0].init("CharCookTorrance", {
             {&PshadowMapChar, {{
                 {true, 0, {} },     // Shadow map UBO
             }} },
@@ -488,7 +436,22 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 1, &VDchar);
-		PRs[1].init("SkyBox", {
+        PRs[1].init("CharPBR", {
+            {&PshadowMapChar, {{
+                    {true, 0, {} },     // Shadow map UBO
+            }} },
+            {&PcharPbr, {
+                {},
+                {},
+                {
+                    {true,  0, {}},     // albedo
+                    {true,  1, {}},     // normal
+                    {true,  2, {}},     // specular / glossiness
+                    {true,  3, {}}     // ambient occlusion
+                    }
+                }}
+        }, 4, &VDchar);
+        PRs[2].init("SkyBox", {
             {&PshadowMapSky, {} },
             {&Pskybox, {
                 {
@@ -496,7 +459,7 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 1, &VDpos);
-        PRs[2].init("Terrain", {
+        PRs[3].init("Terrain", {
             {&PshadowMap, {{
                 {true, 1, {} },     // Shadow map UBO
             }} },
@@ -518,7 +481,7 @@ class CGProject : public BaseProject {
                 {}
             }}
         }, 9, &VDtan);
-        PRs[3].init("Water", {
+        PRs[4].init("Water", {
             {&PshadowMapWater, {} },
             {&Pwater, {
                 {},
@@ -535,7 +498,7 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 8, &VDnormUV);
-        PRs[4].init("Grass", {
+        PRs[5].init("Grass", {
             {&PshadowMap, {{
                 {true, 0, {} },     // Shadow map UBO
             }} },
@@ -548,7 +511,7 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 2, &VDtan);
-        PRs[5].init("Buildings", {
+        PRs[6].init("Buildings", {
             {&PshadowMap, {{
                 {true, 0, {} },     // Shadow map UBO
             }} },
@@ -564,7 +527,7 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 4, &VDtan);
-        PRs[6].init("Props", {
+        PRs[7].init("Props", {
             {&PshadowMap, {{
                 {true, 0, {} },     // Shadow map UBO
             }} },
@@ -579,22 +542,6 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 4, &VDtan);
-        //TODO: da rivedere
-        PRs[7].init("PBR_sg_char", {
-            {&PshadowMap, {{
-                {true, 0, {} },     // Shadow map UBO
-            }} },
-            {&P_PBR_SpecGloss_char, {
-                {},
-                {},
-                {
-                    {true,  0, {}},     // albedo
-                    {true,  1, {}},     // normal
-                    {true,  2, {}},     // specular / glossiness
-                    {true,  3, {}}     // ambient occlusion
-                }
-            }}
-        }, 4, &VDcharTan);
 
 
         // --------- SCENE INITIALIZATION ---------
@@ -644,28 +591,29 @@ class CGProject : public BaseProject {
         std::cout << "Creating pipelines\n";
         std::cout << "\t1: Creating Pchar\n";
         Pchar.create(&RP);
-        std::cout << "\t2: Creating Pskybox\n";
+        std::cout << "\t2: Creating PcharPbr\n";
+        PcharPbr.create(&RP);
+        std::cout << "\t3: Creating Pskybox\n";
         Pskybox.create(&RP);
-        std::cout << "\t3: Creating Pwater\n";
+        std::cout << "\t4: Creating Pwater\n";
         Pwater.create(&RP);
-        std::cout << "\t4: Creating Pgrass\n";
+        std::cout << "\t5: Creating Pgrass\n";
         Pgrass.create(&RP);
-        std::cout << "\t5: Creating Pterrain\n";
+        std::cout << "\t6: Creating Pterrain\n";
         Pterrain.create(&RP);
-        std::cout << "\t6: Creating Pprops\n";
+        std::cout << "\t7: Creating Pprops\n";
         Pprops.create(&RP);
-        std::cout << "\t7: Creating Pbuildings\n";
+        std::cout << "\t8: Creating Pbuildings\n";
         Pbuildings.create(&RP);
-        std::cout << "\t8: Creating PshadowMap\n";
+        std::cout << "\t9: Creating PshadowMap\n";
         PshadowMap.create(&RPshadow);
-        std::cout << "\t9: Creating PshadowMapChar\n";
+        std::cout << "\t10: Creating PshadowMapChar\n";
         PshadowMapChar.create(&RPshadow);
-        std::cout << "\t10: Creating PshadowMapSky\n";
+        std::cout << "\t11: Creating PshadowMapSky\n";
         PshadowMapSky.create(&RPshadow);
-        std::cout << "\t11: Creating PshadowMapWater\n";
+        std::cout << "\t12: Creating PshadowMapWater\n";
         PshadowMapWater.create(&RPshadow);
 
-        		P_PBR_SpecGloss_char.create(&RP);
 
         std::cout << "Creating descriptor sets\n";
 
@@ -677,6 +625,7 @@ class CGProject : public BaseProject {
 
 	void pipelinesAndDescriptorSetsCleanup() {
 		Pchar.cleanup();
+        PcharPbr.cleanup();
 		Pskybox.cleanup();
         Pwater.cleanup();
         Pgrass.cleanup();
@@ -689,9 +638,6 @@ class CGProject : public BaseProject {
         PshadowMapWater.cleanup();
 		RPshadow.cleanup();
         RP.cleanup();
-
-
-        		P_PBR_SpecGloss_char.cleanup();
 
 		SC.pipelinesAndDescriptorSetsCleanup();
 		txt.pipelinesAndDescriptorSetsCleanup();
@@ -711,13 +657,8 @@ class CGProject : public BaseProject {
         DSLshadowMap.cleanup();
         DSLshadowMapChar.cleanup();
 
-
-
-        		DSLlocalPBRChar.cleanup();
-
-
-
 		Pchar.destroy();
+        PcharPbr.destroy();
 		Pskybox.destroy();
         Pwater.destroy();
         Pgrass.destroy();
@@ -728,12 +669,6 @@ class CGProject : public BaseProject {
         PshadowMapChar.destroy();
         PshadowMapSky.destroy();
         PshadowMapWater.destroy();
-
-
-        		P_PBR_SpecGloss_char.destroy();
-
-
-
 
         RPshadow.destroy();
 		RP.destroy();
@@ -764,6 +699,8 @@ class CGProject : public BaseProject {
 	void updateUniformBuffer(uint32_t currentImage) {
 		static bool debounce = false;
 		static int curDebounce = 0;
+        
+        static bool firstTime = true;
 
         // TODO Detect running by pressing SHIFT key (currently hardcoded as walking all the time)
 
@@ -801,25 +738,16 @@ class CGProject : public BaseProject {
             });
         }
 
-
 		// moves the view
 		float deltaT = GameLogic();
-
-		// defines the global parameters for the uniform
-		const glm::mat4 lightView = glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(1.0f,0.0f,0.0f));
-		const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-
 
         // ----- UPDATE UNIFORMS -----
         //NOTE on code style: write all uniform variables in the following section
         // and assign the constant values across the different model during initialization
 
-		GlobalUniformBufferObject gubo{};
-		gubo.lightDir = lightDir;
-		gubo.lightColor = lightColor;
-		gubo.eyePos = cameraPos;
-
         // Common uniforms and general variables
+        int instanceId;
+        int techniqueId = 1;  // First 2 techniques are for characters, so start from 1 (so that after ++ is 2)
 		LightModelUBO lightUbo{
             .lightDir = lightDir,
             .lightColor = lightColor,
@@ -846,11 +774,6 @@ class CGProject : public BaseProject {
         };
         TerrainFactorsUBO terrainFactorsUbo{};
         PbrFactorsUBO pbrUbo{};
-		// defines the local parameters for the uniforms
-		UniformBufferObjectChar uboc{};
-		UniformBufferObjectSimp ubos{};
-		uboc.debug1 = debug1;
-
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
@@ -858,6 +781,8 @@ class CGProject : public BaseProject {
 		// TECHNIQUE Character
         const float SpeedUpAnimFact = 0.85f;
         for (std::shared_ptr<Character> C : charManager.getCharacters()) {
+            if(firstTime) std::cout << "Updating character: " << C->getName() << "\n";
+
 			SkeletalAnimation* SKA = C->getSkeletalAnimation();
 			AnimBlender* AB = C->getAnimBlender();
 			// updated the animation
@@ -868,13 +793,13 @@ class CGProject : public BaseProject {
 			std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
 			for (Instance* I : C->getInstances()) {
 				std::string techniqueName = *(I->TIp->T->id);
-				if (techniqueName == "CookTorranceChar") {
+				if (techniqueName == "CharCookTorrance") {
 					// CookTorrance technique ubo update
 					for(int im = 0; im < TMsp->size(); im++) {
 						geomCharUbo.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
 						geomCharUbo.mvpMat[im] = ViewPrj * geomCharUbo.mMat[im];
 						geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
-                        shadowMapUboChar.model[im] = I->Wm * AdaptMat * (*TMsp)[im];
+                        shadowMapUboChar.model[im] = geomCharUbo.mMat[im];
 					}
 					geomCharUbo.jointsCount = TMsp->size();
 
@@ -882,39 +807,39 @@ class CGProject : public BaseProject {
                     I->DS[1][0]->map(currentImage, &lightUbo, 0);
                     I->DS[1][1]->map(currentImage, &geomCharUbo, 0);
                     I->DS[1][1]->map(currentImage, &shadowClipUbo, 1);
-				} else if(techniqueName == "PBR_sg_char") {
-                    //TODO: rivedi
-					// PBR_SpecGloss_char technique ubo update
-					SgAoMaterialFactorsUBO sgAoUboChar{};
+				} else if(techniqueName == "CharPBR") {
 					for(int im = 0; im < TMsp->size(); im++) {
-						uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
-						uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
-						uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
+						geomCharUbo.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+						geomCharUbo.mvpMat[im] = ViewPrj * geomCharUbo.mMat[im];
+						geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
+                        shadowMapUboChar.model[im] = geomCharUbo.mMat[im];
 					}
-					uboc.jointsCount = TMsp->size();
+					geomCharUbo.jointsCount = TMsp->size();
 
-					sgAoUboChar.diffuseFactor = I->diffuseFactor;
-					sgAoUboChar.specularFactor = I->specularFactor;
-					sgAoUboChar.glossinessFactor = I->factor1;
-					sgAoUboChar.aoFactor = I->factor2;
+					pbrUbo.diffuseFactor = I->diffuseFactor;
+					pbrUbo.specularFactor = I->specularFactor;
+					pbrUbo.glossinessFactor = I->factor1;
+					pbrUbo.aoFactor = I->factor2;
 
-					I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-					I->DS[0][1]->map(currentImage, &uboc, 0); // Set 1
-					I->DS[0][2]->map(currentImage, &sgAoUboChar, 0); // Set 2
+                    I->DS[0][0]->map(currentImage, &shadowMapUboChar, 0);
+                    I->DS[1][0]->map(currentImage, &lightUbo, 0);
+                    I->DS[1][1]->map(currentImage, &geomCharUbo, 0);
+                    I->DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+					I->DS[1][2]->map(currentImage, &pbrUbo, 0); // Set 2
 				} else {
 					std::cout << "ERROR: Unknown technique for character: " << *(I->TIp->T->id) << "\n";
 				}
 			}
 		}
 
-		int instanceId;
-		int techniqueId = 0;
         techniqueId++;
+        if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
 		geomSkyboxUbo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
 		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &geomSkyboxUbo, 0);
 
         // TECHNIQUE Terrain
         techniqueId++;
+        if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
             geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
@@ -934,6 +859,7 @@ class CGProject : public BaseProject {
 
         // TECHNIQUE Water
         techniqueId++;
+        if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         geomUbo.mMat   = SC.TI[techniqueId].I[0].Wm;
         geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
         geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
@@ -944,6 +870,7 @@ class CGProject : public BaseProject {
 
         // TECHNIQUE Vegetation/Grass
         techniqueId++;
+        if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
             geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
@@ -960,6 +887,7 @@ class CGProject : public BaseProject {
 
         // TECHNIQUE Buildings (PBR)
         techniqueId++;
+        if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
             geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
@@ -981,6 +909,7 @@ class CGProject : public BaseProject {
 
         // TECHNIQUE Props (PBR)
         techniqueId++;
+        if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
             geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
@@ -1020,6 +949,7 @@ class CGProject : public BaseProject {
 		}
 		
 		txt.updateCommandBuffer();
+        firstTime = false;
     }
 
 

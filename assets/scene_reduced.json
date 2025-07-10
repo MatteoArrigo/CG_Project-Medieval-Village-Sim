@@ -101,13 +101,23 @@
 		{"id": "Ferns_Normal", "texture": "assets/textures/vegetation/Ferns_Normal.png", "format": "D"}
 	],
 	"instances": [
-		{"technique": "CookTorranceChar", "elements": [
+		{"technique": "CharCookTorrance", "elements": [
 			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
-				"translate": [38, 7, 7]
+				"translate": [40, 6.5, 6],
+				"scale": [5,5,5]
 			},
 			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
-				"translate": [38, 7, 7]
+				"translate": [40, 6.5, 6],
+				"scale": [5,5,5]
+			},
+			{"id": "hm2",  "model": "hm0",   "texture": ["st"],
+				"translate": [20, 20, 20]
+			},
+			{"id": "hm3",  "model": "hm1",   "texture": ["st"],
+				"translate": [20, 20, 20]
 			}
+		]},
+		{"technique": "CharPBR", "elements":  [
 		]},
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
