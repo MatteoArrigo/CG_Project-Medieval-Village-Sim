@@ -682,15 +682,28 @@ class CGProject : public BaseProject {
 			SKA->Sample(*AB);
 			std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
 			for (Instance* I : C->getInstances()) {
-				// CookTorrance technique ubo update
-				for(int im = 0; im < TMsp->size(); im++) {
-					uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
-					uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
-					uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
+				std::string techniqueName = *(I->TIp->T->id);
+				if (techniqueName == "CookTorranceChar") {
+					// CookTorrance technique ubo update
+					for(int im = 0; im < TMsp->size(); im++) {
+						uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+						uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
+						uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
+					}
+					I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+					I->DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
+				} else if(techniqueName == "PBR_sg") {
+					// PBR_SpecGloss technique ubo update
+					for(int im = 0; im < TMsp->size(); im++) {
+						uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+						uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
+						uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
+					}
+					I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
+					I->DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
+				} else {
+					std::cout << "ERROR: Unknown technique for character: " << *(I->TIp->T->id) << "\n";
 				}
-
-				I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-				I->DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
 			}
 		}
 
