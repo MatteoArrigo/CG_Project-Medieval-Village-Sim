@@ -23,9 +23,9 @@
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
-const bool FLY_MODE = true;
+const bool FLY_MODE = false;
 
-const std::string SCENE_FILEPATH = "assets/scene.json";
+const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -159,8 +159,6 @@ class CGProject : public BaseProject {
     float relDir = glm::radians(0.0f);
     float dampedRelDir = glm::radians(0.0f);
     glm::vec3 dampedCamPos = physicsConfig.startPosition;
-    // Player starting point
-    const glm::vec3 StartingPosition = physicsConfig.startPosition;
     // Camera FOV-y, Near Plane and Far Plane
     const float FOVy = glm::radians(45.0f);
     const float worldNearPlane = 0.1f;
@@ -276,27 +274,27 @@ class CGProject : public BaseProject {
 		DSLlightModel.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(LightModelUBO), 1}
         });
-		DSLgeomShadow4Char.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomCharUBO),   1},
-            {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
-        });
-        DSLchar.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
-        });
-		DSLskybox.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomSkyboxUBO), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+		DSLgeomShadow.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomUBO),       1},
+			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
 		});
 		DSLgeomShadowTime.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomUBO),       1},
 			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
 			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO),       1},
 		});
-		DSLgeomShadow.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomUBO),       1},
-			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
+		DSLgeomShadow4Char.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomCharUBO),   1},
+            {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
+        });
+		DSLskybox.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomSkyboxUBO), 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
 		});
+        DSLchar.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+        });
         DSLwater.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
@@ -374,10 +372,10 @@ class CGProject : public BaseProject {
 
         // Specification of names and mappings of VDs for scene.json
 		VDRs.resize(4);
-		VDRs[0].init("VDchar",   &VDchar);
-		VDRs[1].init("VDnormUV",   &VDnormUV);
-		VDRs[2].init("VDpos", &VDpos);
-		VDRs[3].init("VDtan",    &VDtan);
+		VDRs[0].init("VDchar",  &VDchar);
+		VDRs[1].init("VDnormUV",&VDnormUV);
+		VDRs[2].init("VDpos",   &VDpos);
+		VDRs[3].init("VDtan",   &VDtan);
 
 
         // --------- RENDER PASSES INITIALIZATION ---------
@@ -411,8 +409,6 @@ class CGProject : public BaseProject {
         PshadowMapSky.init(this, &VDpos, "shaders/shadowMapShaderSky.vert.spv", "shaders/shadowMapShaderEmpty.frag.spv", {});
         PshadowMapWater.init(this, &VDnormUV, "shaders/shadowMapShaderWater.vert.spv", "shaders/shadowMapShaderEmpty.frag.spv", {});
 
-		Pchar.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterCookTorrance.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLchar});
-
 		Pskybox.init(this, &VDpos, "shaders/SkyBoxShader.vert.spv", "shaders/SkyBoxShader.frag.spv", {&DSLskybox});
 		Pskybox.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
 		Pskybox.setCullMode(VK_CULL_MODE_BACK_BIT);
@@ -421,6 +417,7 @@ class CGProject : public BaseProject {
         Pwater.init(this, &VDnormUV, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLwater});
         Pwater.setTransparency(true);
 
+		Pchar.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterCookTorrance.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLchar});
         Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
 		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
@@ -689,90 +686,38 @@ class CGProject : public BaseProject {
 
         // Handle of command keys
         {
-            if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-                glfwSetWindowShouldClose(window, GL_TRUE);
-            }
-
-            if (glfwGetKey(window, GLFW_KEY_1)) {
-                if (!debounce) {
-                    debounce = true;
-                    curDebounce = GLFW_KEY_1;
-                    std::cout << "Toggling debug light view\n";
-
-                    debugLightView.x = 1.0 - debugLightView.x;
-                }
-            } else if (curDebounce == GLFW_KEY_1 && debounce) {
-                debounce = false;
-                curDebounce = 0;
-                std::cout << "Debug light view toggled\n";
-            }
-            if (glfwGetKey(window, GLFW_KEY_2)) {
-                if (!debounce) {
-                    debounce = true;
-                    curDebounce = GLFW_KEY_2;
-
-                    debugLightView.y = 1.0 - debugLightView.y;
-                }
-            } else if (curDebounce == GLFW_KEY_2 && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }
-        }
-
-		static int curAnim = 0;
-		static AnimBlender* AB = charManager.getCharacters()[0]->getAnimBlender();
-		if(glfwGetKey(window, GLFW_KEY_O)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_O;
-
-				curAnim = (curAnim + 1) % 5;
-				AB->Start(curAnim, 0.5);
-				std::cout << "Playing anim: " << curAnim << "\n";
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_O) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
-
-        if (glfwGetKey(window, GLFW_KEY_SPACE)) {
-            if (!debounce) {
-                debounce = true;
-                curDebounce = GLFW_KEY_SPACE;
-
+            handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
+                debugLightView.x = 1.0 - debugLightView.x;
+            });
+            handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
+                debugLightView.y = 1.0 - debugLightView.y;
+            });
+            handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
                 PhysicsMgr.jumpPlayer();
-            }
-        } else if (curDebounce == GLFW_KEY_SPACE && debounce) {
-            debounce = false;
-            curDebounce = 0;
+            });
+
+            static int curAnim = 0;
+            static AnimBlender *AB = charManager.getCharacters()[0]->getAnimBlender();
+            handleKeyToggle(window, GLFW_KEY_O, debounce, curDebounce, [&]() {
+                curAnim = (curAnim + 1) % 5;
+                AB->Start(curAnim, 0.5);
+                std::cout << "Playing anim: " << curAnim << "\n";
+            });
+
+            // Handle the E key for Character interaction
+            handleKeyToggle(window, GLFW_KEY_E, debounce, curDebounce, [&]() {
+                glm::vec3 playerPos = cameraPos; // TODO: replace with actual player position when implemented
+                auto nearest = charManager.getNearestCharacter(playerPos);
+                if (nearest) {
+                    nearest->interact();
+                    txt.print(0.5f, 0.1f, nearest->getCurrentDialogue(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+                    std::cout << "Character in state : " << nearest->getState() << "\n";
+                } else {
+                    std::cout << "No Character nearby to interact with.\n";
+                }
+            });
         }
 
-		// Handle the E key for Character interaction
-		glm::vec3 playerPos = cameraPos;		// TODO: sostituire con la posizione del giocatore una volta implementato il player
-		if(glfwGetKey(window, GLFW_KEY_E)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_E;
-
-				auto nearest = charManager.getNearestCharacter(playerPos);
-				// glm::distance(nearest->getPosition(), playerPos))
-				if (nearest) {
-					nearest->interact();
-					txt.print(0.5f, 0.1f, nearest->getCurrentDialogue(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
-					std::cout << "Character in state : " << nearest->getState() << "\n";
-				}
-				else {
-					std::cout << "No Character nearby to interact with.\n";
-				}
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_E) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
 
 		// moves the view
 		float deltaT = GameLogic();
@@ -957,6 +902,32 @@ class CGProject : public BaseProject {
 		
 		txt.updateCommandBuffer();
     }
+
+
+/**
+ * Handles key toggle events with debounce logic.
+ *
+ * @param window       Pointer to the GLFW window.
+ * @param key          The GLFW key code to check.
+ * @param debounce     Reference to a debounce flag to prevent repeated triggers.
+ * @param curDebounce  Reference to the currently debounced key.
+ * @param action       Function to execute when the key is toggled.
+ *
+ * When the specified key is pressed, the action is executed only once until the key is released.
+ * This prevents multiple triggers from a single key press.
+ */
+void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action) {
+    if (glfwGetKey(window, key)) {
+        if (!debounce) {
+            debounce = true;
+            curDebounce = key;
+            action();  // Execute the custom logic
+        }
+    } else if (curDebounce == key && debounce) {
+        debounce = false;
+        curDebounce = 0;
+    }
+}
 
 	float GameLogic() {
 		// Integration with the timers and the controllers
