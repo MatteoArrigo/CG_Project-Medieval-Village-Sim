@@ -15,8 +15,9 @@
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNorm;
 layout(location = 2) in vec2 inUV;
-layout(location = 3) in uvec4 inJointIndex;
-layout(location = 4) in vec4 inJointWeight;
+layout(location = 3) in vec4 inTan;
+layout(location = 4) in uvec4 inJointIndex;
+layout(location = 5) in vec4 inJointWeight;
 
 layout(location = 0) out vec2 fragUV;
 
