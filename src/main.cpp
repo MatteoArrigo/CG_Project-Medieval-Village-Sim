@@ -43,6 +43,15 @@ struct VertexTan {
 	glm::vec4 tan;
 };
 
+struct VertexCharTan {
+	glm::vec3 pos;
+	glm::vec3 norm;
+	glm::vec2 UV;
+	glm::vec4 tan;
+	glm::uvec4 jointIndices;
+	glm::vec4 weights;
+};
+
 struct GlobalUniformBufferObject {
 	alignas(16) glm::vec3 lightDir;
 	alignas(16) glm::vec4 lightColor;
@@ -90,15 +99,16 @@ class CGProject : public BaseProject {
 	// Descriptor Layouts [what will be passed to the shaders]
 	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR,
         DSLglobal, DSLskyBox, DSLterrain, DSLsgAoFactors, DSLterrainFactors,
-        DSLwaterVert, DSLwaterFrag, DSLgrass;
+        DSLwaterVert, DSLwaterFrag, DSLgrass, DSLlocalPBRChar;
 
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
 	VertexDescriptor VDsimp;
 	VertexDescriptor VDskyBox;
 	VertexDescriptor VDtan;
+	VertexDescriptor VDcharTan;
 	RenderPass RP;
-	Pipeline Pchar, PsimpObj, PskyBox, Pterrain, P_PBR_SpecGloss, PWater, Pgrass;
+	Pipeline Pchar, PsimpObj, PskyBox, Pterrain, P_PBR_SpecGloss, PWater, Pgrass, P_PBR_SpecGloss_char;
 	//*DBG*/Pipeline PDebug;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -261,6 +271,14 @@ class CGProject : public BaseProject {
                     {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1}
 				  });
 
+		DSLlocalPBRChar.init(this, {
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectChar), 1},
+					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
+					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
+					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1}
+				  });
+
         // This is for the PBR with specular glossines  -- SET 2
         DSLsgAoFactors.init(this, {
                 {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SgAoMaterialFactorsUBO), 1},
@@ -312,11 +330,30 @@ class CGProject : public BaseProject {
 				         sizeof(glm::vec4), TANGENT}
 				});
 
-		VDRs.resize(4);
+		VDcharTan.init(this,
+			{
+					{0, sizeof(VertexCharTan), VK_VERTEX_INPUT_RATE_VERTEX}
+			}, {
+				  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexCharTan, pos),
+						 sizeof(glm::vec3), POSITION},
+				  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexCharTan, norm),
+						 sizeof(glm::vec3), NORMAL},
+				  {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexCharTan, UV),
+						 sizeof(glm::vec2), UV},
+				  {0, 3, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexCharTan, tan),
+						 sizeof(glm::vec4), TANGENT},
+					{0, 4, VK_FORMAT_R32G32B32A32_UINT, offsetof(VertexCharTan, jointIndices),
+					sizeof(glm::uvec4), JOINTINDEX},
+					{0, 5, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexCharTan, weights),
+					sizeof(glm::vec4), JOINTWEIGHT}
+			});
+
+		VDRs.resize(5);
 		VDRs[0].init("VDchar",   &VDchar);
 		VDRs[1].init("VDsimp",   &VDsimp);
 		VDRs[2].init("VDskybox", &VDskyBox);
 		VDRs[3].init("VDtan",    &VDtan);
+		VDRs[4].init("VDcharTan",&VDcharTan);
 
 		// initializes the render passes
 		RP.init(this);
@@ -345,7 +382,9 @@ class CGProject : public BaseProject {
 
 		P_PBR_SpecGloss.init(this, &VDtan, "shaders/SimplePosNormUvTan.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
 
-        PRs.resize(7);
+		P_PBR_SpecGloss_char.init(this, &VDcharTan, "shaders/SimplePosNormUvTanChar.vert.spv", "shaders/PBR_SpecGloss.frag.spv", {&DSLglobal, &DSLlocalPBRChar, &DSLsgAoFactors});
+
+        PRs.resize(8);
 		PRs[0].init("CookTorranceChar", {
 							 {&Pchar, {//Pipeline and DSL for the first pass
 								 /*DSLglobal*/{},
@@ -425,6 +464,18 @@ class CGProject : public BaseProject {
                                  {}   /*DSLsgAoFactors*/
 									}}
 							  }, 4, &VDtan);
+		PRs[7].init("PBR_sg_char", {
+							 {&P_PBR_SpecGloss_char, {//Pipeline and DSL for the first pass
+								 {},    /*DSLglobal*/
+								 {      /*DSLlocalPBRChar*/
+										{true,  0, {}},     // albedo
+										{true,  1, {}},     // normal
+										{true,  2, {}},     // specular / glossiness
+										{true,  3, {}},     // ambient occlusion
+									 },
+								 {}   /*DSLsgAoFactors*/
+									}}
+							  }, 4, &VDcharTan);
 
 		// sets the size of the Descriptor Set Pool
 		DPSZs.uniformBlocksInPool = 1000;
@@ -474,7 +525,8 @@ class CGProject : public BaseProject {
         PWater.create(&RP);
         Pgrass.create(&RP);
 		Pterrain.create(&RP);
-        P_PBR_SpecGloss.create(&RP);
+		P_PBR_SpecGloss.create(&RP);
+		P_PBR_SpecGloss_char.create(&RP);
 
         std::cout << "Creating descriptor sets\n";
 
@@ -492,7 +544,8 @@ class CGProject : public BaseProject {
         PWater.cleanup();
         Pgrass.cleanup();
 		Pterrain.cleanup();
-        P_PBR_SpecGloss.cleanup();
+		P_PBR_SpecGloss.cleanup();
+		P_PBR_SpecGloss_char.cleanup();
 		RP.cleanup();
 
 		SC.pipelinesAndDescriptorSetsCleanup();
@@ -513,6 +566,7 @@ class CGProject : public BaseProject {
 		DSLterrain.cleanup();
         DSLterrainFactors.cleanup();
 		DSLglobal.cleanup();
+		DSLlocalPBRChar.cleanup();
 		
 		Pchar.destroy();	
 		PsimpObj.destroy();
@@ -520,6 +574,7 @@ class CGProject : public BaseProject {
         PWater.destroy();
         Pgrass.destroy();
         P_PBR_SpecGloss.destroy();
+		P_PBR_SpecGloss_char.destroy();
 		Pterrain.destroy();
 
 		RP.destroy();
@@ -656,13 +711,13 @@ class CGProject : public BaseProject {
 		const glm::vec3 lightDir = glm::vec3(lightView * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
 	
 		GlobalUniformBufferObject gubo{};
-
 		gubo.lightDir = lightDir;
 		gubo.lightColor = lightColor;
 		gubo.eyePos = cameraPos;
 
 		// defines the local parameters for the uniforms
-		UniformBufferObjectChar uboc{};	
+		UniformBufferObjectChar uboc{};
+		UniformBufferObjectSimp ubos{};
 		uboc.debug1 = debug1;
 		
 		glm::mat4 AdaptMat =
@@ -672,6 +727,7 @@ class CGProject : public BaseProject {
 
 		// Skeletal Animation sampling and animation update
 		const float SpeedUpAnimFact = 0.85f;
+		std::cout << "Loading animated char assets" << "\n";
 		for (std::shared_ptr<Character> C : charManager.getCharacters()) {
 			SkeletalAnimation* SKA = C->getSkeletalAnimation();
 			AnimBlender* AB = C->getAnimBlender();
@@ -692,15 +748,23 @@ class CGProject : public BaseProject {
 					}
 					I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
 					I->DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
-				} else if(techniqueName == "PBR_sg") {
-					// PBR_SpecGloss technique ubo update
+				} else if(techniqueName == "PBR_sg_char") {
+					// PBR_SpecGloss_char technique ubo update
+					SgAoMaterialFactorsUBO sgAoUboChar{};
 					for(int im = 0; im < TMsp->size(); im++) {
 						uboc.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
 						uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
 						uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
 					}
+
+					sgAoUboChar.diffuseFactor = I->diffuseFactor;
+					sgAoUboChar.specularFactor = I->specularFactor;
+					sgAoUboChar.glossinessFactor = I->factor1;
+					sgAoUboChar.aoFactor = I->factor2;
+
 					I->DS[0][0]->map(currentImage, &gubo, 0); // Set 0
-					I->DS[0][1]->map(currentImage, &uboc, 0);  // Set 1
+					I->DS[0][1]->map(currentImage, &uboc, 0); // Set 1
+					I->DS[0][2]->map(currentImage, &sgAoUboChar, 0); // Set 2
 				} else {
 					std::cout << "ERROR: Unknown technique for character: " << *(I->TIp->T->id) << "\n";
 				}
@@ -709,7 +773,6 @@ class CGProject : public BaseProject {
 
 		int instanceId;
 		int techniqueId = 0;
-		UniformBufferObjectSimp ubos{};
 		// normal objects
         techniqueId++;
 		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
