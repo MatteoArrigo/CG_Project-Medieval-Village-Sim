@@ -15,6 +15,11 @@
 
 //TODO generale: Ripulisci e Commenta tutto il main
 
+//TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
+// Nell'acqua la stiamo usando per la parte speculare
+// Nei fragment shader come PBR si potrebbe usare per parte ambient
+// Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
+
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
@@ -22,7 +27,6 @@ const bool FLY_MODE = true;
 
 const std::string SCENE_FILEPATH = "assets/scene.json";
 
-// The uniform buffer object used in this example
 struct VertexChar {
 	glm::vec3 pos;
 	glm::vec3 norm;
@@ -31,14 +35,14 @@ struct VertexChar {
 	glm::vec4 weights;
 };
 
-struct VertexSimp {
+struct VertexPos {
+	glm::vec3 pos;
+};
+
+struct VertexNormUV {
 	glm::vec3 pos;
 	glm::vec3 norm;
 	glm::vec2 UV;
-};
-
-struct skyBoxVertex {
-	glm::vec3 pos;
 };
 
 struct VertexTan {
@@ -48,20 +52,26 @@ struct VertexTan {
 	glm::vec4 tan;
 };
 
-struct GlobalUniformBufferObject {
+#define MAX_POINT_LIGHTS 10
+struct LightModelUBO {
 	alignas(16) glm::vec3 lightDir;
 	alignas(16) glm::vec4 lightColor;
 	alignas(16) glm::vec3 eyePos;
+
+    alignas(4) int nPointLights;
+    alignas(16) glm::vec3 pointLightPositions[MAX_POINT_LIGHTS];
+	alignas(16) glm::vec4 pointLightColors[MAX_POINT_LIGHTS];
 };
 
-struct UniformBufferObjectChar {
+#define N_JOINTS 65
+struct GeomCharUBO {
 	alignas(16) glm::vec4 debug1;
-	alignas(16) glm::mat4 mvpMat[65];
-	alignas(16) glm::mat4 mMat[65];
-	alignas(16) glm::mat4 nMat[65];
+	alignas(16) glm::mat4 mvpMat[N_JOINTS];
+	alignas(16) glm::mat4 mMat[N_JOINTS];
+	alignas(16) glm::mat4 nMat[N_JOINTS];
 };
 
-struct UniformBufferObjectSimp {
+struct GeomUBO {
 	alignas(16) glm::mat4 mvpMat;
 	alignas(16) glm::mat4 mMat;
 	alignas(16) glm::mat4 nMat;
@@ -73,18 +83,15 @@ struct ShadowMapUBO {
 };
 struct ShadowMapUBOChar {
 	alignas(16) glm::mat4 lightVP;
-	alignas(16) glm::mat4 model[65];
+	alignas(16) glm::mat4 model[N_JOINTS];
 };
 struct ShadowClipUBO {
 	alignas(16) glm::mat4 lightVP;
 	alignas(16) glm::vec4 debug;
 };
 
-struct skyBoxUniformBufferObject {
+struct GeomSkyboxUBO {
 	alignas(16) glm::mat4 mvpMat;
-};
-
-struct DebugUBO {
     alignas(16) glm::vec4 debug;
 };
 
@@ -92,7 +99,7 @@ struct TimeUBO {
     alignas(4) float time; // scalar
 };
 
-struct SgAoMaterialFactorsUBO {
+struct PbrFactorsUBO {
     alignas(16) glm::vec3 diffuseFactor;      // (RGBA)
     alignas(16) glm::vec3 specularFactor;     // (RGB)
     alignas(4) float glossinessFactor;  // scalar
@@ -109,19 +116,21 @@ class CGProject : public BaseProject {
 	protected:
 	// Here you list all the Vulkan objects you need:
 	
-	// Descriptor Layouts [what will be passed to the shaders]
-	DescriptorSetLayout DSLlocalChar, DSLlocalSimp, DSLlocalPBR,
-        DSLglobal, DSLskyBox, DSLterrain, DSLsgAoFactors, DSLterrainFactors,
-        DSLwaterVert, DSLwaterFrag, DSLgrass;
+	// --- DESCRIPTOR SET LAYOUTS ---
+    // DSL general
+    DescriptorSetLayout DSLlightModel, DSLgeomShadow, DSLgeomShadowTime, DSLgeomShadow4Char;
+    // DSL for specific pipelines
+	DescriptorSetLayout DSLpbr, DSLpbrShadow, DSLskybox, DSLterrain,  DSLwater, DSLgrass, DSLchar;
+    // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
 
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
-	VertexDescriptor VDsimp;
-	VertexDescriptor VDskyBox;
+	VertexDescriptor VDnormUV;
+	VertexDescriptor VDpos;
 	VertexDescriptor VDtan;
 	RenderPass RPshadow, RP;
-	Pipeline Pchar, PsimpObj, PskyBox, PWater, Pgrass, Pterrain, Pprops, Pbuildings;
+	Pipeline Pchar, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
@@ -264,75 +273,71 @@ class CGProject : public BaseProject {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowMapUBOChar), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
-		DSLglobal.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, sizeof(GlobalUniformBufferObject), 1}
+		DSLlightModel.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(LightModelUBO), 1}
         });
-		DSLlocalChar.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectChar), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
+		DSLgeomShadow4Char.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomCharUBO),   1},
+            {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
         });
-		DSLlocalSimp.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1}
+        DSLchar.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
-		DSLskyBox.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(skyBoxUniformBufferObject), 1},
-			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(DebugUBO), 1},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+		DSLskybox.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomSkyboxUBO), 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
 		});
-		DSLwaterVert.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO), 1},
-			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp),1},
-			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO),1},
+		DSLgeomShadowTime.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomUBO),       1},
+			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
+			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO),       1},
 		});
-        DSLwaterFrag.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(GlobalUniformBufferObject), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
-			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
-			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
-			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
-			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5, 1},
-			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1},
-			{8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7, 1}
+		DSLgeomShadow.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomUBO),       1},
+			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
+		});
+        DSLwater.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4,1},
+			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5,1},
+			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6,1},
+			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7,1}
 		});
         DSLgrass.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
-			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO), 1},
-			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
-			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1}
+			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1}
 		});
         DSLterrain.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,           1},
-            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,           1},
-            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,           1},
-            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,           1},
-            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4,           1},
-            {6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5,           1},
-            {7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6,           1},
-            {8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7,           1},
-            {9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 8,           1},
-            {10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 9,          1},
-            {11, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
-        });
-        DSLterrainFactors.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TerrainFactorsUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
+            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
+            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
+            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1},
+            {6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5, 1},
+            {7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6, 1},
+            {8, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7, 1},
+            {9, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 8, 1},
+            {10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 9, 1},
         });
-		DSLlocalPBR.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(UniformBufferObjectSimp), 1},
-            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,                     1},
-            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,                     1},
-            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,                     1},
-            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,                     1},
-            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4,                     1},
-            {6, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO),            1},
+		DSLpbrShadow.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PbrFactorsUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
+            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1, 1},
+            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, 1},
+            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3, 1},
+            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4, 1}
         });
-        DSLsgAoFactors.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(SgAoMaterialFactorsUBO), 1},
+		DSLpbr.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PbrFactorsUBO), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
+            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
+            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
+            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
         });
 
 
@@ -346,17 +351,17 @@ class CGProject : public BaseProject {
                 {0, 3, VK_FORMAT_R32G32B32A32_UINT,   offsetof(VertexChar, jointIndices),   sizeof(glm::uvec4), JOINTINDEX},
                 {0, 4, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(VertexChar, weights),        sizeof(glm::vec4),  JOINTWEIGHT}
         });
-        VDsimp.init(this, {
-                {0, sizeof(VertexSimp), VK_VERTEX_INPUT_RATE_VERTEX}
+        VDpos.init(this, {
+                {0, sizeof(VertexPos), VK_VERTEX_INPUT_RATE_VERTEX}
             }, {
-                {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexSimp, pos),  sizeof(glm::vec3), POSITION},
-                {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexSimp, norm), sizeof(glm::vec3), NORMAL},
-                {0, 2, VK_FORMAT_R32G32_SFLOAT,    offsetof(VertexSimp, UV),   sizeof(glm::vec2), UV}
+                {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexPos, pos), sizeof(glm::vec3), POSITION}
         });
-        VDskyBox.init(this, {
-                {0, sizeof(skyBoxVertex), VK_VERTEX_INPUT_RATE_VERTEX}
+        VDnormUV.init(this, {
+                {0, sizeof(VertexNormUV), VK_VERTEX_INPUT_RATE_VERTEX}
             }, {
-                {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(skyBoxVertex, pos), sizeof(glm::vec3),POSITION}
+                {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexNormUV, pos),  sizeof(glm::vec3), POSITION},
+                {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexNormUV, norm), sizeof(glm::vec3), NORMAL},
+                {0, 2, VK_FORMAT_R32G32_SFLOAT,    offsetof(VertexNormUV, UV),   sizeof(glm::vec2), UV}
         });
         VDtan.init(this, {
                 {0, sizeof(VertexTan), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -370,8 +375,8 @@ class CGProject : public BaseProject {
         // Specification of names and mappings of VDs for scene.json
 		VDRs.resize(4);
 		VDRs[0].init("VDchar",   &VDchar);
-		VDRs[1].init("VDsimp",   &VDsimp);
-		VDRs[2].init("VDskybox", &VDskyBox);
+		VDRs[1].init("VDnormUV",   &VDnormUV);
+		VDRs[2].init("VDpos", &VDpos);
 		VDRs[3].init("VDtan",    &VDtan);
 
 
@@ -403,62 +408,53 @@ class CGProject : public BaseProject {
         PshadowMapChar.setCullMode(VK_CULL_MODE_BACK_BIT);
         PshadowMapChar.setPolygonMode(VK_POLYGON_MODE_FILL);
 
-        PshadowMapSky.init(this, &VDskyBox, "shaders/shadowMapShaderSky.vert.spv", "shaders/shadowMapShaderEmpty.frag.spv", {});
-        PshadowMapWater.init(this, &VDsimp, "shaders/shadowMapShaderWater.vert.spv", "shaders/shadowMapShaderEmpty.frag.spv", {});
+        PshadowMapSky.init(this, &VDpos, "shaders/shadowMapShaderSky.vert.spv", "shaders/shadowMapShaderEmpty.frag.spv", {});
+        PshadowMapWater.init(this, &VDnormUV, "shaders/shadowMapShaderWater.vert.spv", "shaders/shadowMapShaderEmpty.frag.spv", {});
 
-		Pchar.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterCookTorrance.frag.spv", {&DSLglobal, &DSLlocalChar});
-		PsimpObj.init(this, &VDsimp, "shaders/GeneralSimplePosNormUV.vert.spv", "shaders/GeneralCookTorrance.frag.spv", {&DSLglobal, &DSLlocalSimp});
+		Pchar.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterCookTorrance.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLchar});
 
-		PskyBox.init(this, &VDskyBox, "shaders/SkyBoxShader.vert.spv", "shaders/SkyBoxShader.frag.spv", {&DSLskyBox});
-		PskyBox.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
-		PskyBox.setCullMode(VK_CULL_MODE_BACK_BIT);
-		PskyBox.setPolygonMode(VK_POLYGON_MODE_FILL);
+		Pskybox.init(this, &VDpos, "shaders/SkyBoxShader.vert.spv", "shaders/SkyBoxShader.frag.spv", {&DSLskybox});
+		Pskybox.setCompareOp(VK_COMPARE_OP_LESS_OR_EQUAL);
+		Pskybox.setCullMode(VK_CULL_MODE_BACK_BIT);
+		Pskybox.setPolygonMode(VK_POLYGON_MODE_FILL);
 
-        PWater.init(this, &VDsimp, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLwaterVert, &DSLwaterFrag});
-        PWater.setTransparency(true);
+        Pwater.init(this, &VDnormUV, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLwater});
+        Pwater.setTransparency(true);
 
-        Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLglobal, &DSLgrass});
-        Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLglobal, &DSLterrain, &DSLterrainFactors});
-		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
-		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLglobal, &DSLlocalPBR, &DSLsgAoFactors});
+        Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
+        Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
+		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
+		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
 
 
         // --------- TECHNIQUES INITIALIZATION ---------
-        PRs.resize(8);
+        PRs.resize(7);
 		PRs[0].init("CookTorranceChar", {
             {&PshadowMapChar, {{
                 {true, 0, {} },     // Shadow map UBO
             }} },
             {&Pchar, {
                 {},
+                {},
                 {
                     {true,  0, {} }
                 }
             }}
         }, 1, &VDchar);
-		PRs[1].init("CookTorranceNoiseSimp", {
-            {&PshadowMapWater, {{}} },
-            {&PsimpObj,   {
-                {},
-                {
-                  {true,  0, {}},
-                  {true,  1, {}}
-                }
-            }}
-        },2, &VDsimp);
-		PRs[2].init("SkyBox", {
+		PRs[1].init("SkyBox", {
             {&PshadowMapSky, {} },
-            {&PskyBox,    {
+            {&Pskybox, {
                 {
                     {true,  0, {}}
                 }
             }}
-        }, 1, &VDskyBox);
-        PRs[3].init("Terrain", {
+        }, 1, &VDpos);
+        PRs[2].init("Terrain", {
             {&PshadowMap, {{
                 {true, 1, {} },     // Shadow map UBO
             }} },
             {&Pterrain,   {
+                {},
                 {},
                 {
                     {true,  0, {} },
@@ -475,9 +471,10 @@ class CGProject : public BaseProject {
                 {}
             }}
         }, 9, &VDtan);
-        PRs[4].init("Water", {
+        PRs[3].init("Water", {
             {&PshadowMapWater, {} },
-            {&PWater, {
+            {&Pwater, {
+                {},
                 {},
                 {
                     {true, 0, {} },
@@ -490,12 +487,13 @@ class CGProject : public BaseProject {
                     {true, 7, {} }
                 }
             }}
-        }, 8, &VDsimp);
-        PRs[5].init("Grass", {
+        }, 8, &VDnormUV);
+        PRs[4].init("Grass", {
             {&PshadowMap, {{
                 {true, 0, {} },     // Shadow map UBO
             }} },
             {&Pgrass,     {
+                {},
                 {},
                 {
                     {true, 0, {}},
@@ -503,27 +501,12 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 2, &VDtan);
-        PRs[6].init("Buildings", {
+        PRs[5].init("Buildings", {
             {&PshadowMap, {{
                 {true, 0, {} },     // Shadow map UBO
             }} },
             {&Pbuildings, {
                 {},
-                {
-                    {true,  0, {}},     // albedo
-                    {true,  1, {}},     // normal
-                    {true,  2, {}},     // specular / glossiness
-                    {true,  3, {}},     // ambient occlusion
-                        {false,  -1, RPshadow.attachments[0].getViewAndSampler() }
-                },
-                {}
-            }}
-        }, 4, &VDtan);
-        PRs[7].init("Props", {
-            {&PshadowMap, {{
-                {true, 0, {} },     // Shadow map UBO
-            }} },
-            {&Pprops, {
                 {},
                 {
                     {true,  0, {}},     // albedo
@@ -531,8 +514,22 @@ class CGProject : public BaseProject {
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}},     // ambient occlusion
                         {false,  -1, RPshadow.attachments[0].getViewAndSampler() }
-                },
-                {}
+                }
+            }}
+        }, 4, &VDtan);
+        PRs[6].init("Props", {
+            {&PshadowMap, {{
+                {true, 0, {} },     // Shadow map UBO
+            }} },
+            {&Pprops, {
+                {},
+                {},
+                {
+                    {true,  0, {}},     // albedo
+                    {true,  1, {}},     // normal
+                    {true,  2, {}},     // specular / glossiness
+                    {true,  3, {}}     // ambient occlusion
+                }
             }}
         }, 4, &VDtan);
 
@@ -582,17 +579,27 @@ class CGProject : public BaseProject {
         RP.create();
 
         std::cout << "Creating pipelines\n";
-		Pchar.create(&RP);
-		PsimpObj.create(&RP);
-		PskyBox.create(&RP);
-        PWater.create(&RP);
+        std::cout << "\t1: Creating Pchar\n";
+        Pchar.create(&RP);
+        std::cout << "\t2: Creating Pskybox\n";
+        Pskybox.create(&RP);
+        std::cout << "\t3: Creating Pwater\n";
+        Pwater.create(&RP);
+        std::cout << "\t4: Creating Pgrass\n";
         Pgrass.create(&RP);
-		Pterrain.create(&RP);
+        std::cout << "\t5: Creating Pterrain\n";
+        Pterrain.create(&RP);
+        std::cout << "\t6: Creating Pprops\n";
         Pprops.create(&RP);
+        std::cout << "\t7: Creating Pbuildings\n";
         Pbuildings.create(&RP);
+        std::cout << "\t8: Creating PshadowMap\n";
         PshadowMap.create(&RPshadow);
+        std::cout << "\t9: Creating PshadowMapChar\n";
         PshadowMapChar.create(&RPshadow);
+        std::cout << "\t10: Creating PshadowMapSky\n";
         PshadowMapSky.create(&RPshadow);
+        std::cout << "\t11: Creating PshadowMapWater\n";
         PshadowMapWater.create(&RPshadow);
 
         std::cout << "Creating descriptor sets\n";
@@ -605,9 +612,8 @@ class CGProject : public BaseProject {
 
 	void pipelinesAndDescriptorSetsCleanup() {
 		Pchar.cleanup();
-		PsimpObj.cleanup();
-		PskyBox.cleanup();
-        PWater.cleanup();
+		Pskybox.cleanup();
+        Pwater.cleanup();
         Pgrass.cleanup();
 		Pterrain.cleanup();
         Pprops.cleanup();
@@ -624,24 +630,22 @@ class CGProject : public BaseProject {
 	}
 
 	void localCleanup() {
-		DSLlocalChar.cleanup();
-		DSLlocalSimp.cleanup();
-		DSLlocalPBR.cleanup();
-        DSLsgAoFactors.cleanup();
-		DSLskyBox.cleanup();
-        DSLwaterVert.cleanup();
-        DSLwaterFrag.cleanup();
+		DSLgeomShadow4Char.cleanup();
+		DSLpbr.cleanup();
+        DSLpbrShadow.cleanup();
+		DSLskybox.cleanup();
+        DSLgeomShadowTime.cleanup();
+        DSLgeomShadow.cleanup();
+        DSLwater.cleanup();
         DSLgrass.cleanup();
 		DSLterrain.cleanup();
-        DSLterrainFactors.cleanup();
-		DSLglobal.cleanup();
+		DSLlightModel.cleanup();
         DSLshadowMap.cleanup();
         DSLshadowMapChar.cleanup();
 
 		Pchar.destroy();
-		PsimpObj.destroy();
-		PskyBox.destroy();
-        PWater.destroy();
+		Pskybox.destroy();
+        Pwater.destroy();
         Pgrass.destroy();
         Pprops.destroy();
         Pbuildings.destroy();
@@ -713,21 +717,6 @@ class CGProject : public BaseProject {
                 debounce = false;
                 curDebounce = 0;
             }
-
-            if (glfwGetKey(window, GLFW_KEY_SPACE)) {
-                if (!debounce) {
-                    debounce = true;
-                    curDebounce = GLFW_KEY_SPACE;
-
-                    debug1.z = (float) (((int) debug1.z + 1) % 65);
-                    std::cout << "Showing bone index: " << debug1.z << "\n";
-                }
-            } else {
-                if ((curDebounce == GLFW_KEY_P) && debounce) {
-                    debounce = false;
-                    curDebounce = 0;
-                }
-            }
         }
 
 		static int curAnim = 0;
@@ -797,87 +786,72 @@ class CGProject : public BaseProject {
 
 
         // ----- UPDATE UNIFORMS -----
+        //NOTE on code style: write all uniform variables in the following section
+        // and assign the constant values across the different model during initialization
 
         // Common uniforms and general variables
         int instanceId;
         int techniqueId = -1;
-		GlobalUniformBufferObject gubo{
+		LightModelUBO lightUbo{
             .lightDir = lightDir,
             .lightColor = lightColor,
             .eyePos = cameraPos
+        //TODO: aggiungi point lights!
         };
         ShadowMapUBO shadowUbo{
+            .lightVP = lightVP
+        };
+        ShadowMapUBOChar shadowMapUboChar{
             .lightVP = lightVP
         };
         ShadowClipUBO shadowClipUbo{
             .lightVP = lightVP,
             .debug = debugLightView
         };
-        DebugUBO debugUbo{debugLightView};
-        UniformBufferObjectSimp ubos{};
         TimeUBO timeUbo{.time = static_cast<float>(glfwGetTime())};
-//        TimeUBO timeUbo{.time = glfwGetTime()};
-
-
-		// TECHNIQUE Character
-        techniqueId++;
-		UniformBufferObjectChar uboc{
-            .debug1 = debug1
+        GeomUBO geomUbo{};
+        GeomCharUBO geomCharUbo{
+                .debug1 = debug1
         };
-        ShadowMapUBOChar shadowCharUbo {
-            .lightVP = lightVP,
+        GeomSkyboxUBO geomSkyboxUbo{
+            .debug = debugLightView
         };
+        TerrainFactorsUBO terrainFactorsUbo{};
+        PbrFactorsUBO pbrUbo{};
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
+
+		// TECHNIQUE Character
+        techniqueId++;
 		static SkeletalAnimation* SKA = charManager.getCharacters()[0]->getSkeletalAnimation();
 		SKA->Sample(*AB);
 		std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
-
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
 			for(int im = 0; im < TMsp->size(); im++) {
-				uboc.mMat[im]   = SC.TI[techniqueId].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
-				uboc.mvpMat[im] = ViewPrj * uboc.mMat[im];
-				uboc.nMat[im] = glm::inverse(glm::transpose(uboc.mMat[im]));
-                shadowCharUbo.model[im] = SC.TI[techniqueId].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
+                geomCharUbo.mMat[im]   = SC.TI[techniqueId].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
+                geomCharUbo.mvpMat[im] = ViewPrj * geomCharUbo.mMat[im];
+                geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
+                shadowMapUboChar.model[im] = SC.TI[techniqueId].I[instanceId].Wm * AdaptMat * (*TMsp)[im];
 			}
 
-			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowCharUbo, 0);
-			SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0);
-			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &uboc, 0);
-			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 2);
-		}
-
-		// TECHNIQUE Simple objects
-        // TODO: capisci se mantenere o meno
-        //  se la tiene, aggiungi passaggio a visione ortografica
-        techniqueId++;
-		for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
-			ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-			ubos.mvpMat = ViewPrj * ubos.mMat;
-			ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
-            shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
-
-            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
-			SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
-			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0);  // Set 1
+			SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowMapUboChar, 0);
+			SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
+			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomCharUbo, 0);
+			SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
 		}
 
         // TECHNIQUE SkyBox
         techniqueId++;
-		skyBoxUniformBufferObject sbubo{
-		    .mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f))
-        };
-		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &sbubo, 0);
-		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &debugUbo, 1);
+		geomSkyboxUbo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
+		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &geomSkyboxUbo, 0);
 
         // TECHNIQUE Terrain
         techniqueId++;
-        TerrainFactorsUBO terrainFactorsUbo{};
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
-            ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-            ubos.mvpMat = ViewPrj * ubos.mMat;
-            ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+            geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
 
             terrainFactorsUbo.maskBlendFactor = SC.TI[techniqueId].I[instanceId].factor1;
             terrainFactorsUbo.tilingFactor = SC.TI[techniqueId].I[instanceId].factor2;
@@ -885,79 +859,78 @@ class CGProject : public BaseProject {
             shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
 
             SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
-            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0);  // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 11);
-            SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &terrainFactorsUbo, 0);  // Set 2
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+            SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &terrainFactorsUbo, 0);
         }
 
         // TECHNIQUE Water
         techniqueId++;
-        ubos.mMat   = SC.TI[techniqueId].I[0].Wm;
-        ubos.mvpMat = ViewPrj * ubos.mMat;
-        ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
-        SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &timeUbo, 0);
-        SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &ubos, 1);
-        SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &shadowClipUbo, 2);
-        SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &gubo, 0);
+        geomUbo.mMat   = SC.TI[techniqueId].I[0].Wm;
+        geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+        geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
+        SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &lightUbo, 0);
+        SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &geomUbo, 0);
+        SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+        SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &timeUbo, 2);
 
         // TECHNIQUE Vegetation/Grass
         techniqueId++;
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
-            ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-            ubos.mvpMat = ViewPrj * ubos.mMat;
-            ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+            geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
 
             shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
 
             SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
-            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0);
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0);
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &timeUbo, 1);
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 2);
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &timeUbo, 2);
         }
 
         // TECHNIQUE Buildings (PBR)
         techniqueId++;
-        SgAoMaterialFactorsUBO sgAoUbo{};
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
-            ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-            ubos.mvpMat = ViewPrj * ubos.mMat;
-            ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+            geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
 
-            sgAoUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
-            sgAoUbo.specularFactor = SC.TI[techniqueId].I[instanceId].specularFactor;
-            sgAoUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].factor1;
-            sgAoUbo.aoFactor = SC.TI[techniqueId].I[instanceId].factor2;
+            pbrUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
+            pbrUbo.specularFactor = SC.TI[techniqueId].I[instanceId].specularFactor;
+            pbrUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].factor1;
+            pbrUbo.aoFactor = SC.TI[techniqueId].I[instanceId].factor2;
 
             shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
 
             SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
-            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0); // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 6); // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &sgAoUbo, 0); // Set 2
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+            SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &pbrUbo, 0);
         }
 
         // TECHNIQUE Props (PBR)
         techniqueId++;
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
-            ubos.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-            ubos.mvpMat = ViewPrj * ubos.mMat;
-            ubos.nMat   = glm::inverse(glm::transpose(ubos.mMat));
+            geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
 
-            sgAoUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
-            sgAoUbo.specularFactor = SC.TI[techniqueId].I[instanceId].specularFactor;
-            sgAoUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].factor1;
-            sgAoUbo.aoFactor = SC.TI[techniqueId].I[instanceId].factor2;
+            pbrUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
+            pbrUbo.specularFactor = SC.TI[techniqueId].I[instanceId].specularFactor;
+            pbrUbo.glossinessFactor = SC.TI[techniqueId].I[instanceId].factor1;
+            pbrUbo.aoFactor = SC.TI[techniqueId].I[instanceId].factor2;
 
             shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
 
             SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
-            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &gubo, 0); // Set 0
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &ubos, 0); // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 6); // Set 1
-            SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &sgAoUbo, 0); // Set 2
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+            SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &pbrUbo, 0);
         }
 
 

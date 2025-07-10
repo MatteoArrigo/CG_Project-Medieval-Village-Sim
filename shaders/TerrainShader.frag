@@ -40,31 +40,35 @@ layout(location = 5) in vec4 debug;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 1, set = 1) uniform sampler2D maskMap;
-
-layout(binding = 2, set = 1) uniform sampler2D mAlbedoMap;
-layout(binding = 3, set = 1) uniform sampler2D mNormalMap;
-layout(binding = 4, set = 1) uniform sampler2D mSGMap;
-
-layout(binding = 5, set = 1) uniform sampler2D tAlbedoMap;
-layout(binding = 6, set = 1) uniform sampler2D tNormalMap;
-layout(binding = 7, set = 1) uniform sampler2D tSGMap;
-
-layout(binding = 8, set = 1) uniform sampler2D aoMap;
-layout(binding = 9, set = 1) uniform sampler2D aoMapHighPassed;
-
-layout(binding = 10, set = 1) uniform sampler2D shadowMap;
-
-layout(binding = 0, set = 0) uniform GlobalUniformBufferObject {
+#define MAX_POINT_LIGHTS 10
+layout(set = 0, binding = 0) uniform LightModelUBO {
     vec3 lightDir;
     vec4 lightColor;
     vec3 eyePos;
-} gubo;
+
+    vec3 pointLightPositions[MAX_POINT_LIGHTS];
+    vec4 pointLightColors[MAX_POINT_LIGHTS];
+} lightUbo;
 
 layout(set = 2, binding = 0) uniform TerrainFactorsUBO {
     float maskBlendFactor;
     float tilingFactor;
 } terrainFactors;
+
+layout(set = 2, binding = 1) uniform sampler2D maskMap;
+
+layout(set = 2, binding = 2) uniform sampler2D mAlbedoMap;
+layout(set = 2, binding = 3) uniform sampler2D mNormalMap;
+layout(set = 2, binding = 4) uniform sampler2D mSGMap;
+
+layout(set = 2, binding = 5) uniform sampler2D tAlbedoMap;
+layout(set = 2, binding = 6) uniform sampler2D tNormalMap;
+layout(set = 2, binding = 7) uniform sampler2D tSGMap;
+
+layout(set = 2, binding = 8) uniform sampler2D aoMap;
+layout(set = 2, binding = 9) uniform sampler2D aoMapHighPassed;
+
+layout(set = 2, binding = 10) uniform sampler2D shadowMap;
 
 const float PI = 3.14159265359;
 const float aoBaseFactor = 0.8;
@@ -185,8 +189,8 @@ void main() {
         float glossiness = sgTex.a * GLOSSINESS_FACTOR;
         float shininess = max(glossiness * 256.0, 1.0);
 
-        vec3 V = normalize(gubo.eyePos - fragPos);
-        vec3 L = normalize(gubo.lightDir);
+        vec3 V = normalize(lightUbo.eyePos - fragPos);
+        vec3 L = normalize(lightUbo.lightDir);
         vec3 H = normalize(V + L);
 
         float NdotL = max(dot(N, L), 0.0);
@@ -202,7 +206,7 @@ void main() {
         vec3 diffuse = albedo * oneMinusSpec / PI;
 
         float ao = getCombinedAO();
-        vec3 lightColor = gubo.lightColor.rgb;
+        vec3 lightColor = lightUbo.lightColor.rgb;
 
         float shadow = ShadowCalculation(fragPosLightSpace);
 

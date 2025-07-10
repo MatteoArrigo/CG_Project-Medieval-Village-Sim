@@ -14,7 +14,7 @@
  *
  * Uniforms:
  * - `timeUBO`: Provides the current time for animating the wave and UVs.
- * - `UniformBufferObject`: Contains transformation matrices for model, view, projection, and normal calculations.
+ * - `GeomUBO`: Contains transformation matrices for model, view, projection, and normal calculations.
  *
  * Outputs:
  * - `fragPosWorld`: Vertex position in world space.
@@ -35,17 +35,13 @@ layout(location = 3) out vec3 fragNormalWorld;
 layout(location = 4) out vec3 fragTangentWorld;
 layout(location = 5) out vec3 fragBitangentWorld;
 
-layout(set = 0, binding = 0) uniform timeUBO {
-    float time;
-} time;
-
-layout(set = 0, binding = 1) uniform UniformBufferObject {
+layout(set = 1, binding = 0) uniform GeomUBO {
     mat4 mvpMat;
     mat4 mMat;
     mat4 nMat;
-} ubo;
+} geomUbo;
 
-layout(binding = 2, set = 0) uniform ShaodowClipUBO {
+layout(set = 1, binding = 1) uniform ShaodowClipUBO {
     mat4 lightVP;
 
 /** Debug vector for shadow map rendering.
@@ -54,6 +50,11 @@ layout(binding = 2, set = 0) uniform ShaodowClipUBO {
 	 */
     vec4 debug;
 } shadowClipUbo;
+
+layout(set = 1, binding = 2) uniform TimeUBO {
+    float time;
+} time;
+
 /**
     Parameters for the wave function representing the vertical displacement of the water surface.
     - `amplitude`: Amplitude of the wave (max displacement).
@@ -65,7 +66,7 @@ layout(binding = 2, set = 0) uniform ShaodowClipUBO {
 */
 const float amplitude = 0.3;
 const vec3 waveDir = normalize(vec3(1.0, 0.0, -5.0));
-const float spatialFrequency = 0.9;
+const float spatialFrequency = 0.4;
 const float waveSpeed = 0.9;
 
 /**
@@ -83,7 +84,7 @@ void main() {
     pos.y = amplitude * sin(phase);
 
     // Transform position to world space
-    vec4 worldPos = ubo.mMat * vec4(pos, 1.0);
+    vec4 worldPos = geomUbo.mMat * vec4(pos, 1.0);
     fragPosWorld = worldPos.xyz;
 
     // Normal in world space
@@ -93,10 +94,10 @@ void main() {
     vec3 dx = vec3(1.0, dHdx, 0.0);
     vec3 dz = vec3(0.0, dHdz, 1.0);
     vec3 N = normalize(cross(dz, dx));
-    fragNormalWorld = normalize((ubo.nMat * vec4(N, 0.0)).xyz);
+    fragNormalWorld = normalize((geomUbo.nMat * vec4(N, 0.0)).xyz);
 
     // Approximate tangent and bitangent for a planar surface in XZ
-    vec3 T = normalize((ubo.mMat * vec4(1.0, 0.0, 0.0, 0.0)).xyz); // X direction
+    vec3 T = normalize((geomUbo.mMat * vec4(1.0, 0.0, 0.0, 0.0)).xyz); // X direction
     vec3 B = normalize(cross(N, T)); // Y upward, so this makes sense for a horizontal plane
     fragTangentWorld = T;
     fragBitangentWorld = B;
@@ -104,9 +105,9 @@ void main() {
     // Transform position to clip space
     // This is the final position that will be used for rendering
     if( shadowClipUbo.debug.y == 1.0)
-        gl_Position = shadowClipUbo.lightVP * ubo.mMat * vec4(pos, 1.0);
+        gl_Position = shadowClipUbo.lightVP * geomUbo.mMat * vec4(pos, 1.0);
     else
-        gl_Position = ubo.mvpMat * vec4(pos, 1.0);
+        gl_Position = geomUbo.mvpMat * vec4(pos, 1.0);
 
     // Calculate UV coordinates for animated normal mapping
     // These UVs are offset by the position and scaled by time to create a dynamic effect

@@ -20,9 +20,10 @@ layout(location = 4) in vec4 inJointWeight;
 
 layout(location = 0) out vec2 fragUV;
 
-layout(binding = 0, set = 0) uniform UniformBufferObject {
-    mat4 lightVP;       // Light's view-projection matrix (orthographic)
-    mat4 model[65];     // Model matrix of the object
+#define MAX_JOINTS 65
+layout(set = 0, binding = 0) uniform ShdaowMapUBOChar {
+    mat4 lightVP;
+    mat4 model[MAX_JOINTS];
 } ubo;
 
 void main() {

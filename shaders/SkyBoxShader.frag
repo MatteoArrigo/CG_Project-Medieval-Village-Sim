@@ -2,16 +2,14 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 layout(location = 0) in vec3 fragTexCoord;
+layout(location = 1) in vec4 debug;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 1) uniform DebugUBO {
-	vec4 debug;
-} debugUbo;
-layout(binding = 2) uniform sampler2D skybox;
+layout(set = 0, binding = 1) uniform sampler2D skybox;
 
 void main() {
-	if(debugUbo.debug.y == 1.0)
+	if(debug.y == 1.0)
 		discard;	// Light orthographic clip space mode, skybox not rendered
 
 	float yaw = -(atan(fragTexCoord.x, fragTexCoord.z)/6.2831853+0.5);

@@ -28,13 +28,13 @@ layout(location = 0) out vec2 fragUV;
 * Uniform buffer object for passing transformation matrices.
 * This includes the light's view-projection matrix and the model matrix.
 */
-layout(binding = 0, set = 0) uniform UniformBufferObject {
+layout(set = 0, binding = 0) uniform ShadowMapUBO {
     mat4 lightVP;  // Light's view-projection matrix (orthographic)
     mat4 model;    // Model matrix of the object
-} ubo;
+} shadowMapUbo;
 
 void main() {
     // Transform vertex position from model space to light clip space
-    gl_Position = ubo.lightVP * ubo.model * vec4(inPosition, 1.0);
+    gl_Position = shadowMapUbo.lightVP * shadowMapUbo.model * vec4(inPosition, 1.0);
     fragUV = inUV;
 }

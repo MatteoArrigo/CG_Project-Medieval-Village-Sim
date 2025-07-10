@@ -18,7 +18,7 @@
  *   - fragBitangent (vec3, location = 4): World-space bitangent.
  *
  * Uniform Buffers:
- *   - UniformBufferObject (mvpMat, mMat, nMat)
+ *   - GeomUBO (mvpMat, mMat, nMat)
  *   - TimeUBO
  *
  * Constants:
@@ -45,18 +45,13 @@ layout(location = 3) out vec3 fragTangent;
 layout(location = 4) out vec3 fragBitangent;
 
 // Object-local transform
-layout(binding = 0, set = 1) uniform UniformBufferObject {
+layout(set = 1, binding = 0) uniform GeomUBO {
     mat4 mvpMat;
     mat4 mMat;
     mat4 nMat;
-} ubo;
+} geomUbo;
 
-// Wind UBO
-layout(binding = 1, set = 1) uniform TimeUBO {
-    float time;
-} timeUBO;
-
-layout(binding = 2, set = 1) uniform ShaodowClipUBO {
+layout(set = 1, binding = 1) uniform ShaodowClipUBO {
     mat4 lightVP;
 
 /** Debug vector for shadow map rendering.
@@ -65,6 +60,12 @@ layout(binding = 2, set = 1) uniform ShaodowClipUBO {
 	 */
     vec4 debug;
 } shadowClipUbo;
+
+// Wind UBO
+layout(set = 1, binding = 2) uniform TimeUBO {
+    float time;
+} timeUBO;
+
 
 // Wind parameters
 const vec3 windDir = normalize(vec3(1.0, 0.0, 1.0));  // Wind blowing along +X (you can rotate this)
@@ -81,19 +82,19 @@ void main() {
     pos += windDir * sway * clamp(pos.y, 0.0, 2.0);
 
     // World-space calculations
-    vec4 worldPos = ubo.mMat * vec4(pos, 1.0);
+    vec4 worldPos = geomUbo.mMat * vec4(pos, 1.0);
     fragPosWorld = worldPos.xyz;
-    fragNormalWorld = normalize(ubo.nMat * vec4(inNorm, 0.0)).xyz;
+    fragNormalWorld = normalize(geomUbo.nMat * vec4(inNorm, 0.0)).xyz;
     fragUV = inUV;
 
     // Compute tangent space basis from inTangent and inNorm
     vec3 localTangent = inTangent.xyz;
     vec3 localBitangent = cross(inNorm, localTangent) * inTangent.w;
-    fragTangent = normalize((ubo.nMat * vec4(localTangent, 0.0)).xyz);
-    fragBitangent = normalize((ubo.nMat * vec4(localBitangent, 0.0)).xyz);
+    fragTangent = normalize((geomUbo.nMat * vec4(localTangent, 0.0)).xyz);
+    fragBitangent = normalize((geomUbo.nMat * vec4(localBitangent, 0.0)).xyz);
 
     if(shadowClipUbo.debug.y == 1.0)
-        gl_Position = shadowClipUbo.lightVP * ubo.mMat * vec4(pos, 1.0);
+        gl_Position = shadowClipUbo.lightVP * geomUbo.mMat * vec4(pos, 1.0);
     else
-        gl_Position = ubo.mvpMat * vec4(pos, 1.0);
+        gl_Position = geomUbo.mvpMat * vec4(pos, 1.0);
 }

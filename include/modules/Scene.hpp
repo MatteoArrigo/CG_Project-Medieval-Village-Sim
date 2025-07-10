@@ -210,7 +210,6 @@ int Scene::init(BaseProject *_BP,  int _Npasses, std::vector<VertexDescriptorRef
 			MeshIds[ms[k]["id"]] = k;
 			std::string MT = ms[k]["format"].template get<std::string>();
 			std::string VDN = ms[k]["VD"].template get<std::string>();
-
 			M[k] = new Model();
 			if(MT[0] == 'A') {
 				// init from asset file

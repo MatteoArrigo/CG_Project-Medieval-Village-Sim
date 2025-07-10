@@ -30,8 +30,8 @@
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
 		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
-		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
-		{"id": "water_grid", "VD": "VDsimp", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
+		{"id": "skybox", "VD": "VDpos", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
+		{"id": "water_grid", "VD": "VDnormUV", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
 
 		{"id": "terrain_far_01-00", "VD": "VDtan", "model": "terrain_far_01.001", "node": "terrain_far_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
 		{"id": "terrain_near_01-00", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
@@ -542,6 +542,7 @@
         {"id": "Plant_Perennials_a_qhthU2_Albedo_Opacity", "texture": "assets/textures/vegetation/Plant_Perennials_a_qhthU2_Albedo_Opacity.png", "format": "D"},
         {"id": "Plant_Perennials_a_qhthU2_Normal", "texture": "assets/textures/vegetation/Plant_Perennials_a_qhthU2_Normal.png", "format": "D"}
     ],
+	"instances_no_visible": [],
 	"instances": [
 		{"technique": "CookTorranceChar", "elements": [
 			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
@@ -550,8 +551,6 @@
 			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
 				"translate": [40, 6.5, 6]
 			}
-		]},
-		{"technique": "CookTorranceNoiseSimp", "elements": [
 		]},
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
@@ -3238,7 +3237,6 @@
 				"physics": false
 			}
 		]},
-
 		{"technique": "Props", "elements":  [
 			{"id": "pf_bucket_01-00.00", "model": "pf_bucket_01-00", "texture": ["prop_bucket_01_a", "prop_bucket_01_n", "prop_bucket_01_sg", "prop_bucket_01_o"],
 				"translate": [-19.41000747680664, 5.410999774932861, -3.8410043716430664],
@@ -7015,8 +7013,7 @@
 				"eulerAngles": [3.9376240076288345, 52.19641950249228, 12.265161812886484],
 				"diffuseFactor": [0.9911022, 0.9911022, 0.9911022], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0}
 		]}
-	],
+	]
 
-	"instances_no_visible": []
 }
 

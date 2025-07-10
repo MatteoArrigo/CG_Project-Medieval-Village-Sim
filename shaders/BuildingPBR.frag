@@ -40,28 +40,31 @@ layout(location = 5) in vec4 debug;
 
 layout(location = 0) out vec4 outColor;
 
-// Global UBO (set=0)
-layout(binding = 0, set = 0) uniform GlobalUniformBufferObject {
+#define MAX_POINT_LIGHTS 10
+layout(set = 0, binding = 0) uniform LightModelUBO {
     vec3 lightDir;
     vec4 lightColor;
     vec3 eyePos;
-} gubo;
 
-// Textures (set=1)
-layout(binding = 1, set = 1) uniform sampler2D albedoMap;
-layout(binding = 2, set = 1) uniform sampler2D normalMap;
-layout(binding = 3, set = 1) uniform sampler2D specGlossMap;
-layout(binding = 4, set = 1) uniform sampler2D aoMap;  // ambient occlusion map
+    vec3 pointLightPositions[MAX_POINT_LIGHTS];
+    vec4 pointLightColors[MAX_POINT_LIGHTS];
+} lightUbo;
 
-layout(binding = 5, set = 1) uniform sampler2D shadowMap;
-
-// Material factors (set=2)
-layout(binding = 0, set = 2) uniform SgAoMaterialFactors {
-    vec3 diffuseFactor;      // (RGB)
-    vec3 specularFactor;     // (RGB)
-    float glossinessFactor;  // scalar
-    float aoFactor;          // scalar ambient occlusion factor
+// Material factors for specular-glossiness PBR model and ambient occlusion
+layout(set = 2, binding = 0) uniform PbrFactorsUBO {
+    vec3 diffuseFactor;
+    vec3 specularFactor;
+    float glossinessFactor;
+    float aoFactor;
 } matFactors;
+
+// Textures
+layout(set = 2, binding = 1) uniform sampler2D albedoMap;
+layout(set = 2, binding = 2) uniform sampler2D normalMap;
+layout(set = 2, binding = 3) uniform sampler2D specGlossMap;
+layout(set = 2, binding = 4) uniform sampler2D aoMap;
+
+layout(set = 2, binding = 5) uniform sampler2D shadowMap;
 
 const float PI = 3.14159265359;
 
@@ -175,10 +178,10 @@ void main() {
         mat3 TBN = computeTBN(N, T, w);
         vec3 Nmap = getNormalFromMap(TBN);
 
-        vec3 V = normalize(gubo.eyePos - fragPos);
-        vec3 L = normalize(gubo.lightDir);
+        vec3 V = normalize(lightUbo.eyePos - fragPos);
+        vec3 L = normalize(lightUbo.lightDir);
         vec3 H = normalize(V + L);
-        vec3 radiance = gubo.lightColor.rgb;
+        vec3 radiance = lightUbo.lightColor.rgb;
 
         // Apply Specular/Glossiness factors to diffuse color (albedo)
         vec3 diffuseColor = texDiffuse.rgb * matFactors.diffuseFactor;

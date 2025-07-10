@@ -1,14 +1,15 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(binding = 0, set = 1) uniform UniformBufferObject {
+#define MAX_JOINTS 65
+layout(set = 1, binding = 0) uniform CharUBO {
 	vec4 debug1;
-	mat4 mvpMat[65];
-	mat4 mMat[65];
-	mat4 nMat[65];
-} ubo;
+	mat4 mvpMat[MAX_JOINTS];
+	mat4 mMat[MAX_JOINTS];
+	mat4 nMat[MAX_JOINTS];
+} charUbo;
 
-layout(binding = 2, set = 1) uniform ShaodowClipUBO {
+layout(set = 1, binding = 1) uniform ShadowClipUBO {
 	mat4 lightVP;
 
 /** Debug vector for shadow map rendering.
@@ -31,50 +32,50 @@ layout(location = 2) out vec2 fragUV;
 layout(location = 3) out vec2 debug2;
 
 void main() {
-	if(ubo.debug1.x == 1.0f) {
-		gl_Position = ubo.mvpMat[0] * vec4(inPosition, 1.0);
-		fragPos = (ubo.mMat[0] * vec4(inPosition, 1.0)).xyz;
-		fragNorm = (ubo.nMat[0] * vec4(inNorm, 0.0)).xyz;
+	if(charUbo.debug1.x == 1.0f) {
+		gl_Position = charUbo.mvpMat[0] * vec4(inPosition, 1.0);
+		fragPos = (charUbo.mMat[0] * vec4(inPosition, 1.0)).xyz;
+		fragNorm = (charUbo.nMat[0] * vec4(inNorm, 0.0)).xyz;
 	} else {
 		if(shadowClipUbo.debug.y == 1.0)
-			gl_Position = inJointWeight.x * shadowClipUbo.lightVP * ubo.mMat[inJointIndex.x] * vec4(inPosition, 1.0);
+			gl_Position = inJointWeight.x * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.x] * vec4(inPosition, 1.0);
 		else
-			gl_Position = inJointWeight.x * ubo.mvpMat[inJointIndex.x] * vec4(inPosition, 1.0);
-		fragPos = inJointWeight.x * (ubo.mMat[inJointIndex.x] * vec4(inPosition, 1.0)).xyz;
-		fragNorm = inJointWeight.x * (ubo.nMat[inJointIndex.x] * vec4(inNorm, 0.0)).xyz;
+			gl_Position = inJointWeight.x * charUbo.mvpMat[inJointIndex.x] * vec4(inPosition, 1.0);
+		fragPos = inJointWeight.x * (charUbo.mMat[inJointIndex.x] * vec4(inPosition, 1.0)).xyz;
+		fragNorm = inJointWeight.x * (charUbo.nMat[inJointIndex.x] * vec4(inNorm, 0.0)).xyz;
 
 		if(shadowClipUbo.debug.y == 1.0)
-			gl_Position += inJointWeight.y * shadowClipUbo.lightVP * ubo.mMat[inJointIndex.y] * vec4(inPosition, 1.0);
+			gl_Position += inJointWeight.y * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.y] * vec4(inPosition, 1.0);
 		else
-			gl_Position += inJointWeight.y * ubo.mvpMat[inJointIndex.y] * vec4(inPosition, 1.0);
+			gl_Position += inJointWeight.y * charUbo.mvpMat[inJointIndex.y] * vec4(inPosition, 1.0);
 		fragPos += inJointWeight.y *
-				  (ubo.mMat[inJointIndex.y] * vec4(inPosition, 1.0)).xyz;
+				  (charUbo.mMat[inJointIndex.y] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.y * 
-				   (ubo.nMat[inJointIndex.y] * vec4(inNorm, 0.0)).xyz;
+				   (charUbo.nMat[inJointIndex.y] * vec4(inNorm, 0.0)).xyz;
 		
 		if(shadowClipUbo.debug.y == 1.0)
-			gl_Position += inJointWeight.z * shadowClipUbo.lightVP * ubo.mMat[inJointIndex.z] * vec4(inPosition, 1.0);
+			gl_Position += inJointWeight.z * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.z] * vec4(inPosition, 1.0);
 		else
-			gl_Position += inJointWeight.z * ubo.mvpMat[inJointIndex.z] * vec4(inPosition, 1.0);
+			gl_Position += inJointWeight.z * charUbo.mvpMat[inJointIndex.z] * vec4(inPosition, 1.0);
 		fragPos += inJointWeight.z * 
-				  (ubo.mMat[inJointIndex.z] * vec4(inPosition, 1.0)).xyz;
+				  (charUbo.mMat[inJointIndex.z] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.z * 
-				   (ubo.nMat[inJointIndex.z] * vec4(inNorm, 0.0)).xyz;
+				   (charUbo.nMat[inJointIndex.z] * vec4(inNorm, 0.0)).xyz;
 		
 		if(shadowClipUbo.debug.y == 1.0)
-			gl_Position += inJointWeight.w * shadowClipUbo.lightVP * ubo.mMat[inJointIndex.w] * vec4(inPosition, 1.0);
+			gl_Position += inJointWeight.w * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.w] * vec4(inPosition, 1.0);
 		else
-			gl_Position += inJointWeight.w * ubo.mvpMat[inJointIndex.w] * vec4(inPosition, 1.0);
+			gl_Position += inJointWeight.w * charUbo.mvpMat[inJointIndex.w] * vec4(inPosition, 1.0);
 		fragPos += inJointWeight.w * 
-				  (ubo.mMat[inJointIndex.w] * vec4(inPosition, 1.0)).xyz;
+				  (charUbo.mMat[inJointIndex.w] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.w * 
-				   (ubo.nMat[inJointIndex.w] * vec4(inNorm, 0.0)).xyz;
+				   (charUbo.nMat[inJointIndex.w] * vec4(inNorm, 0.0)).xyz;
 	}
 	fragUV = inUV;
-	debug2 = vec2(ubo.debug1.y, 
-		 ((int(ubo.debug1.z) == inJointIndex.x) ? inJointWeight.x : 0.0f) +
-		 ((int(ubo.debug1.z) == inJointIndex.y) ? inJointWeight.y : 0.0f) +
-		 ((int(ubo.debug1.z) == inJointIndex.z) ? inJointWeight.z : 0.0f) +
-		 ((int(ubo.debug1.z) == inJointIndex.w) ? inJointWeight.w : 0.0f) 
+	debug2 = vec2(charUbo.debug1.y,
+		 ((int(charUbo.debug1.z) == inJointIndex.x) ? inJointWeight.x : 0.0f) +
+		 ((int(charUbo.debug1.z) == inJointIndex.y) ? inJointWeight.y : 0.0f) +
+		 ((int(charUbo.debug1.z) == inJointIndex.z) ? inJointWeight.z : 0.0f) +
+		 ((int(charUbo.debug1.z) == inJointIndex.w) ? inJointWeight.w : 0.0f)
 		);
 }

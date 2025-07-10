@@ -3,7 +3,7 @@
 layout(location = 0) in vec2 fragUV; // Input UV coordinates from the vertex shader
 
 /** Albedo map used for alpha test */
-layout(binding = 1, set = 0) uniform sampler2D albedoMap;
+layout(set = 0, binding = 1) uniform sampler2D albedoMap;
 
 void main() {
     if( texture(albedoMap, fragUV).a < 0.5 ) {

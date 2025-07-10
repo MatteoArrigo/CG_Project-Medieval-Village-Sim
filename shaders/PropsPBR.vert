@@ -1,13 +1,13 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(binding = 0, set = 1) uniform UniformBufferObject {
+layout(set = 1, binding = 0) uniform GeomUBO {
 	mat4 mvpMat;
 	mat4 mMat;
 	mat4 nMat;
-} ubo;
+} geomUbo;
 
-layout(binding = 6, set = 1) uniform ShadowUBO {
+layout(set = 1, binding = 1) uniform ShadowUBO {
 	mat4 lightVP;
 	/** Debug vector for shadow map rendering.
 	 * If debug.x == 1.0, the terrain renders only white if lit and black if in shadow
@@ -35,14 +35,14 @@ layout(location = 5) out vec4 debug;
 
 void main() {
 	if(shadowClipUbo.debug.y == 1.0)
-		gl_Position = shadowClipUbo.lightVP * ubo.mMat * vec4(inPosition, 1.0);
+		gl_Position = shadowClipUbo.lightVP * geomUbo.mMat * vec4(inPosition, 1.0);
 	else
-		gl_Position = ubo.mvpMat * vec4(inPosition, 1.0);
-	fragPos = (ubo.mMat * vec4(inPosition, 1.0)).xyz;
-	fragNorm = normalize((ubo.nMat * vec4(inNorm, 0.0)).xyz);
+		gl_Position = geomUbo.mvpMat * vec4(inPosition, 1.0);
+	fragPos = (geomUbo.mMat * vec4(inPosition, 1.0)).xyz;
+	fragNorm = normalize((geomUbo.nMat * vec4(inNorm, 0.0)).xyz);
 	fragUV = inUV;
-	fragTan = vec4(normalize(mat3(ubo.mMat) * inTangent.xyz), inTangent.w);
+	fragTan = vec4(normalize(mat3(geomUbo.mMat) * inTangent.xyz), inTangent.w);
 
-	fragPosLightSpace = shadowClipUbo.lightVP * ubo.mMat * vec4(inPosition, 1.0);
+	fragPosLightSpace = shadowClipUbo.lightVP * geomUbo.mMat * vec4(inPosition, 1.0);
 	debug = shadowClipUbo.debug;
 }
