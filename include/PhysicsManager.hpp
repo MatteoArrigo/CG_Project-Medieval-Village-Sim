@@ -68,6 +68,7 @@ private:
     void createTerrain();
     void createPlayer();
     bool checkGrounded();
+    static btCollisionShape * getShapeFromModel(const Model* modelRef);
 
 public:
     PhysicsManager();
