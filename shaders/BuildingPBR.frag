@@ -40,7 +40,7 @@ layout(location = 5) in vec4 debug;
 
 layout(location = 0) out vec4 outColor;
 
-#define MAX_POINT_LIGHTS 10
+#define MAX_POINT_LIGHTS 20
 layout(set = 0, binding = 0) uniform LightModelUBO {
     vec3 lightDir;
     vec4 lightColor;
@@ -48,6 +48,7 @@ layout(set = 0, binding = 0) uniform LightModelUBO {
 
     vec3 pointLightPositions[MAX_POINT_LIGHTS];
     vec4 pointLightColors[MAX_POINT_LIGHTS];
+    int nPointLights;
 } lightUbo;
 
 // Material factors for specular-glossiness PBR model and ambient occlusion
@@ -181,17 +182,16 @@ void main() {
         vec3 V = normalize(lightUbo.eyePos - fragPos);
         vec3 L = normalize(lightUbo.lightDir);
         vec3 H = normalize(V + L);
-        vec3 radiance = lightUbo.lightColor.rgb;
 
-        // Apply Specular/Glossiness factors to diffuse color (albedo)
+        // === Directional light ===
+        vec3 radiance = lightUbo.lightColor.rgb;
         vec3 diffuseColor = texDiffuse.rgb * matFactors.diffuseFactor;
         vec3 specularColor = texSpecGloss.rgb * matFactors.specularFactor;
         float glossiness = texSpecGloss.a * matFactors.glossinessFactor;
-
         float roughness = 1.0 - glossiness;
 
-        // Specular BRDF
-        float NDF = DistributionBlinnPhong(Nmap, H, glossiness * 256.0); // scale gloss to exponent
+        // === Specular BRDF for directional light ===
+        float NDF = DistributionBlinnPhong(Nmap, H, glossiness * 256.0);
         float G = GeometrySmith(Nmap, V, L, roughness);
         vec3 F = fresnelSchlick(max(dot(H, V), 0.0), specularColor);
 
@@ -205,7 +205,38 @@ void main() {
 
         vec3 Lo = (kD * diffuseColor / PI + specular) * radiance * NdotL * shadow;
 
-        // Minimal ambient approximation
+        // === Add point light contributions ===
+        for (int i = 0; i < lightUbo.nPointLights; ++i) {
+            vec3 lightPos = lightUbo.pointLightPositions[i];
+            vec3 Lp = lightPos - fragPos;
+            float distance = length(Lp);
+            Lp = normalize(Lp);
+
+            vec3 Hp = normalize(V + Lp);
+            vec3 radianceP = lightUbo.pointLightColors[i].rgb;
+
+            // TODO: puoi provare diversi attenuation models
+            // Distance attenuation (inverse square)
+            float attenuation = 1.0 / (distance * distance);
+//            float attenuation = (distance < 4.0) ? 1.0 : 0.0; // Simple cutoff for point lights
+//            float attenuation = 1.0 / (distance+1.0);
+            radianceP *= attenuation;
+
+            float NDFp = DistributionBlinnPhong(Nmap, Hp, glossiness * 256.0);
+            float Gp = GeometrySmith(Nmap, V, Lp, roughness);
+            vec3 Fp = fresnelSchlick(max(dot(Hp, V), 0.0), specularColor);
+
+            vec3 specP = (NDFp * Gp * Fp) /
+            max(4.0 * max(dot(Nmap, V), 0.0001f) * max(dot(Nmap, Lp), 0.0), 0.0001f);
+
+            vec3 kSp = Fp;
+            vec3 kDp = vec3(1.0) - kSp;
+            float NdotLp = max(dot(Nmap, Lp), 0.0);
+
+          Lo += (kDp * diffuseColor / PI + specP) * radianceP * NdotLp;
+        }
+
+        // Minimal ambient
         vec3 ambient = matFactors.aoFactor * ao * diffuseColor;
 
         vec3 color = ambient + Lo;

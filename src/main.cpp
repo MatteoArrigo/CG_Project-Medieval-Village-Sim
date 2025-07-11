@@ -10,12 +10,15 @@
 #include "character/character.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-//TODO generale: Ripulisci e Commenta tutto il main
-
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
 // Nell'acqua la stiamo usando per la parte speculare
 // Nei fragment shader come PBR si potrebbe usare per parte ambient
 // Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
+
+//TODO: Fai debug mode per l'illuminazione con le torce
+//TODO: Fai pipeline apposita per torch, così da aggiungere emitting term per loro
+//TODO: Per ora point lights illuminano solo terreno e buildings, pensa se aggiungerle a altre pipeline
+//TODO: effetto bloom, così che le torce illuminano anche la parte vicino a loro!
 
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
@@ -49,15 +52,16 @@ struct VertexTan {
 	glm::vec4 tan;
 };
 
-#define MAX_POINT_LIGHTS 10
+#define MAX_POINT_LIGHTS 20
 struct LightModelUBO {
 	alignas(16) glm::vec3 lightDir;
 	alignas(16) glm::vec4 lightColor;
 	alignas(16) glm::vec3 eyePos;
 
-    alignas(4) int nPointLights;
-    alignas(16) glm::vec3 pointLightPositions[MAX_POINT_LIGHTS];
+    // For padding mismatch reasons, positions are in vec4 format, but the last coordinate is not used
+    alignas(16) glm::vec4 pointLightPositions[MAX_POINT_LIGHTS];
 	alignas(16) glm::vec4 pointLightColors[MAX_POINT_LIGHTS];
+    alignas(4) int nPointLights;
 };
 
 #define MAX_JOINTS 100
@@ -156,7 +160,7 @@ class CGProject : public BaseProject {
 	glm::vec3 cameraPos;
 
     // Camera rotation controls
-	float Yaw = glm::radians(180.0f);
+	float Yaw = glm::radians(0.0f);
 	float Pitch = glm::radians(0.0f);
 	float Roll = glm::radians(0.0f);
     float relDir = glm::radians(0.0f);
@@ -193,7 +197,7 @@ class CGProject : public BaseProject {
      * NOTE: Also rendered skybox should be changed accordingly, and for this
      *   lightColors.size() textures for skybox instance are expected in the json file
      */
-    int lightColorIdx = 0;
+    int lightColorIdx = 3;
     /**
      * Matrix defining the light rotation to apply to +z axis to get the light direction.
      * It is used
@@ -447,12 +451,9 @@ class CGProject : public BaseProject {
         waterTexs.reserve(nLightColors*6+2);
         waterTexs.push_back({true, 0, VkDescriptorImageInfo{}});
         waterTexs.push_back({true, 1, VkDescriptorImageInfo{}});
-        std::cout << "DEBUG\n";
         for(int j = 0; j < 6; ++j)
-            for(int i = 0; i < nLightColors; ++i) {
-                std::cout << 2 + 6 * i + j << "\n";
+            for(int i = 0; i < nLightColors; ++i)
                 waterTexs.push_back({true, 2 + 6 * i + j, VkDescriptorImageInfo{}});
-            }
 
         PRs.resize(8);
 		PRs[0].init("CharCookTorrance", {
@@ -774,9 +775,27 @@ class CGProject : public BaseProject {
 		LightModelUBO lightUbo{
             .lightDir = lightDir,
             .lightColor = lightColors[lightColorIdx],
-            .eyePos = cameraPos
-        //TODO: aggiungi point lights!
+            .eyePos = cameraPos,
+            .nPointLights = 0,
         };
+        for (const auto& kv : SC.placeholderPos) {
+            if (kv.first.find("torch_fire") != std::string::npos) {
+                if (lightUbo.nPointLights > MAX_POINT_LIGHTS) {
+                    std::cout << "ERROR: Too many point lights in the scene.\n";
+                    std::exit(-1);  // Stop adding if we exceed the limit
+                }
+                lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(kv.second, 1.0f);
+                lightUbo.pointLightColors[lightUbo.nPointLights] = glm::vec4(10,0,0,1);
+                lightUbo.nPointLights++;
+            }
+        }
+
+        if(firstTime)
+            for (int i = 0; i < lightUbo.nPointLights; ++i) {
+                const glm::vec4& pos = lightUbo.pointLightPositions[i];
+                std::cout << "PointLight " << i << ": (" << pos.x << ", " << pos.y << ", " << pos.z << ", " << pos.w << ")\n";
+            }
+
         ShadowMapUBO shadowUbo{
             .lightVP = lightVP
         };

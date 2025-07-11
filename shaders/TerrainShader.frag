@@ -40,7 +40,7 @@ layout(location = 5) in vec4 debug;
 
 layout(location = 0) out vec4 outColor;
 
-#define MAX_POINT_LIGHTS 10
+#define MAX_POINT_LIGHTS 20
 layout(set = 0, binding = 0) uniform LightModelUBO {
     vec3 lightDir;
     vec4 lightColor;
@@ -48,6 +48,7 @@ layout(set = 0, binding = 0) uniform LightModelUBO {
 
     vec3 pointLightPositions[MAX_POINT_LIGHTS];
     vec4 pointLightColors[MAX_POINT_LIGHTS];
+    int nPointLights;
 } lightUbo;
 
 layout(set = 2, binding = 0) uniform TerrainFactorsUBO {
@@ -173,11 +174,10 @@ float DistributionBlinnPhong(vec3 N, vec3 H, float glossiness) {
 }
 
 void main() {
-    if(debug.x == 1.0) {
+    if (debug.x == 1.0) {
         float shadow = ShadowCalculation(fragPosLightSpace);
         outColor = vec4(shadow, shadow, shadow, 1.0);
     } else {
-
         mat3 TBN = computeTBN();
         vec3 N = getNormalFromMap(TBN, mNormalMap, tNormalMap);
 
@@ -187,6 +187,7 @@ void main() {
         vec3 albedo = albedoTex.rgb * DIFFUSE_FACTOR;
         vec3 specularColor = sgTex.rgb * SPECULAR_FACTOR;
         float glossiness = sgTex.a * GLOSSINESS_FACTOR;
+        float roughness = 1.0 - glossiness;
         float shininess = max(glossiness * 256.0, 1.0);
 
         vec3 V = normalize(lightUbo.eyePos - fragPos);
@@ -210,8 +211,39 @@ void main() {
 
         float shadow = ShadowCalculation(fragPosLightSpace);
 
+        vec3 Lo = (diffuse + specular) * lightColor * NdotL * shadow;
+
+        // === Point lights ===
+        for (int i = 0; i < lightUbo.nPointLights; ++i) {
+            vec3 lightPos = lightUbo.pointLightPositions[i];
+            vec3 Lp = lightPos - fragPos;
+            float distance = length(Lp);
+            Lp = normalize(Lp);
+
+            vec3 Hp = normalize(V + Lp);
+            vec3 radianceP = lightUbo.pointLightColors[i].rgb;
+
+            float attenuation = 1.0 / (distance * distance);
+//            float attenuation = (distance < 4.0) ? 1.0 : 0.0; // Simple cutoff for point lights
+            radianceP *= attenuation;
+
+            float NdotLp = max(dot(N, Lp), 0.0);
+            float NdotHp = max(dot(N, Hp), 0.0);
+            float VdotHp = max(dot(V, Hp), 0.0);
+
+            vec3 Fp = fresnelSchlick(VdotHp, specularColor);
+            float specTermP = pow(NdotHp, shininess);
+            vec3 specP = Fp * specTermP;
+
+            float oneMinusSpecP = 1.0 - max(max(specularColor.r, specularColor.g), specularColor.b);
+            vec3 diffP = albedo * oneMinusSpecP / PI;
+
+            Lo += (diffP + specP) * radianceP * NdotLp;
+        }
+
         vec3 ambient = vec3(AO_FACTOR) * albedo * ao;
-        vec3 color = (diffuse + specular) * lightColor * NdotL * shadow + ambient;
+
+        vec3 color = Lo + ambient;
         outColor = vec4(color, 1.0);
     }
 }

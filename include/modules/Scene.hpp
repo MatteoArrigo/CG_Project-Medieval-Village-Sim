@@ -98,6 +98,8 @@ class Scene {
     Instance **I_physics;
     int InstancePhysicsCount = 0;
 
+    std::unordered_map<std::string, glm::vec3> placeholderPos;
+
 	// Pipelines, DSL and Vertex Formats
 	std::unordered_map<std::string, TechniqueRef *> TechniqueIds;
 	int TechniqueInstanceCount = 0;
@@ -460,6 +462,18 @@ std::cout << "Creating physics-only instances\n";
 		}
 std::cout << " Physics-only instances created\n";
 
+    std::cout << "Reading placeholders' positions\n";
+    nlohmann::json placeholders = js["placeholders"];
+    for (const auto& placeholder : placeholders) {
+        std::cout << "Read placeholder: " << placeholder["id"] << "\n";
+        std::string name = placeholder["id"];
+        nlohmann::json pos = placeholder["pos"];
+        if (pos.is_array() && pos.size() == 3) {
+            placeholderPos[name] = glm::vec3(pos[0], pos[1], pos[2]);
+        } else {
+            std::cout << "Invalid position for placeholder: " << name << "\n";
+        }
+    }
 
 /*		} catch (const nlohmann::json::exception& e) {
 		std::cout << "\n\n\nException while parsing JSON file: " << file << "\n";
