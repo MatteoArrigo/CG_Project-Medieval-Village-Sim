@@ -46,14 +46,18 @@ layout(set = 0, binding = 0) uniform LightModelUBO {
     vec4 pointLightColors[MAX_POINT_LIGHTS];
 } lightUbo;
 
-layout(set = 2, binding = 0) uniform sampler2D normalMap1;
-layout(set = 2, binding = 1) uniform sampler2D normalMap2;
-layout(set = 2, binding = 2) uniform sampler2D facePosX;
-layout(set = 2, binding = 3) uniform sampler2D faceNegX;
-layout(set = 2, binding = 4) uniform sampler2D facePosY;
-layout(set = 2, binding = 5) uniform sampler2D faceNegY;
-layout(set = 2, binding = 6) uniform sampler2D facePosZ;
-layout(set = 2, binding = 7) uniform sampler2D faceNegZ;
+layout(set = 2, binding = 0) uniform IndexUBO {
+    int index;
+} indexUbo;
+
+#define N_LIGHT_COLORS 4
+layout(set = 2, binding = 1) uniform sampler2D normalMaps[2];
+layout(set = 2, binding = 2) uniform sampler2D facePosX[N_LIGHT_COLORS];
+layout(set = 2, binding = 3) uniform sampler2D faceNegX[N_LIGHT_COLORS];
+layout(set = 2, binding = 4) uniform sampler2D facePosY[N_LIGHT_COLORS];
+layout(set = 2, binding = 5) uniform sampler2D faceNegY[N_LIGHT_COLORS];
+layout(set = 2, binding = 6) uniform sampler2D facePosZ[N_LIGHT_COLORS];
+layout(set = 2, binding = 7) uniform sampler2D faceNegZ[N_LIGHT_COLORS];
 
 /**
  Function to sample a cube map from 6 faces based on direction vector
@@ -72,33 +76,33 @@ vec4 sampleCubeFrom6Faces(vec3 dir) {
         if (dir.x > 0.0) {
             // +X
             uv = vec2(dir.z, -dir.y) / ma;
-            return texture(facePosX, uv * 0.5 + 0.5);
+            return texture(facePosX[indexUbo.index], uv * 0.5 + 0.5);
         } else {
             // -X
             uv = vec2(-dir.z, -dir.y) / ma;
-            return texture(faceNegX, uv * 0.5 + 0.5);
+            return texture(faceNegX[indexUbo.index], uv * 0.5 + 0.5);
         }
     } else if (absDir.y >= absDir.x && absDir.y >= absDir.z) {
         ma = absDir.y;
         if (dir.y > 0.0) {
             // +Y
             uv = vec2(dir.x, -dir.z) / ma;
-            return texture(facePosY, uv * 0.5 + 0.5);
+            return texture(facePosY[indexUbo.index], uv * 0.5 + 0.5);
         } else {
             // -Y
             uv = vec2(dir.x, dir.z) / ma;
-            return texture(faceNegY, uv * 0.5 + 0.5);
+            return texture(faceNegY[indexUbo.index], uv * 0.5 + 0.5);
         }
     } else {
         ma = absDir.z;
         if (dir.z > 0.0) {
             // +Z
             uv = vec2(-dir.x, -dir.y) / ma;
-            return texture(facePosZ, uv * 0.5 + 0.5);
+            return texture(facePosZ[indexUbo.index], uv * 0.5 + 0.5);
         } else {
             // -Z
             uv = vec2(dir.x, -dir.y) / ma;
-            return texture(faceNegZ, uv * 0.5 + 0.5);
+            return texture(faceNegZ[indexUbo.index], uv * 0.5 + 0.5);
         }
     }
 }
@@ -113,14 +117,14 @@ vec4 sampleCubeFrom6Faces(vec3 dir) {
 vec3 sampleCubeInterpolated(vec3 dir) {
     vec3 dir2 = dir * dir;
 
-    vec3 cxp = texture(facePosX, vec2(dir.z, -dir.y) / abs(dir.x) * 0.5 + 0.5).rgb;
-    vec3 cxn = texture(faceNegX, vec2(-dir.z, -dir.y) / abs(dir.x) * 0.5 + 0.5).rgb;
+    vec3 cxp = texture(facePosX[indexUbo.index], vec2(dir.z, -dir.y) / abs(dir.x) * 0.5 + 0.5).rgb;
+    vec3 cxn = texture(faceNegX[indexUbo.index], vec2(-dir.z, -dir.y) / abs(dir.x) * 0.5 + 0.5).rgb;
 
-    vec3 cyp = texture(facePosY, vec2(dir.x, -dir.z) / abs(dir.y) * 0.5 + 0.5).rgb;
-    vec3 cyn = texture(faceNegY, vec2(dir.x, dir.z) / abs(dir.y) * 0.5 + 0.5).rgb;
+    vec3 cyp = texture(facePosY[indexUbo.index], vec2(dir.x, -dir.z) / abs(dir.y) * 0.5 + 0.5).rgb;
+    vec3 cyn = texture(faceNegY[indexUbo.index], vec2(dir.x, dir.z) / abs(dir.y) * 0.5 + 0.5).rgb;
 
-    vec3 czp = texture(facePosZ, vec2(-dir.x, -dir.y) / abs(dir.z) * 0.5 + 0.5).rgb;
-    vec3 czn = texture(faceNegZ, vec2(dir.x, -dir.y) / abs(dir.z) * 0.5 + 0.5).rgb;
+    vec3 czp = texture(facePosZ[indexUbo.index], vec2(-dir.x, -dir.y) / abs(dir.z) * 0.5 + 0.5).rgb;
+    vec3 czn = texture(faceNegZ[indexUbo.index], vec2(dir.x, -dir.y) / abs(dir.z) * 0.5 + 0.5).rgb;
 
     return ((dir.x > 0.0 ? cxp : cxn) * dir2.x +
     (dir.y > 0.0 ? cyp : cyn) * dir2.y +
@@ -151,8 +155,8 @@ vec2 rotateUV(vec2 uv, float angle) {
     float sinA = sin(angle);
     vec2 centeredUV = uv - 0.5;
     vec2 rotatedUV = vec2(
-        cosA * centeredUV.x - sinA * centeredUV.y,
-        sinA * centeredUV.x + cosA * centeredUV.y
+    cosA * centeredUV.x - sinA * centeredUV.y,
+    sinA * centeredUV.x + cosA * centeredUV.y
     );
     return rotatedUV + 0.5;
 }
@@ -161,12 +165,13 @@ vec2 rotateUV(vec2 uv, float angle) {
 const vec3 mainDiffColor = vec3(0.0, 0.4, 0.7);
 
 void main() {
-
+    if(indexUbo.index < 0 || indexUbo.index >= N_LIGHT_COLORS)
+        discard;  // Invalid index, skip rendering
 
     // ---- Sample 2 normal maps and blend them ----
 
-    vec3 n1 = texture(normalMap1, rotateUV(fragUV1, radians(-20.0))).rgb * 2.0 - 1.0;  // [0,1] -> [-1,1]
-    vec3 n2 = texture(normalMap2, fragUV2).rgb * 2.0 - 1.0;  // [0,1] -> [-1,1]
+    vec3 n1 = texture(normalMaps[0], rotateUV(fragUV1, radians(-20.0))).rgb * 2.0 - 1.0;  // [0,1] -> [-1,1]
+    vec3 n2 = texture(normalMaps[1], fragUV2).rgb * 2.0 - 1.0;  // [0,1] -> [-1,1]
 
     // Blend the two normal maps
     // blendFactor is in [0,1], where 0 gives n1 and 1 gives n2
@@ -184,14 +189,14 @@ void main() {
     vec3 reflectDir = reflect(-viewDir, N);
 
     vec3 reflectionColor = sampleCubeInterpolated(reflectDir).rgb;
-//    vec3 reflectionColor = sampleCubeFrom6Faces(reflectDir).rgb;
+    //    vec3 reflectionColor = sampleCubeFrom6Faces(reflectDir).rgb;
 
 
     // ---- Coefficients for mixing effects ----
 
     // Fresnel effect for water-like surface
-        // Controls how much reflection vs diffuse color is used
-        // For grazing angles, more reflection is used
+    // Controls how much reflection vs diffuse color is used
+    // For grazing angles, more reflection is used
     // Adjust F0 to control the strength of the Fresnel effect (0.04 is typical for water)
     float F0 = 0.05; // Increase to make reflections stronger
     float cosTheta = clamp(dot(viewDir, N), 0.0, 1.0);
@@ -215,4 +220,5 @@ void main() {
     vec3 finalColor = mix(mainDiffColor * diffuse + specular, reflectionColor, fresnel);
     float alpha = mix(0.4, 0.8, fresnel); // more transparent at grazing angles
     outColor = vec4(finalColor, alpha);
+//    outColor = vec4(texture(faceNegZ[indexUbo.index], fragUV1).rgb, 1.0); // For testing, replace with finalColor later)
 }

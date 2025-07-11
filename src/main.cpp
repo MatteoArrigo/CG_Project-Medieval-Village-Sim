@@ -90,11 +90,16 @@ struct ShadowClipUBO {
 
 struct GeomSkyboxUBO {
 	alignas(16) glm::mat4 mvpMat;
+    alignas(4) int skyboxTextureIdx;
     alignas(16) glm::vec4 debug;
 };
 
 struct TimeUBO {
     alignas(4) float time; // scalar
+};
+
+struct IndexUBO {
+    alignas(4) int idx;
 };
 
 struct PbrFactorsUBO {
@@ -118,7 +123,7 @@ class CGProject : public BaseProject {
     // DSL general
     DescriptorSetLayout DSLlightModel, DSLgeomShadow, DSLgeomShadowTime, DSLgeomShadow4Char;
     // DSL for specific pipelines
-	DescriptorSetLayout DSLpbr, DSLpbrShadow, DSLskybox, DSLterrain,  DSLwater, DSLgrass, DSLchar;
+	DescriptorSetLayout DSLpbr, DSLpbrShadow, DSLskybox, DSLterrain, DSLwater, DSLgrass, DSLchar;
     // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
 
@@ -151,7 +156,7 @@ class CGProject : public BaseProject {
 	glm::vec3 cameraPos;
 
     // Camera rotation controls
-	float Yaw = glm::radians(0.0f);
+	float Yaw = glm::radians(180.0f);
 	float Pitch = glm::radians(0.0f);
 	float Roll = glm::radians(0.0f);
     float relDir = glm::radians(0.0f);
@@ -175,8 +180,20 @@ class CGProject : public BaseProject {
     const float MAX_CAM_DIST = 7.5;
     const float MIN_CAM_DIST = 1.5;
 
-
-    const glm::vec4 lightColor = glm::vec4(1.0f, 0.7f, 0.7f, 1.0f);
+    //TODO: produci le reflection cubemap associate alle skyboxes
+    const std::vector<glm::vec4> lightColors{
+        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),      // full day
+        glm::vec4(1.0f, 0.3f, 0.3f, 1.0f),      // sunset
+        glm::vec4(0.2f, 0.2f, 0.4f, 1.0f),      // night with light     // TODO: trova una skybox con la luna ben visibile
+        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),      // night, full dark
+    };
+    const int nLightColors = static_cast<int>(lightColors.size());
+    /**
+     * Index of the current light color in scene wrt the array lightColors
+     * NOTE: Also rendered skybox should be changed accordingly, and for this
+     *   lightColors.size() textures for skybox instance are expected in the json file
+     */
+    int lightColorIdx = 0;
     /**
      * Matrix defining the light rotation to apply to +z axis to get the light direction.
      * It is used
@@ -287,21 +304,20 @@ class CGProject : public BaseProject {
         });
 		DSLskybox.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomSkyboxUBO), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, nLightColors}
 		});
         DSLchar.init(this, {
             {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
         DSLwater.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
-			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
-			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4,1},
-			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5,1},
-			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6,1},
-			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7,1}
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO), 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,2},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,                 nLightColors},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+1*nLightColors,  nLightColors},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+2*nLightColors,  nLightColors},
+			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+3*nLightColors,  nLightColors},
+			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+4*nLightColors,  nLightColors},
+			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+5*nLightColors,  nLightColors}
 		});
         DSLgrass.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -423,6 +439,21 @@ class CGProject : public BaseProject {
 		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
 
         // --------- TECHNIQUES INITIALIZATION ---------
+        std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
+        skyboxTexs.reserve(nLightColors);
+        for (int i = 0; i < nLightColors; ++i)
+            skyboxTexs.push_back({true, i, VkDescriptorImageInfo{}});
+        std::vector<TextureDefs> waterTexs;        // automatic fill-up of textures for water
+        waterTexs.reserve(nLightColors*6+2);
+        waterTexs.push_back({true, 0, VkDescriptorImageInfo{}});
+        waterTexs.push_back({true, 1, VkDescriptorImageInfo{}});
+        std::cout << "DEBUG\n";
+        for(int j = 0; j < 6; ++j)
+            for(int i = 0; i < nLightColors; ++i) {
+                std::cout << 2 + 6 * i + j << "\n";
+                waterTexs.push_back({true, 2 + 6 * i + j, VkDescriptorImageInfo{}});
+            }
+
         PRs.resize(8);
 		PRs[0].init("CharCookTorrance", {
             {&PshadowMapChar, {{
@@ -448,17 +479,15 @@ class CGProject : public BaseProject {
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}}     // ambient occlusion
-                    }
-                }}
+                }
+            }}
         }, 4, &VDchar);
         PRs[2].init("SkyBox", {
             {&PshadowMapSky, {} },
             {&Pskybox, {
-                {
-                    {true,  0, {}}
-                }
+                     skyboxTexs
             }}
-        }, 1, &VDpos);
+        }, static_cast<int>(skyboxTexs.size()), &VDpos);
         PRs[3].init("Terrain", {
             {&PshadowMap, {{
                 {true, 1, {} },     // Shadow map UBO
@@ -477,8 +506,7 @@ class CGProject : public BaseProject {
                     {true,  7, {} },
                     {true,  8, {} },
                     {false,  9, RPshadow.attachments[0].getViewAndSampler() }
-                },
-                {}
+                }
             }}
         }, 9, &VDtan);
         PRs[4].init("Water", {
@@ -486,18 +514,11 @@ class CGProject : public BaseProject {
             {&Pwater, {
                 {},
                 {},
-                {
-                    {true, 0, {} },
-                    {true, 1, {} },     // 6 textures for cubemap faces
-                    {true, 2, {} },     // Order is: +x, -x, +y, -y, +z, -z
-                    {true, 3, {} },
-                    {true, 4, {} },
-                    {true, 5, {} },
-                    {true, 6, {} },
-                    {true, 7, {} }
-                }
+                waterTexs
+                /* water textures, with expected order: 2 normal maps, 6 reflection maps for each lightColor, in order +x, -x, +y, -y, +z, -z
+                 * */
             }}
-        }, 8, &VDnormUV);
+        }, static_cast<int>(waterTexs.size()), &VDnormUV);
         PRs[5].init("Grass", {
             {&PshadowMap, {{
                 {true, 0, {} },     // Shadow map UBO
@@ -523,7 +544,7 @@ class CGProject : public BaseProject {
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}},     // ambient occlusion
-                        {false,  -1, RPshadow.attachments[0].getViewAndSampler() }
+                    {false,  4, RPshadow.attachments[0].getViewAndSampler() }
                 }
             }}
         }, 4, &VDtan);
@@ -614,9 +635,7 @@ class CGProject : public BaseProject {
         std::cout << "\t12: Creating PshadowMapWater\n";
         PshadowMapWater.create(&RPshadow);
 
-
         std::cout << "Creating descriptor sets\n";
-
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
 
@@ -646,6 +665,7 @@ class CGProject : public BaseProject {
 	void localCleanup() {
 		DSLgeomShadow4Char.cleanup();
 		DSLpbr.cleanup();
+        DSLchar.cleanup();
         DSLpbrShadow.cleanup();
 		DSLskybox.cleanup();
         DSLgeomShadowTime.cleanup();
@@ -706,6 +726,9 @@ class CGProject : public BaseProject {
 
         // Handle of command keys
         {
+            handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
+                lightColorIdx = (lightColorIdx + 1) % nLightColors;
+            });
             handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
                 debugLightView.x = 1.0 - debugLightView.x;
             });
@@ -750,7 +773,7 @@ class CGProject : public BaseProject {
         int techniqueId = 1;  // First 2 techniques are for characters, so start from 1 (so that after ++ is 2)
 		LightModelUBO lightUbo{
             .lightDir = lightDir,
-            .lightColor = lightColor,
+            .lightColor = lightColors[lightColorIdx],
             .eyePos = cameraPos
         //TODO: aggiungi point lights!
         };
@@ -770,8 +793,10 @@ class CGProject : public BaseProject {
                 .debug1 = debug1
         };
         GeomSkyboxUBO geomSkyboxUbo{
-            .debug = debugLightView
+            .skyboxTextureIdx = lightColorIdx,
+            .debug = debugLightView,
         };
+        IndexUBO indexUbo{lightColorIdx};
         TerrainFactorsUBO terrainFactorsUbo{};
         PbrFactorsUBO pbrUbo{};
 		glm::mat4 AdaptMat =
@@ -867,6 +892,7 @@ class CGProject : public BaseProject {
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &geomUbo, 0);
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &timeUbo, 2);
+        SC.TI[techniqueId].I[0].DS[1][2]->map(currentImage, &indexUbo, 0);
 
         // TECHNIQUE Vegetation/Grass
         techniqueId++;

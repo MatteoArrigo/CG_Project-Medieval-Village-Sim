@@ -416,12 +416,15 @@
 	"textures": [
 		{"id": "pnois", "texture": "assets/textures/Perlin_noise.png", "format": "C"},
 		{"id": "main", "texture": "assets/textures/textures0.png", "format": "C"},
-		{"id": "skybox", "texture": "assets/textures/skybox.jpg", "format": "C"},
 		{"id": "void", "texture": "assets/textures/void.png", "format": "C"},
 		{"id": "white", "texture": "assets/textures/white.png", "format": "C"},
 		{"id": "transparent", "texture": "assets/textures/transparent.png", "format": "C"},
 
-        {"id": "player_d",    "texture": "assets/textures/player/Paladin_diffuse.png", "format": "C"},
+		{"id": "day", "texture": "assets/textures/skybox/day.jpg", "format": "C"},
+		{"id": "sunset", "texture": "assets/textures/skybox/sunset.jpg", "format": "C"},
+		{"id": "night", "texture": "assets/textures/skybox/night.png", "format": "C"},
+
+		{"id": "player_d",    "texture": "assets/textures/player/Paladin_diffuse.png", "format": "C"},
 		{"id": "player_n",    "texture": "assets/textures/player/Paladin_normal.png", "format": "D"},
 		{"id": "player_s",    "texture": "assets/textures/player/Paladin_specular.png", "format": "D"},
         {"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png", "format": "C"},
@@ -592,7 +595,11 @@
 			}
 		]},
 		{"technique": "SkyBox", "elements": [
-			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
+			{"id": "sunset",  "model": "skybox",   "texture": [
+				"day",
+				"sunset",
+				"night", "night"
+			]}
 		]},
 		{"technique": "Terrain", "elements": [
 			{"id": "Baseplate-00.00", "model": "Baseplate-00", "texture": [
@@ -655,12 +662,12 @@
 		]},
 	    {"technique":  "Water", "elements":  [
 			{"id": "water_grid", "model": "water_grid", "texture": [
-			    "water_n1", "water_n2",
-			    "water_+x", "water_-x",
-			    "water_+y", "water_-y",
-			    "water_+z", "water_-z" ],
-              "physics": false
-            }
+				"water_n1", "water_n2",
+				"void", "void", "void", "void", "void", "void",
+				"water_+x", "water_-x", "water_+y", "water_-y", "water_+z", "water_-z",
+				"void", "void", "void", "void", "void", "void",
+				"void", "void", "void", "void", "void", "void"
+			]}
 	    ]},
         {"technique": "Grass", "elements":  [
 
