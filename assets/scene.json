@@ -5,7 +5,6 @@
 		{"id": "a2", "file": "assets/models/Characters/Uomo/idle.gltf", "format":"GLTF"},
 		{"id": "a3", "file": "assets/models/Characters/Uomo/pointing.gltf", "format":"GLTF"},
 		{"id": "a4", "file": "assets/models/Characters/Uomo/waving.gltf", "format":"GLTF"},
-
 		{"id": "player", "file": "assets/models/Characters/Player/Player.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
@@ -19,6 +18,15 @@
 		{"id":  "vegetation", "file":  "assets/models/Vegetation.gltf", "format": "GLTF"}
 	],
 	"characters": [
+		{
+			"id": "player",
+			"name": "Player",
+			"instanceIds": ["player"],
+			"animList": ["player"],
+			"startEndFrames": [[0,32]],
+			"charStates": ["Walking"],
+			"BaseTrackName": "Armature|mixamo.com|Layer0"
+		},
 		{
 			"id": "char1",
 			"name": "Mario",
@@ -35,15 +43,6 @@
 			"animList": ["a1", "a2"],
 			"startEndFrames": [[0,16], [0,263]],
 			"charStates": ["Running", "Idle"],
-			"BaseTrackName": "Armature|mixamo.com|Layer0"
-		},
-		{
-			"id": "player",
-			"name": "Player",
-			"instanceIds": ["player"],
-			"animList": ["player"],
-			"startEndFrames": [[0,32]],
-			"charStates": ["Walking"],
 			"BaseTrackName": "Armature|mixamo.com|Layer0"
 		}
 	],
@@ -586,9 +585,7 @@
 			{
 				"id": "player",
 				"model": "player",
-				"texture": ["player_d", "player_n", "player_s", "void"],
-				"translate": [15.0, 15.0, 15.0],
-				"scale": [10.0, 10.0, 10.0]
+				"texture": ["player_d", "player_n", "player_s", "white"]
 			}
 		]},
 		{"technique": "SkyBox", "elements": [

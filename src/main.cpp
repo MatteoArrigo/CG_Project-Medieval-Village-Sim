@@ -20,7 +20,7 @@
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
-const bool FLY_MODE = true;
+const bool FLY_MODE = false;
 const std::string SCENE_FILEPATH = "assets/scene.json";
 
 struct VertexChar {
@@ -212,8 +212,10 @@ class CGProject : public BaseProject {
 
 	glm::vec4 debug1 = glm::vec4(0);
 
-	// To manage NPSs
-	CharManager charManager;
+	// Everything related to characters inside the scene
+	CharManager charManager;	// Character manager for animations
+	std::shared_ptr<Character> playerCharacter;
+	glm::vec3 playerScale = glm::vec3(1.33f);;
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -561,6 +563,10 @@ class CGProject : public BaseProject {
 			std::cout << "ERROR LOADING CHARACTERs\n";
 			exit(0);
 		}
+
+		// Initializes the player Character reference
+		// NOTE: the first character in scene.json is supposed to be the player character
+		playerCharacter = charManager.getCharacters()[0];
 
 		// initializes the textual output
 		txt.init(this, windowWidth, windowHeight);
@@ -990,7 +996,7 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		PhysicsMgr.update(deltaT);
 
 		// Get current player position from physics body
-		glm::vec3 Pos = PhysicsMgr.getPlayerPosition();
+		glm::vec3 playerPos = PhysicsMgr.getPlayerPosition();
 
 		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
 
@@ -1028,7 +1034,7 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		dampedRelDir = ef * dampedRelDir + (1.0f - ef) * relDir;
 
 		// Final world matrix computation using physics position
-		World = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
+		World = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
 
 		// Projection
 		glm::mat4 Prj = glm::perspective(FOVy, Ar, worldNearPlane, worldFarPlane);
@@ -1036,10 +1042,10 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 
 		// View
 		// Target position based on physics body position
-		glm::vec3 target = Pos + glm::vec3(0.0f, camHeight, 0.0f);
+		glm::vec3 target = playerPos + glm::vec3(0.0f, camHeight, 0.0f);
 
 		// Camera position, depending on Yaw parameter
-		glm::mat4 camWorld = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
+		glm::mat4 camWorld = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
 		cameraPos = camWorld * glm::vec4(0.0f, camHeight + camDist * sin(Pitch), camDist * cos(Pitch), 1.0);
 
 		// Damping of camera
@@ -1048,6 +1054,13 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		glm::mat4 View = glm::lookAt(dampedCamPos, target, glm::vec3(0,1,0));
 
 		ViewPrj = Prj * View;
+
+		// Move the player character asset in the correct position and direction
+		for (Instance* I : playerCharacter->getInstances()) {
+			I->Wm = glm::translate(glm::mat4(1.0f), playerPos) *
+					glm::rotate(glm::mat4(1.0f), Yaw + glm::radians(180.0f), glm::vec3(0,1,0)) *
+					glm::scale(glm::mat4(1.0f), playerScale);
+		}
 
 		return deltaT;
 	}
