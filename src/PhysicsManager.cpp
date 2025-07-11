@@ -284,12 +284,54 @@ btTransform glmMat4ToBtTransform(const glm::mat4& mat) {
     return transform;
 }
 
+btCollisionShape * PhysicsManager::getShapeFromModel(const Model* modelRef) {
+    const Model &model = *modelRef;
+    const std::vector<unsigned char> &vertices = model.vertices;
+    const std::vector<uint32_t> &indices = model.indices;
+    const VertexDescriptor *VD = model.VD;
+
+    const uint32_t stride = VD->Bindings[0].stride;
+    const uint32_t posOffset = VD->Position.offset;
+    std::vector<float> Xs, Ys, Zs;
+
+    for (size_t i = 0; i + 3 < indices.size(); i += 4) {
+        for (int j = 0; j < 4; ++j) {
+            const uint32_t idx = indices[i + j];
+            const size_t base = idx * stride + posOffset;
+
+            float x = *reinterpret_cast<const float*>(&vertices[base]);
+            float y = *reinterpret_cast<const float*>(&vertices[base + 4]);
+            float z = *reinterpret_cast<const float*>(&vertices[base + 8]);
+
+            Xs.push_back(x);
+            Ys.push_back(y);
+            Zs.push_back(z);
+        }
+    }
+
+    if (Xs.size() >= 9) {
+        // At least 3 triangles (9 vertices)
+        btTriangleMesh* mesh = new btTriangleMesh();
+
+        // Each 3 vertices form a triangle
+        for (size_t i = 0; i + 2 < Xs.size(); i += 3) {
+            btVector3 v0(Xs[i], Ys[i], Zs[i]);
+            btVector3 v1(Xs[i + 1], Ys[i + 1], Zs[i + 1]);
+            btVector3 v2(Xs[i + 2], Ys[i + 2], Zs[i + 2]);
+            mesh->addTriangle(v0, v1, v2);
+        }
+
+        return new btBvhTriangleMeshShape(mesh, true);
+    };
+
+    return nullptr; // No valid shape created
+}
+
 //TODO: discuti
 // Se si usano tutte le mesh per le collision, compaiono oggetti invisibili sulle boardwalk...
 // Secondo me sono mesh per cui non viene calcolato bene il posizionamento
 // Per ora ho risolto usando solo gli edifici e il boardwalk per le collision
 // Il problema specifico delle boardwalk sembra essere dato dalle fence
-
 void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount) {
     for (int instanceIdx=0; instanceIdx<instanceCount; instanceIdx++) {
 
@@ -307,52 +349,15 @@ void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs,
         const Instance* instanceRef = instanceRefs[instanceIdx];
         const Model* modelRef = modelRefs[modelIdx];
 
-        const Model &model = *modelRef;
-        const std::vector<unsigned char> &vertices = model.vertices;
-        const std::vector<uint32_t> &indices = model.indices;
-        const VertexDescriptor *VD = model.VD;
+        auto obj = std::make_unique<PhysicsObject>();
 
-        uint32_t stride = VD->Bindings[0].stride;
-        uint32_t posOffset = VD->Position.offset;
-        std::vector<float> Xs, Ys, Zs;
-
-        for (size_t i = 0; i + 3 < indices.size(); i += 4) {
-            for (int j = 0; j < 4; ++j) {
-                uint32_t idx = indices[i + j];
-                size_t base = idx * stride + posOffset;
-
-                float x = *reinterpret_cast<const float*>(&vertices[base]);
-                float y = *reinterpret_cast<const float*>(&vertices[base + 4]);
-                float z = *reinterpret_cast<const float*>(&vertices[base + 8]);
-
-                Xs.push_back(x);
-                Ys.push_back(y);
-                Zs.push_back(z);
-            }
-        }
-
-        if (Xs.size() >= 9) { // At least 3 triangles (9 vertices)
-            btTriangleMesh* mesh = new btTriangleMesh();
-
-            // Each 3 vertices form a triangle
-            for (size_t i = 0; i + 2 < Xs.size(); i += 3) {
-                btVector3 v0(Xs[i], Ys[i], Zs[i]);
-                btVector3 v1(Xs[i + 1], Ys[i + 1], Zs[i + 1]);
-                btVector3 v2(Xs[i + 2], Ys[i + 2], Zs[i + 2]);
-                mesh->addTriangle(v0, v1, v2);
-            }
-
-            auto obj = std::make_unique<PhysicsObject>();
-            obj->shape = new btBvhTriangleMeshShape(mesh, true);
-
-            btTransform transform = glmMat4ToBtTransform(instanceRef->Wm);
-
-            obj->motionState = new btDefaultMotionState(transform);
-            btRigidBody::btRigidBodyConstructionInfo info(0.0f, obj->motionState, obj->shape);
-            obj->body = new btRigidBody(info);
-            dynamicsWorld->addRigidBody(obj->body);
-            staticObjects.push_back(std::move(obj));
-        }
+        obj->shape = getShapeFromModel(modelRef);
+        btTransform transform = glmMat4ToBtTransform(instanceRef->Wm);
+        obj->motionState = new btDefaultMotionState(transform);
+        btRigidBody::btRigidBodyConstructionInfo info(0.0f, obj->motionState, obj->shape);
+        obj->body = new btRigidBody(info);
+        dynamicsWorld->addRigidBody(obj->body);
+        staticObjects.push_back(std::move(obj));
     }
 }
 
