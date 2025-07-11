@@ -581,7 +581,18 @@ class CGProject : public BaseProject {
 			exit(0);
 		}
 
-		// Add static meshes for collision detection
+		// Add player character to the PhysicsManager
+		/*
+		 * TODO: PhysicsMgr.addPlayerFromModel() creates a player object based on a model reference. The problem is that, at the current state of
+		 * this project, getShapeFromModel() is not able to correctly extract a collision shape from the player model we are using.
+		 * That method should be re-implemented to better support different model types.
+		 */
+		// int playerModelIdx = playerCharacter->getInstances()[0]->Mid; // assuming the player has only one instance
+		// const Model * playerModel = SC.M[playerModelIdx];
+		// PhysicsMgr.addPlayerFromModel(playerModel);
+		PhysicsMgr.addCapsulePlayer();
+
+		// Add static meshes to the PhysicsManager for collision detection
 		PhysicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
 	}
 	

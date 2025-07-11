@@ -38,7 +38,6 @@ bool PhysicsManager::initialize(bool flyMode_, const PlayerConfig& playerCfg, co
     try {
         initializePhysicsWorld();
         createTerrain();
-        createPlayer();
 
         std::cout << "PhysicsManager initialized successfully" << std::endl;
         return true;
@@ -94,7 +93,11 @@ void PhysicsManager::createTerrain() {
     dynamicsWorld->addRigidBody(terrain->body);
 }
 
-void PhysicsManager::createPlayer() {
+/*
+ * This function creates a dummy player object with a capsule shape inside the physics world.
+ * The shape is not based on any character model. Will be used configuration settings from `playerConfig`.
+ */
+void PhysicsManager::addCapsulePlayer() {
     player = std::make_unique<PhysicsObject>();
 
     // Create capsule shape
@@ -117,11 +120,45 @@ void PhysicsManager::createPlayer() {
     player->body->setActivationState(DISABLE_DEACTIVATION);
 
     // Set some physics properties
-    player->body->setFriction(0.5f);
-    player->body->setRollingFriction(0.1f);
+    player->body->setFriction(playerConfig.friction);
+    player->body->setRollingFriction(playerConfig.rollingFriction);
 
     dynamicsWorld->addRigidBody(player->body);
 }
+
+void PhysicsManager::addPlayerFromModel(const Model* modelRef) {
+    player = std::make_unique<PhysicsObject>();
+
+    // Create shape from model
+    player->shape = getShapeFromModel(modelRef);
+    if (!player->shape) {
+        std::cerr << "Failed to create collision shape from model." << std::endl;
+        return;
+    }
+
+    btTransform startTransform;
+    startTransform.setIdentity();
+    startTransform.setOrigin(glmToBt(playerConfig.startPosition));
+
+    player->motionState = new btDefaultMotionState(startTransform);
+    player->initialPosition = playerConfig.startPosition;
+
+    btVector3 inertia(0, 0, 0);
+    player->shape->calculateLocalInertia(playerConfig.mass, inertia);
+
+    btRigidBody::btRigidBodyConstructionInfo playerInfo(playerConfig.mass, player->motionState, player->shape, inertia);
+    player->body = new btRigidBody(playerInfo);
+
+    // Prevent deactivation
+    player->body->setActivationState(DISABLE_DEACTIVATION);
+
+    // Set some physics properties
+    player->body->setFriction(playerConfig.friction);
+    player->body->setRollingFriction(playerConfig.rollingFriction);
+
+    dynamicsWorld->addRigidBody(player->body);
+}
+
 
 void PhysicsManager::update(float deltaTime) {
     if (!dynamicsWorld) return;
@@ -356,6 +393,10 @@ void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs,
         obj->motionState = new btDefaultMotionState(transform);
         btRigidBody::btRigidBodyConstructionInfo info(0.0f, obj->motionState, obj->shape);
         obj->body = new btRigidBody(info);
+
+        obj->body->setFriction(0.5f);
+        obj->body->setRollingFriction(0.1f);
+
         dynamicsWorld->addRigidBody(obj->body);
         staticObjects.push_back(std::move(obj));
     }
