@@ -16,7 +16,7 @@
  *   - fragNormalWorld, fragTangentWorld, fragBitangentWorld: TBN basis vectors in world space.
  *
  * Uniforms:
- *   - GlobalUniformBufferObject (gubo): Contains light direction, color, and camera position.
+ *   - LightModelUBO (lightUbo): Contains light direction, color, and camera position.
  *   - normalMap1, normalMap2: 2D normal maps for surface detail.
  *   - facePosX, faceNegX, facePosY, faceNegY, facePosZ, faceNegZ: 2D textures representing cubemap faces.
  *
@@ -36,20 +36,24 @@ layout(location = 5) in vec3 fragBitangentWorld;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 0, set = 1) uniform GlobalUniformBufferObject {
+#define MAX_POINT_LIGHTS 10
+layout(set = 0, binding = 0) uniform LightModelUBO {
     vec3 lightDir;
     vec4 lightColor;
     vec3 eyePos;
-} gubo;
 
-layout(binding = 1, set = 1) uniform sampler2D normalMap1;
-layout(binding = 2, set = 1) uniform sampler2D normalMap2;
-layout(binding = 3, set = 1) uniform sampler2D facePosX;
-layout(binding = 4, set = 1) uniform sampler2D faceNegX;
-layout(binding = 5, set = 1) uniform sampler2D facePosY;
-layout(binding = 6, set = 1) uniform sampler2D faceNegY;
-layout(binding = 7, set = 1) uniform sampler2D facePosZ;
-layout(binding = 8, set = 1) uniform sampler2D faceNegZ;
+    vec3 pointLightPositions[MAX_POINT_LIGHTS];
+    vec4 pointLightColors[MAX_POINT_LIGHTS];
+} lightUbo;
+
+layout(set = 2, binding = 0) uniform sampler2D normalMap1;
+layout(set = 2, binding = 1) uniform sampler2D normalMap2;
+layout(set = 2, binding = 2) uniform sampler2D facePosX;
+layout(set = 2, binding = 3) uniform sampler2D faceNegX;
+layout(set = 2, binding = 4) uniform sampler2D facePosY;
+layout(set = 2, binding = 5) uniform sampler2D faceNegY;
+layout(set = 2, binding = 6) uniform sampler2D facePosZ;
+layout(set = 2, binding = 7) uniform sampler2D faceNegZ;
 
 /**
  Function to sample a cube map from 6 faces based on direction vector
@@ -98,6 +102,31 @@ vec4 sampleCubeFrom6Faces(vec3 dir) {
         }
     }
 }
+
+/**
+ Function to sample a cube map from 6 faces based on direction vector
+ The direction vector should be normalized and in world space
+ The function returns the weighted sum of the color sampled from the 3 faces in the direction of dir
+ The cube map faces are expected to be bound to the corresponding texture units
+ facePosX, faceNegX, facePosY, faceNegY, facePosZ, faceNegZ
+*/
+vec3 sampleCubeInterpolated(vec3 dir) {
+    vec3 dir2 = dir * dir;
+
+    vec3 cxp = texture(facePosX, vec2(dir.z, -dir.y) / abs(dir.x) * 0.5 + 0.5).rgb;
+    vec3 cxn = texture(faceNegX, vec2(-dir.z, -dir.y) / abs(dir.x) * 0.5 + 0.5).rgb;
+
+    vec3 cyp = texture(facePosY, vec2(dir.x, -dir.z) / abs(dir.y) * 0.5 + 0.5).rgb;
+    vec3 cyn = texture(faceNegY, vec2(dir.x, dir.z) / abs(dir.y) * 0.5 + 0.5).rgb;
+
+    vec3 czp = texture(facePosZ, vec2(-dir.x, -dir.y) / abs(dir.z) * 0.5 + 0.5).rgb;
+    vec3 czn = texture(faceNegZ, vec2(dir.x, -dir.y) / abs(dir.z) * 0.5 + 0.5).rgb;
+
+    return ((dir.x > 0.0 ? cxp : cxn) * dir2.x +
+    (dir.y > 0.0 ? cyp : cyn) * dir2.y +
+    (dir.z > 0.0 ? czp : czn) * dir2.z);
+}
+
 
 /**
  * Computes the Fresnel-Schlick approximation for reflectance.
@@ -151,10 +180,11 @@ void main() {
 
     // ----- Compute reflection through cubemap sampling -----
 
-    vec3 viewDir = normalize(gubo.eyePos - fragPosWorld);
+    vec3 viewDir = normalize(lightUbo.eyePos - fragPosWorld);
     vec3 reflectDir = reflect(-viewDir, N);
 
-    vec3 reflectionColor = sampleCubeFrom6Faces(reflectDir).rgb;
+    vec3 reflectionColor = sampleCubeInterpolated(reflectDir).rgb;
+//    vec3 reflectionColor = sampleCubeFrom6Faces(reflectDir).rgb;
 
 
     // ---- Coefficients for mixing effects ----
@@ -168,21 +198,21 @@ void main() {
     float fresnel = fresnelSchlick(cosTheta, F0);
 
     // Lambertian diffuse lighting --> Controls how much light is scattered in all directions
-    float diffuse = max(dot(N, normalize(gubo.lightDir)), 0.0);
+    float diffuse = max(dot(N, normalize(lightUbo.lightDir)), 0.0);
 
 
     // ---- Specular reflection with Blinn-Phong model, for sunlight ----
 
-    vec3 halfwayDir = normalize(viewDir + normalize(gubo.lightDir));
+    vec3 halfwayDir = normalize(viewDir + normalize(lightUbo.lightDir));
     // Adjust the exponent to control the shininess of the surface (how large is the specular highlight)
     float spec = pow(max(dot(N, halfwayDir), 0.0), 200.0);
     // Adjust the intensity of the specular highlight
-    vec3 specular = gubo.lightColor.rgb * spec * fresnel * 4;
+    vec3 specular = lightUbo.lightColor.rgb * spec * fresnel * 20;
 
 
     // ---- Final color computation ----
 
     vec3 finalColor = mix(mainDiffColor * diffuse + specular, reflectionColor, fresnel);
-    float alpha = mix(0.2, 0.9, fresnel); // more transparent at grazing angles
+    float alpha = mix(0.4, 0.8, fresnel); // more transparent at grazing angles
     outColor = vec4(finalColor, alpha);
 }

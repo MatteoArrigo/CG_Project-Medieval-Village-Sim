@@ -50,9 +50,9 @@
 	"models": [
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
 		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
-		{"id": "player",  "VD": "VDcharTan",  "model": "Paladin_J_Nordstrom", "node": "Paladin_J_Nordstrom", "meshId": 0, "asset": "player", "format":"ASSET"},
-		{"id": "skybox", "VD": "VDskybox", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
-		{"id": "water_grid", "VD": "VDsimp", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
+		{"id": "player",  "VD": "VDchar",  "model": "Paladin_J_Nordstrom", "node": "Paladin_J_Nordstrom", "meshId": 0, "asset": "player", "format":"ASSET"},
+		{"id": "skybox", "VD": "VDpos", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
+		{"id": "water_grid", "VD": "VDnormUV", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
 
 		{"id": "terrain_far_01-00", "VD": "VDtan", "model": "terrain_far_01.001", "node": "terrain_far_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
 		{"id": "terrain_near_01-00", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
@@ -414,18 +414,17 @@
 		{"id": "Meadow_Grass_01_Var1_LOD2-00", "VD": "VDtan", "model": "Meadow_Grass_01_Var1_LOD2", "node": "Meadow_Grass_01_Var1_LOD2", "meshId": 0, "asset": "vegetation", "format": "ASSET"}
 	],
 	"textures": [
-		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png", "format": "C"},
-
-		{"id": "player_d",    "texture": "assets/textures/player/Paladin_diffuse.png", "format": "C"},
-		{"id": "player_n",    "texture": "assets/textures/player/Paladin_normal.png", "format": "D"},
-		{"id": "player_s",    "texture": "assets/textures/player/Paladin_specular.png", "format": "D"},
-
 		{"id": "pnois", "texture": "assets/textures/Perlin_noise.png", "format": "C"},
 		{"id": "main", "texture": "assets/textures/textures0.png", "format": "C"},
 		{"id": "skybox", "texture": "assets/textures/skybox.jpg", "format": "C"},
 		{"id": "void", "texture": "assets/textures/void.png", "format": "C"},
 		{"id": "white", "texture": "assets/textures/white.png", "format": "C"},
 		{"id": "transparent", "texture": "assets/textures/transparent.png", "format": "C"},
+
+        {"id": "player_d",    "texture": "assets/textures/player/Paladin_diffuse.png", "format": "C"},
+		{"id": "player_n",    "texture": "assets/textures/player/Paladin_normal.png", "format": "D"},
+		{"id": "player_s",    "texture": "assets/textures/player/Paladin_specular.png", "format": "D"},
+        {"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png", "format": "C"},
 
 		{"id": "terrain_01_m", "texture": "assets/textures/terrain/terrain_01_m.png", "format": "D"},
 		{"id": "terrain_01_n", "texture": "assets/textures/terrain/terrain_01_n.png", "format": "D"},
@@ -567,13 +566,14 @@
         {"id": "Plant_Perennials_a_qhthU2_Albedo_Opacity", "texture": "assets/textures/vegetation/Plant_Perennials_a_qhthU2_Albedo_Opacity.png", "format": "D"},
         {"id": "Plant_Perennials_a_qhthU2_Normal", "texture": "assets/textures/vegetation/Plant_Perennials_a_qhthU2_Normal.png", "format": "D"}
     ],
+	"instances_no_visible": [],
 	"instances": [
-		{"technique": "CookTorranceChar", "elements": [
+		{"technique": "CharCookTorrance", "elements": [
 			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
-				"translate": [10, 20, 10]
+				"translate": [40, 6.5, 6]
 			},
 			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
-				"translate": [10, 20, 10]
+				"translate": [40, 6.5, 6]
 			},
 			{"id": "hm2",  "model": "hm0",   "texture": ["st"],
 				"translate": [20, 20, 20]
@@ -582,7 +582,14 @@
 				"translate": [20, 20, 20]
 			}
 		]},
-		{"technique": "CookTorranceNoiseSimp", "elements": [
+		{"technique": "CharPBR", "elements":  [
+			{
+				"id": "player",
+				"model": "player",
+				"texture": ["player_d", "player_n", "player_s", "void"],
+				"translate": [15.0, 15.0, 15.0],
+				"scale": [10.0, 10.0, 10.0]
+			}
 		]},
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
@@ -2048,7 +2055,8 @@
 				"eulerAngles": [-90.00000973316463, 12.340234624949357, 1.622292295266621e-07],
 				"scale": [2.210635185241699, 2.2106356620788574, 2.2106356620788574]}
 		]},
-		{"technique": "PBR_sg", "elements":  [
+
+		{"technique": "Buildings", "elements":  [
 			{"id": "build_boat_01-00.00", "model": "build_boat_01-00", "texture": ["build_boat_01_a", "build_boat_01_n", "build_boat_01_sg", "build_boat_01_o"],
 				"translate": [73.84013366699219, 2.2529194355010986, 33.53003692626953],
 				"eulerAngles": [-9.50358644374407e-09, -134.03944162851658, -0.625381446329164],
@@ -3230,7 +3238,6 @@
 				"physics": true
 			},
 
-
 			{"id": "prop_boardwalk_01-00.00", "model": "prop_boardwalk_01-00", "texture": ["prop_boardwalk_01_d", "prop_boardwalk_01_n", "prop_boardwalk_01_sg", "prop_boardwalk_01_o"],
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
 				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5},
@@ -3266,8 +3273,9 @@
 				"translate": [286.0799865722656, 0.0, -396.2300109863281],
 				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.5,
 				"physics": false
-			},
-
+			}
+		]},
+		{"technique": "Props", "elements":  [
 			{"id": "pf_bucket_01-00.00", "model": "pf_bucket_01-00", "texture": ["prop_bucket_01_a", "prop_bucket_01_n", "prop_bucket_01_sg", "prop_bucket_01_o"],
 				"translate": [-19.41000747680664, 5.410999774932861, -3.8410043716430664],
 				"eulerAngles": [-174.6775522409562, -14.304023828717229, -6.755495709636262],
@@ -7042,18 +7050,8 @@
 				"translate": [25.229076385498047, 5.213664531707764, 32.19197082519531],
 				"eulerAngles": [3.9376240076288345, 52.19641950249228, 12.265161812886484],
 				"diffuseFactor": [0.9911022, 0.9911022, 0.9911022], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0}
-		]},
-		{"technique": "PBR_sg_char", "elements":  [
-			{
-				"id": "player",
-				"model": "player",
-				"texture": ["player_d", "player_n", "player_s", "void"],
-				"translate": [15.0, 15.0, 15.0],
-				"scale": [10.0, 10.0, 10.0]
-			}
 		]}
-	],
+	]
 
-	"instances_no_visible": []
 }
 

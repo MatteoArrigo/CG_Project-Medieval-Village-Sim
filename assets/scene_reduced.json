@@ -1,0 +1,286 @@
+{
+	"assetfiles": [
+		{"id": "hm", "file": "assets/models/Characters/Uomo/uomo.gltf", "format":"GLTF"},
+		{"id": "a1", "file": "assets/models/Characters/Uomo/running.gltf", "format":"GLTF"},
+		{"id": "a2", "file": "assets/models/Characters/Uomo/idle.gltf", "format":"GLTF"},
+		{"id": "a3", "file": "assets/models/Characters/Uomo/pointing.gltf", "format":"GLTF"},
+		{"id": "a4", "file": "assets/models/Characters/Uomo/waving.gltf", "format":"GLTF"},
+
+		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
+		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
+		{"id":  "water", "file":  "assets/models/Water.gltf", "format":"GLTF"},
+
+		{"id":  "vegetation", "file":  "assets/models/Vegetation.gltf", "format": "GLTF"},
+		{"id": "village_props", "file": "assets/models/Props.gltf", "format":"GLTF"}
+	],
+	"characters": [
+		{
+			"id": "char1",
+			"name": "Mario",
+			"instanceIds": ["hm0", "hm1"],
+			"animList": ["hm", "a1", "a2", "a3", "a4"],
+			"startEndFrames": [[0,32], [0,16], [0,263], [0,83], [0,16]],
+			"charStates": ["Walking", "Running", "Idle", "Pointing", "Waving"],
+			"BaseTrackName": "Armature|mixamo.com|Layer0"
+		}
+	],
+	"models": [
+		{"id": "skybox", "VD": "VDpos", "model": "assets/models/SkyBoxCube.obj", "format":"OBJ"},
+		{"id": "water_grid", "VD": "VDnormUV", "model": "Grid.003", "node": "Grid", "meshId": 0, "asset": "water", "format": "ASSET"},
+
+		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
+		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
+
+		{"id": "terrain_far_01-00", "VD": "VDtan", "model": "terrain_far_01.001", "node": "terrain_far_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
+		{"id": "terrain_near_01-00", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
+		{"id": "terrain_near_01-01", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 1, "asset": "terrain", "format": "ASSET"},
+		{"id": "Baseplate-00", "VD": "VDtan", "model": "Baseplate.001", "node": "Baseplate.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
+
+		{"id": "build_bighouse_01-00", "VD": "VDtan", "model": "build_bighouse_01", "node": "build_bighouse_01", "meshId": 0, "asset": "village", "format": "ASSET"},
+		{"id": "build_bighouse_01-01", "VD": "VDtan", "model": "build_bighouse_01", "node": "build_bighouse_01", "meshId": 1, "asset": "village", "format": "ASSET"},
+		{"id": "build_bighouse_01-02", "VD": "VDtan", "model": "build_bighouse_01", "node": "build_bighouse_01", "meshId": 2, "asset": "village", "format": "ASSET"},
+		{"id": "pf_build_bighouse_02-00", "VD": "VDtan", "model": "pf_build_bighouse_02", "node": "pf_build_bighouse_02", "meshId": 0, "asset": "village", "format": "ASSET"},
+		{"id": "pf_build_bighouse_02-01", "VD": "VDtan", "model": "pf_build_bighouse_02", "node": "pf_build_bighouse_02", "meshId": 1, "asset": "village", "format": "ASSET"},
+		{"id": "pf_build_bighouse_02-02", "VD": "VDtan", "model": "pf_build_bighouse_02", "node": "pf_build_bighouse_02", "meshId": 2, "asset": "village", "format": "ASSET"},
+
+
+		{"id": "Fern_Var3_LOD0-00", "VD": "VDtan", "model": "Fern_Var3_LOD0", "node": "Fern_Var3_LOD0", "meshId": 0, "asset": "vegetation", "format": "ASSET"},
+		{"id": "Fern_Var3_LOD1-00", "VD": "VDtan", "model": "Fern_Var3_LOD1", "node": "Fern_Var3_LOD1", "meshId": 0, "asset": "vegetation", "format": "ASSET"},
+		{"id": "Fern_Var3_LOD2-00", "VD": "VDtan", "model": "Fern_Var3_LOD2", "node": "Fern_Var3_LOD2", "meshId": 0, "asset": "vegetation", "format": "ASSET"},
+		{"id": "pf_boulder_01-00", "VD": "VDtan", "model": "pf_boulder_01", "node": "pf_boulder_01", "meshId": 0, "asset": "village_props", "format": "ASSET"}
+	],
+	"textures": [
+		{"id": "white", "texture": "assets/textures/white.png", "format": "C"},
+		{"id": "pnois", "texture": "assets/textures/Perlin_noise.png", "format": "C"},
+		{"id": "main", "texture": "assets/textures/textures0.png", "format": "C"},
+		{"id": "skybox", "texture": "assets/textures/skybox.jpg", "format": "C"},
+		{"id": "void", "texture": "assets/textures/void.png", "format": "C"},
+		{"id": "transparent", "texture": "assets/textures/transparent.png", "format": "C"},
+		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png", "format": "C"},
+
+		{"id": "terrain_01_m", "texture": "assets/textures/terrain/terrain_01_m.png", "format": "D"},
+		{"id": "terrain_01_n", "texture": "assets/textures/terrain/terrain_01_n.png", "format": "D"},
+		{"id": "terrain_01_o", "texture": "assets/textures/terrain/terrain_01_o.png", "format": "D"},
+		{"id": "terrain_01_o_highpassed", "texture": "assets/textures/terrain/terrain_01_o_highpassed.png", "format": "D"},
+		{"id": "terrain_far_01_a2", "texture": "assets/textures/terrain/terrain_far_01_a2.png", "format": "D"},
+		{"id": "terrain_far_01_sg", "texture": "assets/textures/terrain/terrain_far_01_sg.png", "format": "D"},
+		{"id": "terrain_grass_01_a", "texture": "assets/textures/terrain/terrain_grass_01_a.png", "format": "C"},
+		{"id": "terrain_grass_01_n", "texture": "assets/textures/terrain/terrain_grass_01_n.png", "format": "D"},
+		{"id": "terrain_grass_01_sg", "texture": "assets/textures/terrain/terrain_grass_01_sg.png", "format": "D"},
+		{"id": "terrain_mudslide_01_a", "texture": "assets/textures/terrain/terrain_mudslide_01_a.png", "format": "C"},
+		{"id": "terrain_mudslide_01_n", "texture": "assets/textures/terrain/terrain_mudslide_01_n.png", "format": "D"},
+		{"id": "terrain_mudslide_01_sg", "texture": "assets/textures/terrain/terrain_mudslide_01_sg.png", "format": "D"},
+		{"id": "terrain_wetmud_01_a", "texture": "assets/textures/terrain/terrain_wetmud_01_a.png", "format": "C"},
+		{"id": "terrain_wetmud_01_n", "texture": "assets/textures/terrain/terrain_wetmud_01_n.png", "format": "D"},
+		{"id": "terrain_wetmud_01_sg", "texture": "assets/textures/terrain/terrain_wetmud_01_sg.png", "format": "D"},
+
+		{"id": "build_building_01_a", "texture": "assets/textures/all_buildings/build_building_01_a.png", "format": "C"},
+		{"id": "build_building_01_n", "texture": "assets/textures/all_buildings/build_building_01_n.png", "format": "D"},
+		{"id": "build_building_01_o", "texture": "assets/textures/all_buildings/build_building_01_o.png", "format": "D"},
+		{"id": "build_building_01_sg", "texture": "assets/textures/all_buildings/build_building_01_sg.png", "format": "D"},
+		{"id": "build_building_02_a", "texture": "assets/textures/all_buildings/build_building_02_a.png", "format": "C"},
+		{"id": "build_building_02_n", "texture": "assets/textures/all_buildings/build_building_02_n.png", "format": "D"},
+		{"id": "build_building_02_o", "texture": "assets/textures/all_buildings/build_building_02_o.png", "format": "D"},
+		{"id": "build_building_02_sg", "texture": "assets/textures/all_buildings/build_building_02_sg.png", "format": "D"},
+		{"id": "wood_tiled_02_a", "texture": "assets/textures/wood_tiled_02_a.png", "format": "C"},
+		{"id": "wood_tiled_02_n", "texture": "assets/textures/wood_tiled_02_n.png", "format": "D"},
+		{"id": "wood_tiled_02_o", "texture": "assets/textures/wood_tiled_02_o.png", "format": "D"},
+
+		{"id": "water_a1", "texture": "assets/textures/water/water_a1.jpg", "format": "C"},
+		{"id": "water_a2", "texture": "assets/textures/water/water_a2.jpg", "format": "C"},
+		{"id": "water_n1", "texture": "assets/textures/water/water_n1.jpg", "format": "D"},
+		{"id": "water_n2", "texture": "assets/textures/water/water_n2.jpg", "format": "D"},
+		{"id": "water_+x", "texture": "assets/textures/water/water_reflection_posx.png", "format": "C"},
+		{"id": "water_-x", "texture": "assets/textures/water/water_reflection_negx.png", "format": "C"},
+		{"id": "water_+y", "texture": "assets/textures/water/water_reflection_posy.png", "format": "C"},
+		{"id": "water_-y", "texture": "assets/textures/water/water_reflection_negy.png", "format": "C"},
+		{"id": "water_+z", "texture": "assets/textures/water/water_reflection_posz.png", "format": "C"},
+		{"id": "water_-z", "texture": "assets/textures/water/water_reflection_negz.png", "format": "C"},
+
+		{"id": "Ferns_Albedo_Opacity", "texture": "assets/textures/vegetation/Ferns_Albedo_Opacity.png", "format": "D"},
+		{"id": "Ferns_Normal", "texture": "assets/textures/vegetation/Ferns_Normal.png", "format": "D"}
+	],
+	"instances": [
+		{"technique": "CharCookTorrance", "elements": [
+			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
+				"translate": [40, 6.5, 6],
+				"scale": [5,5,5]
+			},
+			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
+				"translate": [40, 6.5, 6],
+				"scale": [5,5,5]
+			},
+			{"id": "hm2",  "model": "hm0",   "texture": ["st"],
+				"translate": [20, 20, 20]
+			},
+			{"id": "hm3",  "model": "hm1",   "texture": ["st"],
+				"translate": [20, 20, 20]
+			}
+		]},
+		{"technique": "CharPBR", "elements":  [
+		]},
+		{"technique": "SkyBox", "elements": [
+			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}
+		]},
+
+		{"technique": "Terrain", "elements": [
+			{"id": "Baseplate-00.00", "model": "Baseplate-00", "texture": [
+				"void", "void", "void", "void",
+				"terrain_wetmud_01_a", "terrain_wetmud_01_n", "terrain_wetmud_01_sg", "white", "white"
+			], "translate": [0.0, -1.7000000476837158, 100.0],
+				"scale": [100.0, 1.0, 100.0],
+				"maskBlendFactor": 1, "tilingFactor": 30,
+				"physics": true
+			},
+			{"id": "terrain_near_01-00.00", "model": "terrain_near_01-00", "texture": [
+				"terrain_01_m",
+				"terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg",
+				"terrain_grass_01_a", "terrain_grass_01_n", "terrain_grass_01_sg",
+				"terrain_01_o", "terrain_01_o_highpassed"
+			], "translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] ,
+				"maskBlendFactor": 0.5, "tilingFactor": 8,
+				"physics": true
+			},
+			{"id": "terrain_near_01-01.00", "model": "terrain_near_01-01", "texture": [
+				"terrain_01_m",
+				"terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg",
+				"terrain_grass_01_a", "terrain_grass_01_n", "terrain_grass_01_sg",
+				"terrain_01_o", "terrain_01_o_highpassed"
+			], "translate": [286.080810546875, -0.0002593994140625, -396.2229919433594] ,
+				"maskBlendFactor": 0.5, "tilingFactor": 8,
+				"physics": true
+			},
+			{"id": "terrain_far_01-00.02", "model": "terrain_far_01-00", "texture": [
+				"terrain_01_m",
+				"terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg",
+				"void", "void", "void",
+				"terrain_01_o", "terrain_01_o_highpassed"
+			], "translate": [286.080810546875, -0.0002593994140625, -396.2229919433594],
+				"maskBlendFactor": 0, "tilingFactor": 0,
+				"physics": true
+			},
+			{"id": "terrain_far_01-00.00", "model": "terrain_far_01-00", "texture": [
+				"terrain_01_m",
+				"terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg",
+				"terrain_mudslide_01_a", "terrain_mudslide_01_n", "terrain_mudslide_01_sg",
+				"terrain_01_o", "terrain_01_o_highpassed"
+			], "translate": [596.986572265625, -14.051000595092773, 405.6328430175781],
+				"eulerAngles": [-0.03782941734244376, -82.43292172314469, 0.28614077587168324],
+				"scale": [0.9200002551078796, 0.9199999570846558, 0.9200003147125244],
+				"maskBlendFactor": 0.3, "tilingFactor": 8,
+				"physics": true
+			},
+			{"id": "terrain_far_01-00.01", "model": "terrain_far_01-00", "texture": [
+				"terrain_01_m",
+				"terrain_far_01_a2", "terrain_01_n", "terrain_far_01_sg",
+				"terrain_mudslide_01_a", "terrain_mudslide_01_n", "terrain_mudslide_01_sg",
+				"terrain_01_o", "terrain_01_o_highpassed"
+			], "translate": [-473.42919921875, -5.35099983215332, 83.63700866699219],
+				"eulerAngles": [-0.0038745600549622023, 113.54241236271713, -0.3107792368361189],
+				"scale": [0.6941959857940674, 0.500005841255188, 0.6941999793052673],
+				"maskBlendFactor": 0.3, "tilingFactor": 8,
+				"physics": true
+			}
+		]},
+	    {"technique":  "Water", "elements":  [
+			{"id": "water_grid", "model": "water_grid", "texture": [
+				"water_n1", "water_n2",
+				"water_+x", "water_-x",
+				"water_+y", "water_-y",
+				"water_+z", "water_-z" ]}
+	    ]},
+        {"technique": "Grass", "elements": [
+			{"id": "Fern_Var3_LOD2-00.04", "model": "Fern_Var3_LOD2-00", "texture": ["Ferns_Albedo_Opacity", "Ferns_Normal"],
+				"translate": [34.49399948120117, 8.366000175476074, -17.476999282836914],
+				"eulerAngles": [-90.73553762853662, 1.503198035018398, -3.497096081133639],
+				"scale": [20, 20, 20]}
+
+		]},
+
+		{"technique": "Buildings", "elements": [
+
+			{"id": "build_bighouse_01-00.00", "model": "build_bighouse_01-00", "texture": ["build_building_01_a", "build_building_01_n", "build_building_01_sg", "build_building_01_o"],
+				"translate": [-6.95001220703125, 4.925300121307373, -4.930023193359375],
+				"eulerAngles": [0.0, 5.158029865055985, 0.0],
+				"diffuseFactor": [0.725425839, 0.725425839, 0.725425839], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.10000000149011612},
+			{"id": "build_bighouse_01-01.00", "model": "build_bighouse_01-01", "texture": ["build_building_02_a", "build_building_02_n", "build_building_02_sg", "build_building_02_o"],
+				"translate": [-6.95001220703125, 4.925300121307373, -4.930023193359375],
+				"eulerAngles": [0.0, 5.158029865055985, 0.0],
+				"diffuseFactor": [0.707756639, 0.707756639, 0.707756639], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.05000000074505806},
+			{"id": "build_bighouse_01-02.00", "model": "build_bighouse_01-02", "texture": ["wood_tiled_02_a", "wood_tiled_02_n", "void", "wood_tiled_02_o"],
+				"translate": [-6.95001220703125, 4.925300121307373, -4.930023193359375],
+				"eulerAngles": [0.0, 5.158029865055985, 0.0],
+				"diffuseFactor": [0.743349731, 0.743349731, 0.743349731], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.05400000140070915, "aoFactor": 0.30000001192092896},
+			{"id": "pf_build_bighouse_02-00.00", "model": "pf_build_bighouse_02-00", "texture": ["build_building_02_a", "build_building_02_n", "build_building_02_sg", "build_building_02_o"],
+				"translate": [-18.395782470703125, 2.7540504932403564, 20.25602149963379],
+				"eulerAngles": [0.28480283829805403, 101.84957250463658, -0.2538725313238497],
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.15000000596046448},
+			{"id": "pf_build_bighouse_02-01.00", "model": "pf_build_bighouse_02-01", "texture": ["build_building_01_a", "build_building_01_n", "build_building_01_sg", "build_building_01_o"],
+				"translate": [-18.395782470703125, 2.7540504932403564, 20.25602149963379],
+				"eulerAngles": [0.28480283829805403, 101.84957250463658, -0.2538725313238497],
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.30000001192092896},
+			{"id": "pf_build_bighouse_02-02.00", "model": "pf_build_bighouse_02-02", "texture": ["wood_tiled_02_a", "wood_tiled_02_n", "void", "wood_tiled_02_o"],
+				"translate": [-18.395782470703125, 2.7540504932403564, 20.25602149963379],
+				"eulerAngles": [0.28480283829805403, 101.84957250463658, -0.2538725313238497],
+				"diffuseFactor": [0.743349731, 0.743349731, 0.743349731], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.05400000140070915, "aoFactor": 0.30000001192092896},
+
+			{"id": "build_bighouse_01-00.00", "model": "build_bighouse_01-00", "texture": ["build_building_01_a", "build_building_01_n", "build_building_01_sg", "build_building_01_o"],
+				"translate": [-52.079681396484375, 7.2565507888793945, -6.890015125274658],
+				"eulerAngles": [0.0, -158.21036540875284, 0.0],
+				"diffuseFactor": [0.725425839, 0.725425839, 0.725425839], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.10000000149011612},
+			{"id": "build_bighouse_01-01.00", "model": "build_bighouse_01-01", "texture": ["build_building_02_a", "build_building_02_n", "build_building_02_sg", "build_building_02_o"],
+				"translate": [-52.079681396484375, 7.2565507888793945, -6.890015125274658],
+				"eulerAngles": [0.0, -158.21036540875284, 0.0],
+				"diffuseFactor": [0.707756639, 0.707756639, 0.707756639], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.05000000074505806},
+			{"id": "build_bighouse_01-02.00", "model": "build_bighouse_01-02", "texture": ["wood_tiled_02_a", "wood_tiled_02_n", "void", "wood_tiled_02_o"],
+				"translate": [-52.079681396484375, 7.2565507888793945, -6.890015125274658],
+				"eulerAngles": [0.0, -158.21036540875284, 0.0],
+				"diffuseFactor": [0.743349731, 0.743349731, 0.743349731], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.05400000140070915, "aoFactor": 0.30000001192092896},
+			{"id": "build_bighouse_01-00.00", "model": "build_bighouse_01-00", "texture": ["build_building_01_a", "build_building_01_n", "build_building_01_sg", "build_building_01_o"],
+				"translate": [42.459991455078125, 5.5879998207092285, 2.229980945587158],
+				"eulerAngles": [0.0, -21.054924385348528, 0.0],
+				"diffuseFactor": [0.725425839, 0.725425839, 0.725425839], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.10000000149011612},
+			{"id": "build_bighouse_01-01.00", "model": "build_bighouse_01-01", "texture": ["build_building_02_a", "build_building_02_n", "build_building_02_sg", "build_building_02_o"],
+				"translate": [42.459991455078125, 5.5879998207092285, 2.229980945587158],
+				"eulerAngles": [0.0, -21.054924385348528, 0.0],
+				"diffuseFactor": [0.707756639, 0.707756639, 0.707756639], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.05000000074505806},
+			{"id": "build_bighouse_01-02.00", "model": "build_bighouse_01-02", "texture": ["wood_tiled_02_a", "wood_tiled_02_n", "void", "wood_tiled_02_o"],
+				"translate": [42.459991455078125, 5.5879998207092285, 2.229980945587158],
+				"eulerAngles": [0.0, -21.054924385348528, 0.0],
+				"diffuseFactor": [0.743349731, 0.743349731, 0.743349731], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.05400000140070915, "aoFactor": 0.30000001192092896},
+			{"id": "pf_build_bighouse_02-00.00", "model": "pf_build_bighouse_02-00", "texture": ["build_building_02_a", "build_building_02_n", "build_building_02_sg", "build_building_02_o"],
+				"translate": [11.989999771118164, 4.510000228881836, 2.25],
+				"eulerAngles": [0.16400306559259611, 79.02100668605028, -0.34399868640413017],
+				"diffuseFactor": [0.707756639, 0.707756639, 0.707756639], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.05000000074505806},
+			{"id": "pf_build_bighouse_02-01.00", "model": "pf_build_bighouse_02-01", "texture": ["build_building_01_a", "build_building_01_n", "build_building_01_sg", "build_building_01_o"],
+				"translate": [11.989999771118164, 4.510000228881836, 2.25],
+				"eulerAngles": [0.16400306559259611, 79.02100668605028, -0.34399868640413017],
+				"diffuseFactor": [0.725425839, 0.725425839, 0.725425839], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.10000000149011612},
+			{"id": "pf_build_bighouse_02-02.00", "model": "pf_build_bighouse_02-02", "texture": ["wood_tiled_02_a", "wood_tiled_02_n", "void", "wood_tiled_02_o"],
+				"translate": [11.989999771118164, 4.510000228881836, 2.25],
+				"eulerAngles": [0.16400306559259611, 79.02100668605028, -0.34399868640413017],
+				"diffuseFactor": [0.743349731, 0.743349731, 0.743349731], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.05400000140070915, "aoFactor": 0.30000001192092896},
+			{"id": "pf_build_bighouse_02-00.00", "model": "pf_build_bighouse_02-00", "texture": ["build_building_02_a", "build_building_02_n", "build_building_02_sg", "build_building_02_o"],
+				"translate": [-44.733680725097656, 5.592260360717773, 15.191020965576172],
+				"eulerAngles": [1.912460542799584, 124.84694558778355, 0.03178229628629763],
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.15000000596046448},
+			{"id": "pf_build_bighouse_02-01.00", "model": "pf_build_bighouse_02-01", "texture": ["build_building_01_a", "build_building_01_n", "build_building_01_sg", "build_building_01_o"],
+				"translate": [-44.733680725097656, 5.592260360717773, 15.191020965576172],
+				"eulerAngles": [1.912460542799584, 124.84694558778355, 0.03178229628629763],
+				"diffuseFactor": [0.673177958, 0.673177958, 0.673177958], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 0.30000001192092896},
+			{"id": "pf_build_bighouse_02-02.00", "model": "pf_build_bighouse_02-02", "texture": ["wood_tiled_02_a", "wood_tiled_02_n", "void", "wood_tiled_02_o"],
+				"translate": [-44.733680725097656, 5.592260360717773, 15.191020965576172],
+				"eulerAngles": [1.912460542799584, 124.84694558778355, 0.03178229628629763],
+				"diffuseFactor": [0.743349731, 0.743349731, 0.743349731], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.05400000140070915, "aoFactor": 0.30000001192092896}
+
+		]},
+
+		{"technique": "Props", "elements": [
+			{"id": "pf_boulder_01-00.00", "model": "pf_boulder_01-00", "texture": ["white", "void", "void", "void"],
+				"translate": [40, 6.0, 5],
+				"eulerAngles": [-5.212581126204228, -136.45907810400575, -3.2761096167843298],
+				"diffuseFactor": [0.432035774, 0.432035774, 0.432035774], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.1340000033378601}
+		]}
+	]
+}
+

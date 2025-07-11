@@ -15,7 +15,7 @@
  * Uniforms:
  *   - albedoMap: Albedo (diffuse) texture.
  *   - normalMap: Normal map for detail lighting.
- *   - gubo: Global uniform buffer object containing light direction, color, and eye position.
+ *   - lightUbo: Global uniform buffer object containing light direction, color, and eye position.
  *
  * Outputs:
  *   - outColor: Final fragment color.
@@ -34,14 +34,18 @@ layout(location = 4) in vec3 fragBitangent;
 
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 2, set = 1) uniform sampler2D albedoMap;
-layout(binding = 3, set = 1) uniform sampler2D normalMap;
+layout(set = 2, binding = 0) uniform sampler2D albedoMap;
+layout(set = 2, binding = 1) uniform sampler2D normalMap;
 
-layout(binding = 0, set = 0) uniform GlobalUniformBufferObject {
+#define MAX_POINT_LIGHTS 10
+layout(set = 0, binding = 0) uniform LightModelUBO {
     vec3 lightDir;
     vec4 lightColor;
     vec3 eyePos;
-} gubo;
+
+    vec3 pointLightPositions[MAX_POINT_LIGHTS];
+    vec4 pointLightColors[MAX_POINT_LIGHTS];
+} lightUbo;
 
 vec3 getNormalFromMap() {
     vec3 tangentNormal = texture(normalMap, fragUV).rgb * 2.0 - 1.0;
@@ -57,8 +61,8 @@ vec3 getNormalFromMap() {
 void main() {
     vec4 albedo = texture(albedoMap, fragUV);
     vec3 normal = getNormalFromMap();
-    vec3 viewDir = normalize(gubo.eyePos - fragPosWorld);
-    vec3 lightDir = normalize(gubo.lightDir);
+    vec3 viewDir = normalize(lightUbo.eyePos - fragPosWorld);
+    vec3 lightDir = normalize(lightUbo.lightDir);
 
     // Alpha test for MASK mode
     if (albedo.a < 0.5)
@@ -71,9 +75,9 @@ void main() {
     // Blinn-Phong specular
     vec3 halfway = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfway), 0.0), 32.0); // hardcoded shininess
-    vec3 specular = gubo.lightColor.rgb * spec * 0.2;
+    vec3 specular = lightUbo.lightColor.rgb * spec * 0.2;
 
-    vec3 finalColor = (diffuse + specular) * gubo.lightColor.rgb;
+    vec3 finalColor = (diffuse + specular) * lightUbo.lightColor.rgb;
 
     outColor = vec4(finalColor, 1.0);
 }
