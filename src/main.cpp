@@ -15,16 +15,16 @@
 // Nei fragment shader come PBR si potrebbe usare per parte ambient
 // Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
 
-//TODO: Fai debug mode per l'illuminazione con le torce
-//TODO: Fai pipeline apposita per torch, così da aggiungere emitting term per loro
-//TODO: Per ora point lights illuminano solo terreno e buildings, pensa se aggiungerle a altre pipeline
+//TODO: Gestisci emitting term su pipeline delle torch pin
 //TODO: effetto bloom, così che le torce illuminano anche la parte vicino a loro!
+// TODO: se non cambi TorchPinShader.vert, puoi in realtà riusare quello di Props o buildings!
+//TODO: Per ora point lights illuminano solo terreno e buildings, pensa se aggiungerle a altre pipeline (tipo props)
 
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = true;
-const std::string SCENE_FILEPATH = "assets/scene.json";
+const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -137,8 +137,10 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDpos;
 	VertexDescriptor VDtan;
 	RenderPass RPshadow, RP;
-	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings;
+	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings, Ptorches;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
+
+    Texture Tvoid;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Scene SC;
@@ -226,7 +228,8 @@ class CGProject : public BaseProject {
      */
     glm::mat4 lightVP;
     /** Debug vector present in DSL for shadow map. Basic version is vec4(0,0,0,0)
-     * if debugLightView.x == 1.0, the terrain renders only white if lit and black if in shadow
+     * if debugLightView.x == 1.0, the terrain and buildings render only white if lit and black if in shadow
+     * if debugLightView.x == 2.0, the terrain and buildings show only the point lights illumination
      * if debugLightView.y == 1.0, the light's clip space is visualized instead of the basic perspective view
      */
     glm::vec4 debugLightView = glm::vec4(0.0);
@@ -264,6 +267,7 @@ class CGProject : public BaseProject {
 	}
 
 	void localInit() {
+        Tvoid.init(this, "assets/textures/void.png", VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
         // ------ LIGHT PROJECTINO MAT COMPUTATION ------
         /* Light projection matrix is computed using an orthographic projection
@@ -395,7 +399,6 @@ class CGProject : public BaseProject {
 		VDRs[2].init("VDpos",   &VDpos);
 		VDRs[3].init("VDtan",   &VDtan);
 
-
         // --------- RENDER PASSES INITIALIZATION ---------
         /* RP 1: used for shadow map, rendered from light point of view
          * The options set, different by default ones, are for writing a depth buffer instead of color
@@ -441,6 +444,7 @@ class CGProject : public BaseProject {
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
 		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
 		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
+		Ptorches.init(this, &VDtan, "shaders/TorchPinShader.vert.spv", "shaders/TorchPinShader.frag.spv", {&DSLlightModel, &DSLgeomShadow});
 
         // --------- TECHNIQUES INITIALIZATION ---------
         std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
@@ -455,7 +459,7 @@ class CGProject : public BaseProject {
             for(int i = 0; i < nLightColors; ++i)
                 waterTexs.push_back({true, 2 + 6 * i + j, VkDescriptorImageInfo{}});
 
-        PRs.resize(8);
+        PRs.resize(9);
 		PRs[0].init("CharCookTorrance", {
             {&PshadowMapChar, {{
                 {true, 0, {} },     // Shadow map UBO
@@ -564,6 +568,15 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 4, &VDtan);
+        PRs[8].init("Torches", {
+            {&PshadowMap, {{
+                {false, 0, Tvoid.getViewAndSampler() },     // Shadow map UBO
+            }} },
+            {&Ptorches, {
+                {},
+                {}
+            }}
+        }, 0, &VDtan);
 
 
         // --------- SCENE INITIALIZATION ---------
@@ -625,15 +638,17 @@ class CGProject : public BaseProject {
         Pterrain.create(&RP);
         std::cout << "\t7: Creating Pprops\n";
         Pprops.create(&RP);
-        std::cout << "\t8: Creating Pbuildings\n";
+        std::cout << "\t8: Creating Ptorches\n";
+        Ptorches.create(&RP);
+        std::cout << "\t9: Creating Pbuildings\n";
         Pbuildings.create(&RP);
-        std::cout << "\t9: Creating PshadowMap\n";
+        std::cout << "\t10: Creating PshadowMap\n";
         PshadowMap.create(&RPshadow);
-        std::cout << "\t10: Creating PshadowMapChar\n";
+        std::cout << "\t11: Creating PshadowMapChar\n";
         PshadowMapChar.create(&RPshadow);
-        std::cout << "\t11: Creating PshadowMapSky\n";
+        std::cout << "\t12: Creating PshadowMapSky\n";
         PshadowMapSky.create(&RPshadow);
-        std::cout << "\t12: Creating PshadowMapWater\n";
+        std::cout << "\t13: Creating PshadowMapWater\n";
         PshadowMapWater.create(&RPshadow);
 
         std::cout << "Creating descriptor sets\n";
@@ -651,6 +666,7 @@ class CGProject : public BaseProject {
         Pgrass.cleanup();
 		Pterrain.cleanup();
         Pprops.cleanup();
+        Ptorches.cleanup();
         Pbuildings.cleanup();
         PshadowMap.cleanup();
         PshadowMapChar.cleanup();
@@ -684,6 +700,7 @@ class CGProject : public BaseProject {
         Pwater.destroy();
         Pgrass.destroy();
         Pprops.destroy();
+        Ptorches.destroy();
         Pbuildings.destroy();
 		Pterrain.destroy();
         PshadowMap.destroy();
@@ -731,7 +748,7 @@ class CGProject : public BaseProject {
                 lightColorIdx = (lightColorIdx + 1) % nLightColors;
             });
             handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
-                debugLightView.x = 1.0 - debugLightView.x;
+                debugLightView.x = static_cast<int>(debugLightView.x + 1) % 3;
             });
             handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
                 debugLightView.y = 1.0 - debugLightView.y;
@@ -972,6 +989,22 @@ class CGProject : public BaseProject {
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
             SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &pbrUbo, 0);
+        }
+
+        // TECHNIQUE Torch Pin
+        techniqueId++;
+        if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
+        for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+            geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
+
+            shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
+
+            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
         }
 
 

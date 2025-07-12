@@ -174,10 +174,24 @@ float DistributionBlinnPhong(vec3 N, vec3 H, float glossiness) {
 }
 
 void main() {
-    if (debug.x == 1.0) {
+    if(debug.x == 1.0) {
         float shadow = ShadowCalculation(fragPosLightSpace);
         outColor = vec4(shadow, shadow, shadow, 1.0);
+    } else if(debug.x == 2.0) {
+        // Show only distance from one light
+        // White is point near to at least one point light, black otherwise
+        for (int i = 0; i < lightUbo.nPointLights; ++i) {
+            vec3 lightPos = lightUbo.pointLightPositions[i];
+            vec3 Lp = lightPos - fragPos;
+            float distance = length(Lp);
+            if( distance < 4.0) {
+                outColor = vec4(1.0, 1.0, 1.0, 1.0); // Close to a point light
+                return;
+            }
+        }
+        outColor = vec4(0.0, 0.0, 0.0, 1.0); // Far from all point lights
     } else {
+
         mat3 TBN = computeTBN();
         vec3 N = getNormalFromMap(TBN, mNormalMap, tNormalMap);
 
