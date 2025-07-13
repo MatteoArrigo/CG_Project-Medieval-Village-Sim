@@ -22,8 +22,25 @@ layout(set = 0, binding = 0) uniform LightModelUBO {
     int nPointLights;
 } lightUbo;
 
-void main() {
+layout(set = 1, binding = 2) uniform TimeUBO {
+    float time;
+} timeUbo;
 
-    outColor = vec4(1.0, 0.0, 0.0, 1.0);
+layout(set = 2, binding = 0) uniform sampler2D burningText;
+
+const float glowStrength = 35.0;
+void main() {
+    // Distortion effect based on time and UV coordinates, to simulate shimmering flames
+    vec2 offset = 0.005 * (1-fragUV.y) * vec2(sin(timeUbo.time*0.5 + fragUV.y*0.5), cos(timeUbo.time*1.0 + fragUV.x*1.0));
+    vec4 texColor = texture(burningText, fragUV + offset);
+
+    vec3 finalColor = texColor.rgb;
+
+    // Flickering effect based on time and position
+    float flicker = 0.8 + 0.4 * sin(timeUbo.time * 1.0 + fragPos.x * 0.3 - fragPos.y * 5.0);
+    vec3 emissive = texColor.rgb * texColor.a * flicker * glowStrength;
+    finalColor += emissive;
+
+    outColor = vec4(finalColor, 1.0);
 
 }

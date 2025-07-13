@@ -15,7 +15,6 @@
 // Nei fragment shader come PBR si potrebbe usare per parte ambient
 // Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
 
-//TODO: Gestisci emitting term su pipeline delle torch pin
 //TODO: effetto bloom, così che le torce illuminano anche la parte vicino a loro!
 // TODO: se non cambi TorchPinShader.vert, puoi in realtà riusare quello di Props o buildings!
 //TODO: Per ora point lights illuminano solo terreno e buildings, pensa se aggiungerle a altre pipeline (tipo props)
@@ -127,7 +126,8 @@ class CGProject : public BaseProject {
     // DSL general
     DescriptorSetLayout DSLlightModel, DSLgeomShadow, DSLgeomShadowTime, DSLgeomShadow4Char;
     // DSL for specific pipelines
-	DescriptorSetLayout DSLpbr, DSLpbrShadow, DSLskybox, DSLterrain, DSLwater, DSLgrass, DSLchar;
+	DescriptorSetLayout DSLpbr, DSLpbrShadow, DSLskybox, DSLterrain, DSLwater,
+                        DSLgrass, DSLchar, DSLtorches;
     // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
 
@@ -304,7 +304,7 @@ class CGProject : public BaseProject {
 		DSLgeomShadowTime.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomUBO),       1},
 			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
-			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO),       1},
+			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, sizeof(TimeUBO),       1},
 		});
 		DSLgeomShadow4Char.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomCharUBO),   1},
@@ -358,6 +358,9 @@ class CGProject : public BaseProject {
             {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
             {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
             {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
+        });
+		DSLtorches.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
         });
 
 
@@ -444,7 +447,7 @@ class CGProject : public BaseProject {
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
 		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
 		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
-		Ptorches.init(this, &VDtan, "shaders/TorchPinShader.vert.spv", "shaders/TorchPinShader.frag.spv", {&DSLlightModel, &DSLgeomShadow});
+		Ptorches.init(this, &VDtan, "shaders/TorchPinShader.vert.spv", "shaders/TorchPinShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLtorches});
 
         // --------- TECHNIQUES INITIALIZATION ---------
         std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
@@ -574,9 +577,12 @@ class CGProject : public BaseProject {
             }} },
             {&Ptorches, {
                 {},
-                {}
+                {},
+                {
+                        {true, 0, {}}
+                }
             }}
-        }, 0, &VDtan);
+        }, 1, &VDtan);
 
 
         // --------- SCENE INITIALIZATION ---------
@@ -714,6 +720,7 @@ class CGProject : public BaseProject {
 		SC.localCleanup();	
 		txt.localCleanup();
 
+        Tvoid.cleanup();
 		charManager.cleanup();
 	}
 
@@ -1005,6 +1012,7 @@ class CGProject : public BaseProject {
             SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &timeUbo, 2);
         }
 
 
