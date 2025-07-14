@@ -110,7 +110,9 @@
 		{"id": "prop_sword_shovel_halberd_01_o", "texture": "assets/textures/props/prop_sword_shovel_halberd_01_o.png", "format": "D"},
 		{"id": "prop_sword_shovel_halberd_01_sg", "texture": "assets/textures/props/prop_sword_shovel_halberd_01_sg.png", "format": "D"},
 
-		{"id": "torch_pin", "texture": "assets/textures/burning.png", "format": "C"}
+		{"id": "torch_pin", "texture": "assets/textures/burning.png", "format": "C"},
+		{"id": "prop_boulder_01_d", "texture": "assets/textures/props/prop_boulder_01_d.png", "format": "C"},
+		{"id": "prop_boulder_01_n", "texture": "assets/textures/props/prop_boulder_01_n.png", "format": "D"}
 	],
 	"instances_no_visible": [],
 	"placeholders": [
@@ -313,7 +315,7 @@
 
 		]},
 		{"technique": "Props", "elements": [
-			{"id": "pf_boulder_01-00.00", "model": "pf_boulder_01-00", "texture": ["white", "void", "void", "void"],
+			{"id": "pf_boulder_01-00.00", "model": "pf_boulder_01-00", "texture": ["prop_boulder_01_d", "prop_boulder_01_n", "void", "white"],
 				"translate": [40, 6.0, 5],
 				"eulerAngles": [-5.212581126204228, -136.45907810400575, -3.2761096167843298],
 				"diffuseFactor": [0.432035774, 0.432035774, 0.432035774], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.1340000033378601},

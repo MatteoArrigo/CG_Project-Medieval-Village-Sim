@@ -310,7 +310,7 @@ std::cout << "}\n";
                 else if( is[j].contains("tilingFactor") )
                     TI[k].I[j].factor2 = is[j]["tilingFactor"];
                 else
-                    TI[k].I[j].factor2 = 1.0f; // Default ambient occlusion factor
+                    TI[k].I[j].factor2 = 0.5f; // Default ambient occlusion factor --> half contribution of ambient occlusion
 
 				nlohmann::json TMjson = is[j]["transform"];
 				if(TMjson.is_null()) {

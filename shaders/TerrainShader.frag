@@ -238,7 +238,6 @@ void main() {
             vec3 radianceP = lightUbo.pointLightColors[i].rgb;
 
             float attenuation = 1.0 / (distance * distance);
-//            float attenuation = (distance < 4.0) ? 1.0 : 0.0; // Simple cutoff for point lights
             radianceP *= attenuation;
 
             float NdotLp = max(dot(N, Lp), 0.0);
