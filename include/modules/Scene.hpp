@@ -488,37 +488,37 @@ std::cout << " Physics-only instances created\n";
 
 
 void Scene::pipelinesAndDescriptorSetsInit() {
-//std::cout << "Scene DS init\n";
+std::cout << "Scene DS init\n";
 	for(int i = 0; i < InstanceCount; i++) {
-//std::cout << "I: " << i << ", NTx: " << I[i]->NTx << ", NDs: " << I[i]->NDs << ", nPasses: " << Npasses << "\n";
+std::cout << "I: " << i << ", NTx: " << I[i]->NTx << ", NDs: " << I[i]->NDs << ", nPasses: " << Npasses << "\n";
 
         I[i]->DS = (DescriptorSet ***)calloc(Npasses, sizeof(DescriptorSet **));
 		for(int ipas = 0; ipas < Npasses; ipas++) {
-//std::cout << "DSs for pass " << ipas << ": " << I[i]->NDs[ipas] << "\n";
+std::cout << "DSs for pass " << ipas << ": " << I[i]->NDs[ipas] << "\n";
 			I[i]->DS[ipas] = (DescriptorSet **)calloc(I[i]->NDs[ipas], sizeof(DescriptorSet *));
 			for(int j = 0; j < I[i]->NDs[ipas]; j++) {
 				std::vector<VkDescriptorImageInfo> Tids = {};
 				TechniqueRef *Tr = I[i]->TIp->T;
 				int ntxs = Tr->PT[ipas].texDefs[j].size();
 				Tids.resize(ntxs);
-//std::cout << "DSs " << j << " for pass " << ipas << " has " << ntxs << " textures\n";
+std::cout << "DSs " << j << " for pass " << ipas << " has " << ntxs << " textures\n";
 				for(int kt = 0; kt < ntxs; kt++) {
 					if(Tr->PT[ipas].texDefs[j][kt].fromInstance) {
 						Tids[kt] = T[I[i]->Tid[
 									  Tr->PT[ipas].texDefs[j][kt].pos
 								    ]]->getViewAndSampler();
-//std::cout << "Getting " << Tids[kt].sampler << " " << Tids[kt].imageView << " " << Tids[kt].imageLayout << " from insance for: i" << i << " p" << ipas << " d" << j << " t" << kt << "\n";
+std::cout << "Getting " << Tids[kt].sampler << " " << Tids[kt].imageView << " " << Tids[kt].imageLayout << " from insance for: i" << i << " p" << ipas << " d" << j << " t" << kt << "\n";
 					} else {
 						Tids[kt] = Tr->PT[ipas].texDefs[j][kt].info;
-//std::cout << "Getting " << Tids[kt].sampler << " " << Tids[kt].imageView << " " << Tids[kt].imageLayout << " from technique for: i" << i << " p" << ipas << " d" << j << " t" << kt << "\n";
-//						Tids[kt] = T[0]->getViewAndSampler();
+std::cout << "Getting " << Tids[kt].sampler << " " << Tids[kt].imageView << " " << Tids[kt].imageLayout << " from technique for: i" << i << " p" << ipas << " d" << j << " t" << kt << "\n";
+						Tids[kt] = T[0]->getViewAndSampler();
 					}
 				}
 
 				I[i]->DS[ipas][j] = new DescriptorSet();
-//std::cout << "Allocating DS for DSL: " << (*I[i]->D[ipas])[j] << ", with " << Tids.size() << " textures\n";
+std::cout << "Allocating DS for DSL: " << (*I[i]->D[ipas])[j] << ", with " << Tids.size() << " textures\n";
 				I[i]->DS[ipas][j]->init(BP, (*I[i]->D[ipas])[j], Tids);
-//std::cout << "DSs " << j << " for pass " << ipas << " done!\n";
+std::cout << "DSs " << j << " for pass " << ipas << " done!\n";
 			}
 		}
 	}

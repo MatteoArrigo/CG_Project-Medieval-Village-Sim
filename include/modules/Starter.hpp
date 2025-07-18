@@ -314,9 +314,10 @@ struct FrameBufferAttachment {
 							);
 };
 
-enum StockAttchmentsConfiguration {AT_SURFACE_AA_DEPTH, AT_ONE_COLOR_AND_DEPTH, AT_DEPTH_ONLY, AT_SURFACE_NOAA_DEPTH, AT_NO_ATTCHMENTS};
+enum StockAttchmentsConfiguration {AT_SURFACE_AA_DEPTH, AT_ONE_COLOR_AND_DEPTH, AT_DEPTH_ONLY,
+        AT_SURFACE_NOAA_DEPTH, AT_NO_ATTCHMENTS, AT_BLOOM_POST_PROCESS};
 
-enum StockAttchmentsDependencies {ATDEP_SIMPLE, ATDEP_SURFACE_ONLY, ATDEP_DEPTH_TRANS, ATDEP_NO_DEP};
+enum StockAttchmentsDependencies {ATDEP_SIMPLE, ATDEP_SURFACE_ONLY, ATDEP_DEPTH_TRANS, ATDEP_NO_DEP, ATDEP_COLOR_RAW};
 
 struct RenderPass {
 	BaseProject *BP;
@@ -376,7 +377,7 @@ struct Pipeline {
 			  const std::string& VertShader, const std::string& FragShader,
   			  std::vector<DescriptorSetLayout *> d,
 			  std::vector<VkPushConstantRange> pk = {});
-  	void create(RenderPass *RP);
+  	void create(RenderPass *RP, bool depthTest = true);
   	void destroy();
   	void bind(VkCommandBuffer commandBuffer);
 	void setCompareOp(VkCompareOp _compareOp);
@@ -3936,7 +3937,7 @@ std::vector <AttachmentProperties> *RenderPass::getStandardAttchmentsProperties(
 			VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 			VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
 		{DEPTH_AT, BP->findDepthFormat(),
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 
@@ -3951,7 +3952,8 @@ std::vector <AttachmentProperties> *RenderPass::getStandardAttchmentsProperties(
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL},
 		{RESOLVE_AT, BP->swapChainImageFormat,
-			0, 0, false, true,
+                VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                0, false, false,
 			{.color = {.float32 = {0.0f,0.0f,0.0f,1.0f}}},
 			VK_SAMPLE_COUNT_1_BIT,
 			VK_ATTACHMENT_LOAD_OP_DONT_CARE,
@@ -3959,7 +3961,7 @@ std::vector <AttachmentProperties> *RenderPass::getStandardAttchmentsProperties(
 			VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 			VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}	
 	};
 
@@ -3992,6 +3994,21 @@ std::vector <AttachmentProperties> *RenderPass::getStandardAttchmentsProperties(
 
 	static std::vector <AttachmentProperties> NoAttachments = {
 	};
+
+    static std::vector <AttachmentProperties> BloomPostProcess = {
+            {COLOR_AT, BP->swapChainImageFormat,
+             VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+             VK_IMAGE_ASPECT_COLOR_BIT, false, true,
+             {.color = {.float32 = {0.0f,0.0f,0.0f,1.0f}}},
+             VK_SAMPLE_COUNT_1_BIT,
+             VK_ATTACHMENT_LOAD_OP_LOAD,
+             VK_ATTACHMENT_STORE_OP_STORE,
+             VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+             VK_ATTACHMENT_STORE_OP_DONT_CARE,
+             VK_IMAGE_LAYOUT_UNDEFINED,
+             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}
+    };
 	
 	switch(cfg) {
 	  case AT_ONE_COLOR_AND_DEPTH:
@@ -4006,6 +4023,8 @@ std::vector <AttachmentProperties> *RenderPass::getStandardAttchmentsProperties(
 	  case AT_DEPTH_ONLY:
 	    return &DepthOnly;
 		break;
+        case AT_BLOOM_POST_PROCESS:
+            return &BloomPostProcess;
 	  default:
 		return &NoAttachments;
 	}
@@ -4075,6 +4094,9 @@ std::vector<VkSubpassDependency> *RenderPass::getStandardDependencies(StockAttch
 	  case ATDEP_DEPTH_TRANS:
 	    return &DepthTransition;
 		break;
+	  case ATDEP_COLOR_RAW:
+	    return &DepthTransition;
+		break;
 	  default:
 		return &NoDep;
 	}
@@ -4130,7 +4152,7 @@ void Pipeline::setTopology(VkPrimitiveTopology _topology) {
 }
 
 
-void Pipeline::create(RenderPass *RP) {	
+void Pipeline::create(RenderPass *RP, bool depthTest) {
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType =
     		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -4275,8 +4297,8 @@ void Pipeline::create(RenderPass *RP) {
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
 	depthStencil.sType = 
 			VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_TRUE;
-	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthTestEnable = depthTest ? VK_TRUE : VK_FALSE;
+	depthStencil.depthWriteEnable = depthTest ? VK_TRUE : VK_FALSE;
 	depthStencil.depthCompareOp = compareOp;
 	depthStencil.depthBoundsTestEnable = VK_FALSE;
 	depthStencil.minDepthBounds = 0.0f; // Optional

@@ -10,14 +10,15 @@
 #include "character/character.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
+//TODO: effetto bloom, così che le torce illuminano anche la parte vicino a loro!
+//TODO: se non cambi TorchPinShader.vert, puoi in realtà riusare quello di Props o buildings!
+
+//TODO: nei frag shader di pbr, si potrebbe cambiare ao contribution in base a se è giorno o notte
+//TODO: Per ora point lights illuminano solo terreno e buildings, pensa se aggiungerle a altre pipeline (tipo props)
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
 // Nell'acqua la stiamo usando per la parte speculare
 // Nei fragment shader come PBR si potrebbe usare per parte ambient
 // Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
-
-//TODO: effetto bloom, così che le torce illuminano anche la parte vicino a loro!
-// TODO: se non cambi TorchPinShader.vert, puoi in realtà riusare quello di Props o buildings!
-//TODO: Per ora point lights illuminano solo terreno e buildings, pensa se aggiungerle a altre pipeline (tipo props)
 
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
@@ -131,14 +132,18 @@ class CGProject : public BaseProject {
     // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
 
+    DescriptorSetLayout DSLpostProcess;
+
+
 	// Vertex formants, Pipelines [Shader couples] and Render passes
 	VertexDescriptor VDchar;
 	VertexDescriptor VDnormUV;
 	VertexDescriptor VDpos;
 	VertexDescriptor VDtan;
-	RenderPass RPshadow, RP;
+	RenderPass RPshadow, RP, RPbloom;
 	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings, Ptorches;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
+    Pipeline Pbloom;
 
     Texture Tvoid;
 
@@ -362,6 +367,9 @@ class CGProject : public BaseProject {
 		DSLtorches.init(this, {
             {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
         });
+		DSLpostProcess.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
+        });
 
 
         // --------- VERTEX DESCRIPTORS INITIALIZATION ---------
@@ -417,7 +425,14 @@ class CGProject : public BaseProject {
 		RP.properties[0].clearValue = {0.0f,0.9f,1.0f,1.0f};
         /* Actual creation of the Render Pass for shadow mapping.
             It is done here to be sure the attachment of RPshadow is created and can be linked as input in RP */
+
+        RPbloom.init(this, -1, -1, -1,
+                     RenderPass::getStandardAttchmentsProperties(StockAttchmentsConfiguration::AT_BLOOM_POST_PROCESS, this),
+                     RenderPass::getStandardDependencies(StockAttchmentsDependencies::ATDEP_COLOR_RAW), true);
+
         RPshadow.create();
+        RP.create();
+        RPbloom.create();
 
 
         PshadowMap.init(this, &VDtan, "shaders/shadowMapShader.vert.spv", "shaders/shadowMapShader.frag.spv", {&DSLshadowMap});
@@ -449,6 +464,8 @@ class CGProject : public BaseProject {
 		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
 		Ptorches.init(this, &VDtan, "shaders/TorchPinShader.vert.spv", "shaders/TorchPinShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLtorches});
 
+        Pbloom.init(this, &VDchar, "shaders/BloomShader.vert.spv", "shaders/BloomShader.frag.spv", {&DSLpostProcess});
+
         // --------- TECHNIQUES INITIALIZATION ---------
         std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
         skyboxTexs.reserve(nLightColors);
@@ -473,7 +490,10 @@ class CGProject : public BaseProject {
                 {
                     {true,  0, {} }
                 }
-            }}
+            }},
+            {&Pbloom, {{
+              {false, -1, Tvoid.getViewAndSampler()}
+            }} }
         }, 1, &VDchar);
         PRs[1].init("CharPBR", {
             {&PshadowMapChar, {{
@@ -488,13 +508,19 @@ class CGProject : public BaseProject {
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}}     // ambient occlusion
                 }
-            }}
+            }},
+            {&Pbloom, {{
+               {false, -1, Tvoid.getViewAndSampler()}
+            }} }
         }, 4, &VDchar);
         PRs[2].init("SkyBox", {
             {&PshadowMapSky, {} },
             {&Pskybox, {
                      skyboxTexs
-            }}
+            }},
+            {&Pbloom, {{
+               {false, -1, Tvoid.getViewAndSampler()}
+            }} }
         }, static_cast<int>(skyboxTexs.size()), &VDpos);
         PRs[3].init("Terrain", {
             {&PshadowMap, {{
@@ -515,7 +541,10 @@ class CGProject : public BaseProject {
                     {true,  8, {} },
                     {false,  9, RPshadow.attachments[0].getViewAndSampler() }
                 }
-            }}
+            }},
+            {&Pbloom, {{
+               {false, -1, Tvoid.getViewAndSampler()}
+            }} }
         }, 9, &VDtan);
         PRs[4].init("Water", {
             {&PshadowMapWater, {} },
@@ -523,9 +552,12 @@ class CGProject : public BaseProject {
                 {},
                 {},
                 waterTexs
-                /* water textures, with expected order: 2 normal maps, 6 reflection maps for each lightColor, in order +x, -x, +y, -y, +z, -z
-                 * */
-            }}
+                /* water textures, with expected order: 2 normal maps, 6 reflection maps for each lightColor,
+                 *      in order +x, -x, +y, -y, +z, -z */
+            }},
+            {&Pbloom, {{
+               {false, -1, Tvoid.getViewAndSampler()}
+            }} }
         }, static_cast<int>(waterTexs.size()), &VDnormUV);
         PRs[5].init("Grass", {
             {&PshadowMap, {{
@@ -538,7 +570,10 @@ class CGProject : public BaseProject {
                     {true, 0, {}},
                     {true, 1, {}}
                 }
-            }}
+            }},
+            {&Pbloom, {{
+               {false, -1, Tvoid.getViewAndSampler()}
+            }} }
         }, 2, &VDtan);
         PRs[6].init("Buildings", {
             {&PshadowMap, {{
@@ -554,7 +589,10 @@ class CGProject : public BaseProject {
                     {true,  3, {}},     // ambient occlusion
                     {false,  4, RPshadow.attachments[0].getViewAndSampler() }
                 }
-            }}
+            }},
+            {&Pbloom, {{
+               {false, -1, Tvoid.getViewAndSampler()}
+            }} }
         }, 4, &VDtan);
         PRs[7].init("Props", {
             {&PshadowMap, {{
@@ -569,7 +607,10 @@ class CGProject : public BaseProject {
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}}     // ambient occlusion
                 }
-            }}
+            }},
+            {&Pbloom, {{
+               {false, -1, Tvoid.getViewAndSampler()}
+            }} }
         }, 4, &VDtan);
         PRs[8].init("Torches", {
             {&PshadowMap, {{
@@ -581,7 +622,10 @@ class CGProject : public BaseProject {
                 {
                         {true, 0, {}}
                 }
-            }}
+            }},
+            {&Pbloom, {{
+               {false, -1, Tvoid.getViewAndSampler()}
+            }} }
         }, 1, &VDtan);
 
 
@@ -592,7 +636,7 @@ class CGProject : public BaseProject {
 		DPSZs.setsInPool = 1000;
 		
         std::cout << "\nLoading the scene\n\n";
-		if(SC.init(this, 2, VDRs, PRs, SCENE_FILEPATH) != 0) {
+		if(SC.init(this, 3, VDRs, PRs, SCENE_FILEPATH) != 0) {
 			std::cout << "ERROR LOADING THE SCENE\n";
 			exit(0);
 		}
@@ -627,7 +671,6 @@ class CGProject : public BaseProject {
         // Render passes already created in localInit()
 
         // Creation of RPshadow must be done before the pipelines, because they use it
-        RP.create();
 
         std::cout << "Creating pipelines\n";
         std::cout << "\t1: Creating Pchar\n";
@@ -657,6 +700,10 @@ class CGProject : public BaseProject {
         std::cout << "\t13: Creating PshadowMapWater\n";
         PshadowMapWater.create(&RPshadow);
 
+
+        Pbloom.create(&RPbloom, false);
+
+
         std::cout << "Creating descriptor sets\n";
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
@@ -681,6 +728,9 @@ class CGProject : public BaseProject {
 		RPshadow.cleanup();
         RP.cleanup();
 
+        RPbloom.cleanup();
+        Pbloom.cleanup();
+
 		SC.pipelinesAndDescriptorSetsCleanup();
 		txt.pipelinesAndDescriptorSetsCleanup();
 	}
@@ -699,6 +749,7 @@ class CGProject : public BaseProject {
 		DSLlightModel.cleanup();
         DSLshadowMap.cleanup();
         DSLshadowMapChar.cleanup();
+        DSLpostProcess.cleanup();
 
 		Pchar.destroy();
         PcharPbr.destroy();
@@ -717,6 +768,9 @@ class CGProject : public BaseProject {
         RPshadow.destroy();
 		RP.destroy();
 
+        RPbloom.destroy();
+        Pbloom.destroy();
+
 		SC.localCleanup();	
 		txt.localCleanup();
 
@@ -732,14 +786,28 @@ class CGProject : public BaseProject {
 	}
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
         //NOTE: shadow render pass has equal swap chain size of main pass, hence the same currentImage
+
+        std::cout << "\tSHADOW RENDER PASS" << "\n";
+
         RPshadow.begin(commandBuffer, currentImage);
         SC.populateCommandBuffer(commandBuffer, 0, currentImage);
         RPshadow.end(commandBuffer);
 
-		RP.begin(commandBuffer, currentImage);
-		SC.populateCommandBuffer(commandBuffer, 1, currentImage);
+        std::cout << "\tMAIN RENDER PASS" << "\n";
+
+        RP.begin(commandBuffer, currentImage);
+        SC.populateCommandBuffer(commandBuffer, 1, currentImage);
         RP.end(commandBuffer);
-	}
+
+        std::cout << "\tPOST-PROCESS RENDER PASS" << "\n";
+
+        RPbloom.begin(commandBuffer, currentImage);
+        std::cout << "\tPOST-PROCESS RENDER PASS" << "\n";
+        SC.populateCommandBuffer(commandBuffer, 2, currentImage);
+        std::cout << "\tPOST-PROCESS RENDER PASS" << "\n";
+        RPbloom.end(commandBuffer);
+        std::cout << "\tPOST-PROCESS RENDER PASS" << "\n";
+    }
 
 	void updateUniformBuffer(uint32_t currentImage) {
 		static bool debounce = false;
