@@ -3,11 +3,14 @@
 
 #include <json.hpp>
 
-#include <PhysicsManager.hpp>
+#include "modules/Starter.hpp"
+#include "modules/Scene.hpp"
 #include "modules/TextMaker.hpp"
 #include "modules/Animations.hpp"
 #include "character/char_manager.hpp"
 #include "character/character.hpp"
+#include "PhysicsManager.hpp"
+#include "Player.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 //TODO generale: Ripulisci e Commenta tutto il main
@@ -213,9 +216,8 @@ class CGProject : public BaseProject {
 	glm::vec4 debug1 = glm::vec4(0);
 
 	// Everything related to characters inside the scene
-	CharManager charManager;	// Character manager for animations
-	std::shared_ptr<Character> playerCharacter;
-	glm::vec3 playerScale = glm::vec3(1.33f);;
+	CharManager charManager;			// Character manager for animations
+	Player * player;						// Player manger
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -564,10 +566,6 @@ class CGProject : public BaseProject {
 			exit(0);
 		}
 
-		// Initializes the player Character reference
-		// NOTE: the first character in scene.json is supposed to be the player character
-		playerCharacter = charManager.getCharacters()[0];
-
 		// initializes the textual output
 		txt.init(this, windowWidth, windowHeight);
 
@@ -594,6 +592,10 @@ class CGProject : public BaseProject {
 
 		// Add static meshes to the PhysicsManager for collision detection
 		PhysicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
+
+		// Initializes the player Character reference
+		// NOTE: the first character in scene.json is supposed to be the player character
+		player = new Player(charManager.getCharacters()[0]);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -732,6 +734,7 @@ class CGProject : public BaseProject {
             handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
                 PhysicsMgr.jumpPlayer();
             });
+			player->handleKeyActions(window);
 
             static int curAnim = 0;
             static AnimBlender *AB = charManager.getCharacters()[0]->getAnimBlender();
@@ -1066,12 +1069,8 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 
 		ViewPrj = Prj * View;
 
-		// Move the player character asset in the correct position and direction
-		for (Instance* I : playerCharacter->getInstances()) {
-			I->Wm = glm::translate(glm::mat4(1.0f), playerPos) *
-					glm::rotate(glm::mat4(1.0f), Yaw + glm::radians(180.0f), glm::vec3(0,1,0)) *
-					glm::scale(glm::mat4(1.0f), playerScale);
-		}
+		// Move the player in the correct position
+		player->move(playerPos, Yaw + glm::radians(180.0f));
 
 		return deltaT;
 	}

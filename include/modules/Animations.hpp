@@ -1,3 +1,6 @@
+#pragma once
+#include <glm/gtc/quaternion.hpp>
+#include "modules/Starter.hpp"
 
 struct AnimFrame {
 	float time;

@@ -1,4 +1,5 @@
 // This has been adapted from the Vulkan tutorial
+#pragma once
 
 #include <iostream>
 #include <stdexcept>

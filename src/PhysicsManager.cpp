@@ -1,6 +1,7 @@
 #include <PhysicsManager.hpp>
 #include <iostream>
 
+struct VertexDescriptor;
 // Utility functions for GLM <-> Bullet conversion
 btVector3 glmToBt(const glm::vec3& v) {
     return btVector3(v.x, v.y, v.z);
