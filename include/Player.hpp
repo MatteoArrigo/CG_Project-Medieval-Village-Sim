@@ -60,8 +60,6 @@ private:
     void run();
     void idle();
 
-    static void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action);
-    static void handleKeyStateChange(GLFWwindow* window, int key, bool& prevState, std::function<void()> onPress, std::function<void()> onRelease);
     void moveModelInScene(glm::vec3 position, float rotation);
     void movePlayerPhysics(glm::vec3 direction);
 
@@ -71,6 +69,7 @@ public:
 
     // Player movement in scene
     void move(glm::vec3 direction, float rotation);
+    // Player key press interactions
     void handleKeyActions(GLFWwindow * window, double deltaT);
 
     // Utils

@@ -7,6 +7,7 @@
 #include "PhysicsManager.hpp"
 #include "character/character.hpp"
 #include "modules/Scene.hpp"
+#include "Utils.hpp"
 
 #define ANIM_BLEND_T 0.5f
 
@@ -17,41 +18,6 @@
 
 #define ANIM_JUMP_TIME 0.8f
 
-
-/**
- * Handles key toggle events with debounce logic.
- *
- * @param window       Pointer to the GLFW window.
- * @param key          The GLFW key code to check.
- * @param debounce     Reference to a debounce flag to prevent repeated triggers.
- * @param curDebounce  Reference to the currently debounced key.
- * @param action       Function to execute when the key is toggled.
- *
- * When the specified key is pressed, the action is executed only once until the key is released.
- * This prevents multiple triggers from a single key press.
- */
-void Player::handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action) {
-    if (glfwGetKey(window, key)) {
-        if (!debounce) {
-            debounce = true;
-            curDebounce = key;
-            action();  // Execute the custom logic
-        }
-    } else if (curDebounce == key && debounce) {
-        debounce = false;
-        curDebounce = 0;
-    }
-}
-
-void Player::handleKeyStateChange(GLFWwindow* window, int key, bool& prevState, std::function<void()> onPress, std::function<void()> onRelease) {
-    bool currentState = glfwGetKey(window, key) == GLFW_PRESS;
-    if (currentState && !prevState) {
-        onPress();
-    } else if (!currentState && prevState) {
-        onRelease();
-    }
-    prevState = currentState;
-}
 
 Player::Player(const std::shared_ptr<Character>& playerCharacter, PhysicsManager * physicsManager)
     : playerCharacter(playerCharacter), physicsManager(physicsManager) {
@@ -122,31 +88,31 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
     time += deltaT;
 
     // Jump (modifier)
-    handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
+    Utils::handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
         lastJumpTime = time;
         jump();
     });
 
     // Walk
-    handleKeyStateChange(window, GLFW_KEY_W, isKeyPressed_W, [&]() {
+    Utils::handleKeyStateChange(window, GLFW_KEY_W, isKeyPressed_W, [&]() {
         isKeyPressed_W = true;
         walk();
     }, [&]() {
         isKeyPressed_W = false;
     });
-    handleKeyStateChange(window, GLFW_KEY_A, isKeyPressed_A, [&]() {
+    Utils::handleKeyStateChange(window, GLFW_KEY_A, isKeyPressed_A, [&]() {
         isKeyPressed_A = true;
         walk();
     }, [&]() {
         isKeyPressed_A = false;
     });
-    handleKeyStateChange(window, GLFW_KEY_S, isKeyPressed_S, [&]() {
+    Utils::handleKeyStateChange(window, GLFW_KEY_S, isKeyPressed_S, [&]() {
         isKeyPressed_S = true;
         walk();
     }, [&]() {
         isKeyPressed_S = false;
     });
-    handleKeyStateChange(window, GLFW_KEY_D, isKeyPressed_D, [&]() {
+    Utils::handleKeyStateChange(window, GLFW_KEY_D, isKeyPressed_D, [&]() {
         isKeyPressed_D = true;
         walk();
     }, [&]() {
@@ -154,7 +120,7 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
     });
 
     // Run (modifier)
-    handleKeyStateChange(window, GLFW_KEY_LEFT_SHIFT, isKeyPressed_SHIFT, [&]() {
+    Utils::handleKeyStateChange(window, GLFW_KEY_LEFT_SHIFT, isKeyPressed_SHIFT, [&]() {
         isKeyPressed_SHIFT = true;
         if (playerMovementState == PlayerMovementState::Walking || playerMovementState == PlayerMovementState::Running) {
             run();

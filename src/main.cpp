@@ -11,6 +11,7 @@
 #include "character/character.hpp"
 #include "PhysicsManager.hpp"
 #include "Player.hpp"
+#include "Utils.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 //TODO generale: Ripulisci e Commenta tutto il main
@@ -725,23 +726,23 @@ class CGProject : public BaseProject {
 
         // Handle of command keys
         {
-            handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
+            Utils::handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
                 debugLightView.x = 1.0 - debugLightView.x;
             });
-            handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
+            Utils::handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
                 debugLightView.y = 1.0 - debugLightView.y;
             });
 
             static int curAnim = 0;
             static AnimBlender *AB = charManager.getCharacters()[0]->getAnimBlender();
-            handleKeyToggle(window, GLFW_KEY_O, debounce, curDebounce, [&]() {
+            Utils::handleKeyToggle(window, GLFW_KEY_O, debounce, curDebounce, [&]() {
                 curAnim = (curAnim + 1) % 5;
                 AB->Start(curAnim, 0.5);
                 std::cout << "Playing anim: " << curAnim << "\n";
             });
 
             // Handle the E key for Character interaction
-            handleKeyToggle(window, GLFW_KEY_E, debounce, curDebounce, [&]() {
+            Utils::handleKeyToggle(window, GLFW_KEY_E, debounce, curDebounce, [&]() {
                 glm::vec3 playerPos = cameraPos; // TODO: replace with actual player position when implemented
                 auto nearest = charManager.getNearestCharacter(playerPos);
                 if (nearest) {
@@ -968,32 +969,6 @@ class CGProject : public BaseProject {
 		txt.updateCommandBuffer();
         firstTime = false;
     }
-
-
-/**
- * Handles key toggle events with debounce logic.
- *
- * @param window       Pointer to the GLFW window.
- * @param key          The GLFW key code to check.
- * @param debounce     Reference to a debounce flag to prevent repeated triggers.
- * @param curDebounce  Reference to the currently debounced key.
- * @param action       Function to execute when the key is toggled.
- *
- * When the specified key is pressed, the action is executed only once until the key is released.
- * This prevents multiple triggers from a single key press.
- */
-void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action) {
-    if (glfwGetKey(window, key)) {
-        if (!debounce) {
-            debounce = true;
-            curDebounce = key;
-            action();  // Execute the custom logic
-        }
-    } else if (curDebounce == key && debounce) {
-        debounce = false;
-        curDebounce = 0;
-    }
-}
 
 	float GameLogic() {
 		// Integration with the timers and the controllers
