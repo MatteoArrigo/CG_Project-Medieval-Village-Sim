@@ -23,7 +23,7 @@
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = true;
-const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
+const std::string SCENE_FILEPATH = "assets/scene.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -189,9 +189,9 @@ class CGProject : public BaseProject {
     const float MIN_CAM_DIST = 1.5;
 
     const std::vector<glm::vec4> lightColors{
-        glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),      // full day
-        glm::vec4(1.0f, 0.3f, 0.3f, 1.0f),      // sunset
-        glm::vec4(0.2f, 0.2f, 0.4f, 1.0f),      // night with light
+        glm::vec4(3.0f, 3.0f, 3.0f, 1.0f),      // full day
+        glm::vec4(1.3f, 0.4f, 0.4f, 1.0f),      // sunset
+        glm::vec4(0.3f, 0.3f, 0.6f, 1.0f),      // night with light
         glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),      // night, full dark
     };
     const int nLightColors = static_cast<int>(lightColors.size());
@@ -209,8 +209,8 @@ class CGProject : public BaseProject {
      * It is chosen from a vector of directions, of the same size of lightColors
      */
     const std::vector<glm::mat4> lightRotations{
-            glm::rotate(glm::mat4(1), glm::radians(-85.0f), glm::vec3(0.0f,1.0f,0.0f)) *
-            glm::rotate(glm::mat4(1), glm::radians(30.0f), glm::vec3(1.0f,0.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(10.0f), glm::vec3(0.0f,1.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(-80.0f), glm::vec3(1.0f,0.0f,0.0f)) *
             glm::rotate(glm::mat4(1), glm::radians(0.0f),glm::vec3(0.0f,0.0f,1.0f)),
 
             glm::rotate(glm::mat4(1), glm::radians(-31.0f), glm::vec3(0.0f,1.0f,0.0f)) *
@@ -231,6 +231,7 @@ class CGProject : public BaseProject {
      * It points towards the light source
      */
     glm::vec3 lightDir = glm::vec3(lightRotation * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+    glm::mat4 lightProj;
     /**
      * Parameters used for orthogonal projection of the scene from light pov, in shadow mapping render pass
      */
@@ -298,7 +299,7 @@ class CGProject : public BaseProject {
         auto vulkanCorrection =
                 glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.5f)) *   // translation of axis z
                 glm::scale(glm::mat4(1.0), glm::vec3(1.0f, -1.0f, 0.5f));       // scale of axis y and z
-        glm::mat4 lightProj = vulkanCorrection * glm::ortho(lightWorldLeft, lightWorldRight, lightWorldBottom, lightWorldTop, lightWorldNear, lightWorldFar);
+        lightProj = vulkanCorrection * glm::ortho(lightWorldLeft, lightWorldRight, lightWorldBottom, lightWorldTop, lightWorldNear, lightWorldFar);
         lightVP = lightProj * glm::inverse(lightRotation); // inverse because we need to invert the rotation of the world scene to get the light's view
 
 		// --------- DSL INITIALIZATION ---------
@@ -425,7 +426,8 @@ class CGProject : public BaseProject {
 		/* RP 2: used for the main rendering
 		 * Now default options of starter.hpp are used, so it will write color and depth  */
         RP.init(this);
-		RP.properties[0].clearValue = {0.0f,0.9f,1.0f,1.0f};
+        // Grey as default clear value
+		RP.properties[0].clearValue = {0.5f,0.5f,0.5f,1.0f};
         /* Actual creation of the Render Pass for shadow mapping.
             It is done here to be sure the attachment of RPshadow is created and can be linked as input in RP */
         RPshadow.create();
@@ -765,6 +767,7 @@ class CGProject : public BaseProject {
                 lightColorIdx = (lightColorIdx + 1) % nLightColors;
                 lightRotation = lightRotations[lightColorIdx];
                 lightDir = glm::vec3(lightRotation * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+                lightVP = lightProj * glm::inverse(lightRotation); // inverse because we need to invert the rotation of the world scene to get the light's view
             });
             handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
                 debugLightView.x = static_cast<int>(debugLightView.x + 1) % 3;

@@ -422,7 +422,8 @@
 
 		{"id": "day", "texture": "assets/textures/skybox/day.jpg", "format": "C"},
 		{"id": "sunset", "texture": "assets/textures/skybox/sunset.jpg", "format": "C"},
-		{"id": "night", "texture": "assets/textures/skybox/night.png", "format": "C"},
+		{"id": "night", "texture": "assets/textures/skybox/night.jpg", "format": "C"},
+		{"id": "night2", "texture": "assets/textures/skybox/night2.jpg", "format": "C"},
 
 		{"id": "player_d",    "texture": "assets/textures/player/Paladin_diffuse.png", "format": "C"},
 		{"id": "player_n",    "texture": "assets/textures/player/Paladin_normal.png", "format": "D"},
@@ -682,10 +683,7 @@
 	    {"technique":  "Water", "elements":  [
 			{"id": "water_grid", "model": "water_grid", "texture": [
 				"water_n1", "water_n2",
-				"void", "void", "void", "void", "void", "void",
-				"water_+x", "water_-x", "water_+y", "water_-y", "water_+z", "water_-z",
-				"void", "void", "void", "void", "void", "void",
-				"void", "void", "void", "void", "void", "void"
+				"day", "sunset", "night", "night2"
 			]}
 	    ]},
         {"technique": "Grass", "elements":  [

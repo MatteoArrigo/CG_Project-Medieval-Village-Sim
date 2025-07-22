@@ -219,10 +219,7 @@
 	    {"technique":  "Water", "elements":  [
 			{"id": "water_grid", "model": "water_grid", "texture": [
 				"water_n1", "water_n2",
-				"day",
-				"sunset",
-				"night",
-				"night2"
+				"day", "sunset", "night", "night2"
 			]}
 	    ]},
         {"technique": "Grass", "elements": [
