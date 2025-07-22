@@ -25,9 +25,9 @@
 			"id": "player",
 			"name": "Player",
 			"instanceIds": ["player"],
-			"animList": ["player", "player_breathing_idle", "player_running", "player_jumping"],
-			"startEndFrames": [[0,32], [0,299], [0,22], [10,45]],
-			"charStates": ["Walking", "BreathingIdle", "Running", "Jumping"],
+			"animList": ["player", "player_breathing_idle", "player_jumping", "player_running"],
+			"startEndFrames": [[0,32], [0,299], [10,45], [0,20]],
+			"charStates": ["Walking", "BreathingIdle", "Jumping", "Running"],
 			"BaseTrackName": "Armature|mixamo.com|Layer0"
 		},
 		{

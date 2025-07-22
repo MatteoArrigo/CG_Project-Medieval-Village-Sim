@@ -9,10 +9,14 @@
 struct Instance;
 class Character;
 
-enum class PlayerState {
+enum class PlayerMovementState {
     Idle,
     Walking,
-    Running,
+    Running
+};
+
+enum class PlayerActionState {
+    NoAction,
     Jumping
 };
 
@@ -25,7 +29,8 @@ private:
     glm::vec3 playerScale = glm::vec3(1.33f);;
 
     // Current player state (idle at start)
-    PlayerState playerState = PlayerState::Idle;
+    PlayerMovementState playerMovementState = PlayerMovementState::Idle;
+    PlayerActionState playerActionState = PlayerActionState::NoAction;
 
     // Key interaction constants
     bool debounce = false;
@@ -37,6 +42,11 @@ private:
     bool isKeyPressed_A = false;
     bool isKeyPressed_S = false;
     bool isKeyPressed_D = false;
+    bool isKeyPressed_SHIFT = false;
+
+    // Time counter
+    double time = 0.0;
+    double lastJumpTime = 0.0;
 
     // Actions for animation blending
     void jump();
@@ -53,7 +63,7 @@ public:
 
     // Player movement in scene
     void move(glm::vec3 position, float rotation);
-    void handleKeyActions(GLFWwindow * window);
+    void handleKeyActions(GLFWwindow * window, double deltaT);
 
     // Utils
     std::shared_ptr<Character> getCharacter();

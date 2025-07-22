@@ -734,7 +734,6 @@ class CGProject : public BaseProject {
             handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
                 PhysicsMgr.jumpPlayer();
             });
-			player->handleKeyActions(window);
 
             static int curAnim = 0;
             static AnimBlender *AB = charManager.getCharacters()[0]->getAnimBlender();
@@ -760,6 +759,7 @@ class CGProject : public BaseProject {
 
 		// moves the view
 		float deltaT = GameLogic();
+		player->handleKeyActions(window, deltaT);
 
         // ----- UPDATE UNIFORMS -----
         //NOTE on code style: write all uniform variables in the following section
