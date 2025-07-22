@@ -2200,11 +2200,12 @@ void BaseProject::getSixAxis(float &deltaT,
 		m.y = -1.0f;
 	}
 	
-	fire = glfwGetKey(window, GLFW_KEY_SPACE) | (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
-	handleGamePad(GLFW_JOYSTICK_1,m,r,fire);
-	handleGamePad(GLFW_JOYSTICK_2,m,r,fire);
-	handleGamePad(GLFW_JOYSTICK_3,m,r,fire);
-	handleGamePad(GLFW_JOYSTICK_4,m,r,fire);
+	fire = (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS);
+	/* The following are resetting fire to false for some reason */
+	// handleGamePad(GLFW_JOYSTICK_1,m,r,fire);
+	// handleGamePad(GLFW_JOYSTICK_2,m,r,fire);
+	// handleGamePad(GLFW_JOYSTICK_3,m,r,fire);
+	// handleGamePad(GLFW_JOYSTICK_4,m,r,fire);
 }
 
 void BaseProject::printFloat(const char *Name, float v) {

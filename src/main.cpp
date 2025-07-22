@@ -140,7 +140,7 @@ class CGProject : public BaseProject {
 	std::vector<TechniqueRef> PRs;
 
 	// PhysicsManager for collision detection
-	PhysicsManager PhysicsMgr;
+	PhysicsManager physicsMgr;
 	PlayerConfig physicsConfig;
 
 	// to provide textual feedback
@@ -575,7 +575,7 @@ class CGProject : public BaseProject {
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
 
 		// Initialize PhysicsManager
-		if(!PhysicsMgr.initialize(FLY_MODE)) {
+		if(!physicsMgr.initialize(FLY_MODE)) {
 			exit(0);
 		}
 
@@ -588,14 +588,14 @@ class CGProject : public BaseProject {
 		// int playerModelIdx = playerCharacter->getInstances()[0]->Mid; // assuming the player has only one instance
 		// const Model * playerModel = SC.M[playerModelIdx];
 		// PhysicsMgr.addPlayerFromModel(playerModel);
-		PhysicsMgr.addCapsulePlayer();
+		physicsMgr.addCapsulePlayer();
 
 		// Add static meshes to the PhysicsManager for collision detection
-		PhysicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
+		physicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
 
 		// Initializes the player Character reference
 		// NOTE: the first character in scene.json is supposed to be the player character
-		player = new Player(charManager.getCharacters()[0]);
+		player = new Player(charManager.getCharacters()[0], &physicsMgr);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -730,9 +730,6 @@ class CGProject : public BaseProject {
             });
             handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
                 debugLightView.y = 1.0 - debugLightView.y;
-            });
-            handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
-                PhysicsMgr.jumpPlayer();
             });
 
             static int curAnim = 0;
@@ -1007,10 +1004,10 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		float MOVE_SPEED = fire ? MOVE_SPEED_RUN : MOVE_SPEED_BASE;
 
 		// Step the physics simulation
-		PhysicsMgr.update(deltaT);
+		physicsMgr.update(deltaT);
 
 		// Get current player position from physics body
-		glm::vec3 playerPos = PhysicsMgr.getPlayerPosition();
+		glm::vec3 playerPos = physicsMgr.getPlayerPosition();
 
 		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
 
@@ -1027,9 +1024,6 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		glm::vec3 moveDir = MOVE_SPEED * m.x * ux - MOVE_SPEED * m.z * uz;
         if(FLY_MODE)
             moveDir += MOVE_SPEED * m.y * glm::vec3(0,1,0);
-
-		// Apply movement force to physics body
-		PhysicsMgr.movePlayer(moveDir, fire);
 
 		// Camera height adjustment
 		camHeight += MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
@@ -1069,8 +1063,8 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 
 		ViewPrj = Prj * View;
 
-		// Move the player in the correct position
-		player->move(playerPos, Yaw + glm::radians(180.0f));
+		// Move the player in the correct position (physics + model update)
+		player->move(moveDir, Yaw + glm::radians(180.0f));
 
 		return deltaT;
 	}

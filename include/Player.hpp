@@ -6,6 +6,7 @@
 
 #include "character/character.hpp"
 
+class PhysicsManager;
 struct Instance;
 class Character;
 
@@ -25,10 +26,15 @@ private:
     // Reference to the player Character instance
     std::shared_ptr<Character> playerCharacter;
 
+    // Reference to the PhysicsManager
+    PhysicsManager * physicsManager;
+
     // Scaling factor for the player character model. Hardcoded and should be adjusted based on the imported model.
     glm::vec3 playerScale = glm::vec3(1.33f);;
 
-    // Current player state (idle at start)
+    // Current player motion states.
+    //      Movements:  motion related to movement of player in scene space
+    //      Actions:    modifiers of the Movement state
     PlayerMovementState playerMovementState = PlayerMovementState::Idle;
     PlayerActionState playerActionState = PlayerActionState::NoAction;
 
@@ -54,15 +60,17 @@ private:
     void run();
     void idle();
 
-    void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action);
-    void handleKeyStateChange(GLFWwindow* window, int key, bool& prevState, std::function<void()> onPress, std::function<void()> onRelease);
+    static void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action);
+    static void handleKeyStateChange(GLFWwindow* window, int key, bool& prevState, std::function<void()> onPress, std::function<void()> onRelease);
+    void moveModelInScene(glm::vec3 position, float rotation);
+    void movePlayerPhysics(glm::vec3 direction);
 
 public:
-    explicit Player(const std::shared_ptr<Character>& playerCharacter);
+    explicit Player(const std::shared_ptr<Character>& playerCharacter, PhysicsManager * physicsManager);
     ~Player();
 
     // Player movement in scene
-    void move(glm::vec3 position, float rotation);
+    void move(glm::vec3 direction, float rotation);
     void handleKeyActions(GLFWwindow * window, double deltaT);
 
     // Utils

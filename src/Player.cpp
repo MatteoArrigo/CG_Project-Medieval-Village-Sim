@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <GLFW/glfw3.h>
 
+#include "PhysicsManager.hpp"
 #include "character/character.hpp"
 #include "modules/Scene.hpp"
 
@@ -52,10 +53,13 @@ void Player::handleKeyStateChange(GLFWwindow* window, int key, bool& prevState, 
     prevState = currentState;
 }
 
-Player::Player(const std::shared_ptr<Character>& playerCharacter)
-    : playerCharacter(playerCharacter) {
+Player::Player(const std::shared_ptr<Character>& playerCharacter, PhysicsManager * physicsManager)
+    : playerCharacter(playerCharacter), physicsManager(physicsManager) {
     if (!playerCharacter) {
         throw std::runtime_error("Player character cannot be null");
+    }
+    if (!physicsManager) {
+        throw std::runtime_error("PhysicsManager cannot be null");
     }
 }
 
@@ -69,7 +73,7 @@ std::shared_ptr<Character> Player::getCharacter() {
     return playerCharacter;
 }
 
-void Player::move(glm::vec3 position, float rotation) {
+void Player::moveModelInScene(glm::vec3 position, float rotation) {
     for (Instance* I : getModelInstances()) {
         I->Wm = glm::translate(glm::mat4(1.0f), position) *
                 glm::rotate(glm::mat4(1.0f), rotation, glm::vec3(0,1,0)) *
@@ -77,10 +81,23 @@ void Player::move(glm::vec3 position, float rotation) {
     }
 }
 
+void Player::movePlayerPhysics(glm::vec3 direction) {
+		physicsManager->movePlayer(direction, playerMovementState == PlayerMovementState::Running);
+}
+
+void Player::move(glm::vec3 direction, float rotation) {
+    glm::vec3 playerPosition = physicsManager->getPlayerPosition();
+
+    moveModelInScene(playerPosition, rotation);
+
+    movePlayerPhysics(direction);
+}
+
 void Player::jump() {
     std::cout << "jump()\n";
     playerActionState = PlayerActionState::Jumping;
     playerCharacter->getAnimBlender()->Start(ANIM_JUMP_IDX, ANIM_BLEND_T);
+    physicsManager->jumpPlayer();
 }
 
 void Player::walk() {
@@ -104,7 +121,7 @@ void Player::idle() {
 void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
     time += deltaT;
 
-    // Jump
+    // Jump (modifier)
     handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
         lastJumpTime = time;
         jump();
@@ -117,21 +134,18 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
     }, [&]() {
         isKeyPressed_W = false;
     });
-
     handleKeyStateChange(window, GLFW_KEY_A, isKeyPressed_A, [&]() {
         isKeyPressed_A = true;
         walk();
     }, [&]() {
         isKeyPressed_A = false;
     });
-
     handleKeyStateChange(window, GLFW_KEY_S, isKeyPressed_S, [&]() {
         isKeyPressed_S = true;
         walk();
     }, [&]() {
         isKeyPressed_S = false;
     });
-
     handleKeyStateChange(window, GLFW_KEY_D, isKeyPressed_D, [&]() {
         isKeyPressed_D = true;
         walk();
@@ -139,6 +153,7 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
         isKeyPressed_D = false;
     });
 
+    // Run (modifier)
     handleKeyStateChange(window, GLFW_KEY_LEFT_SHIFT, isKeyPressed_SHIFT, [&]() {
         isKeyPressed_SHIFT = true;
         if (playerMovementState == PlayerMovementState::Walking || playerMovementState == PlayerMovementState::Running) {
@@ -148,7 +163,7 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
         isKeyPressed_SHIFT = false;
     });
 
-
+    // Handle conclusion of jump animation with smooth transitioning
     if (playerActionState == PlayerActionState::Jumping && lastJumpTime + ANIM_JUMP_TIME < time) {
         playerActionState = PlayerActionState::NoAction;
         if (playerMovementState == PlayerMovementState::Walking) {
@@ -160,6 +175,7 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
         }
     }
 
+    // Fallback to idle state if no movement keys are pressed
     if (!(isKeyPressed_W || isKeyPressed_A || isKeyPressed_S || isKeyPressed_D)) {
         playerActionState = PlayerActionState::NoAction;
         idle();
