@@ -11,13 +11,11 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
-// Nell'acqua la stiamo usando per la parte speculare
-// Nei fragment shader come PBR si potrebbe usare per parte ambient
+// Nota: nell'acqua usiamo ora la equirectangular map per la reflection, non preprocessata
+// Si potrebbe implementare IBL nelle altre tecniche, come PBR+IBL, usando radiance cubemap, quindi preprocessata
 // Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
 
-//TODO: effetto bloom, così che le torce illuminano anche la parte vicino a loro!
-// TODO: se non cambi TorchPinShader.vert, puoi in realtà riusare quello di Props o buildings!
-//TODO: Per ora point lights illuminano solo terreno e buildings, pensa se aggiungerle a altre pipeline (tipo props)
+//TODO: Forse c'è qualcosa che non va con multiple istance di characters dello stesso modello
 
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
@@ -62,6 +60,8 @@ struct LightModelUBO {
 	alignas(16) glm::vec4 pointLightColors[MAX_POINT_LIGHTS];
     alignas(4) int nPointLights;
 };
+// NOTE: Up to now, the point light calculations are present only in terrain and buidlings pipelines.
+// If you want the torches to enlight also other meshes, add those calculations in the corresponding pipelines, too
 
 #define MAX_JOINTS 100
 struct GeomCharUBO {
@@ -199,7 +199,7 @@ class CGProject : public BaseProject {
      * NOTE: Also rendered skybox should be changed accordingly, and for this
      *   lightColors.size() textures for skybox instance are expected in the json file
      */
-    int lightColorIdx = 3;
+    int lightColorIdx = 0;
     /**
      * Matrix defining the light rotation to apply to +z axis to get the light direction.
      * It is used
@@ -320,12 +320,7 @@ class CGProject : public BaseProject {
         DSLwater.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO), 1},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,2},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,                 nLightColors},
-			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+1*nLightColors,  nLightColors},
-			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+2*nLightColors,  nLightColors},
-			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+3*nLightColors,  nLightColors},
-			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+4*nLightColors,  nLightColors},
-			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2+5*nLightColors,  nLightColors}
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, nLightColors}
 		});
         DSLgrass.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -445,9 +440,9 @@ class CGProject : public BaseProject {
 		PcharPbr.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLpbr});
         Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
-		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
-		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
-		Ptorches.init(this, &VDtan, "shaders/TorchPinShader.vert.spv", "shaders/TorchPinShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLtorches});
+		Pbuildings.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
+		Pprops.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
+		Ptorches.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/TorchPinShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLtorches});
 
         // --------- TECHNIQUES INITIALIZATION ---------
         std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
@@ -455,12 +450,11 @@ class CGProject : public BaseProject {
         for (int i = 0; i < nLightColors; ++i)
             skyboxTexs.push_back({true, i, VkDescriptorImageInfo{}});
         std::vector<TextureDefs> waterTexs;        // automatic fill-up of textures for water
-        waterTexs.reserve(nLightColors*6+2);
+        waterTexs.reserve(nLightColors+2);
         waterTexs.push_back({true, 0, VkDescriptorImageInfo{}});
         waterTexs.push_back({true, 1, VkDescriptorImageInfo{}});
-        for(int j = 0; j < 6; ++j)
-            for(int i = 0; i < nLightColors; ++i)
-                waterTexs.push_back({true, 2 + 6 * i + j, VkDescriptorImageInfo{}});
+        for(int i = 0; i < nLightColors; ++i)
+            waterTexs.push_back({true, 2 + i, VkDescriptorImageInfo{}});
 
         PRs.resize(9);
 		PRs[0].init("CharCookTorrance", {
@@ -860,6 +854,7 @@ class CGProject : public BaseProject {
 			SKA->Sample(*AB);
 			std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
 			for (Instance* I : C->getInstances()) {
+                if(firstTime) std::cout << "\tInstance: " << *(I->id) << "\n";
 				std::string techniqueName = *(I->TIp->T->id);
 				if (techniqueName == "CharCookTorrance") {
 					// CookTorrance technique ubo update

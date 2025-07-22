@@ -142,6 +142,7 @@ public:
             for (const auto& instanceId : instancesIds) {
                 if (instanceIdToInstanceRef.find(instanceId) != instanceIdToInstanceRef.end()) {
                     charInstances.push_back(instanceIdToInstanceRef.at(instanceId));
+                    std::cout << "Instance with ID: " << instanceId << " added to character: " << name << "\n";
                 } else {
                     std::cout << "Instance with ID: " << instanceId << " not found in scene.\n";
                 }
