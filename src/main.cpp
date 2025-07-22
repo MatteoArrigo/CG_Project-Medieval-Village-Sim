@@ -17,6 +17,8 @@
 
 //TODO: Forse c'è qualcosa che non va con multiple istance di characters dello stesso modello
 
+// TODO: si potrebbe ancora cercare una skybox con la luna fatta meglio
+
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
@@ -186,11 +188,10 @@ class CGProject : public BaseProject {
     const float MAX_CAM_DIST = 7.5;
     const float MIN_CAM_DIST = 1.5;
 
-    //TODO: produci le reflection cubemap associate alle skyboxes
     const std::vector<glm::vec4> lightColors{
         glm::vec4(1.0f, 1.0f, 1.0f, 1.0f),      // full day
         glm::vec4(1.0f, 0.3f, 0.3f, 1.0f),      // sunset
-        glm::vec4(0.2f, 0.2f, 0.4f, 1.0f),      // night with light     // TODO: trova una skybox con la luna ben visibile
+        glm::vec4(0.2f, 0.2f, 0.4f, 1.0f),      // night with light
         glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),      // night, full dark
     };
     const int nLightColors = static_cast<int>(lightColors.size());
@@ -205,16 +206,31 @@ class CGProject : public BaseProject {
      * It is used
      *  - applied to +z axis to compute light direction
      *  - applied in its inverse form to compute the light projection matrix for shadow map
+     * It is chosen from a vector of directions, of the same size of lightColors
      */
-    const glm::mat4 lightRotation = glm::rotate(glm::mat4(1), glm::radians(-31.0f),
-        glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-30.0f),
-         glm::vec3(1.0f,0.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(0.0f),
-         glm::vec3(0.0f,0.0f,1.0f));
+    const std::vector<glm::mat4> lightRotations{
+            glm::rotate(glm::mat4(1), glm::radians(-85.0f), glm::vec3(0.0f,1.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(30.0f), glm::vec3(1.0f,0.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(0.0f),glm::vec3(0.0f,0.0f,1.0f)),
+
+            glm::rotate(glm::mat4(1), glm::radians(-31.0f), glm::vec3(0.0f,1.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(1.0f,0.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(0.0f),glm::vec3(0.0f,0.0f,1.0f)),
+
+            glm::rotate(glm::mat4(1), glm::radians(-60.0f), glm::vec3(0.0f,1.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(-5.0f), glm::vec3(1.0f,0.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(0.0f),glm::vec3(0.0f,0.0f,1.0f)),
+
+            glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(0.0f,1.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(-1.0f), glm::vec3(1.0f,0.0f,0.0f)) *
+            glm::rotate(glm::mat4(1), glm::radians(0.0f),glm::vec3(0.0f,0.0f,1.0f)),
+    };
+    glm::mat4 lightRotation = lightRotations[lightColorIdx];
     /**
      * Directional of the unique directional light in the scene --> Represents the sun light
      * It points towards the light source
      */
-    const glm::vec3 lightDir = glm::vec3(lightRotation * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+    glm::vec3 lightDir = glm::vec3(lightRotation * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
     /**
      * Parameters used for orthogonal projection of the scene from light pov, in shadow mapping render pass
      */
@@ -747,6 +763,8 @@ class CGProject : public BaseProject {
         {
             handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
                 lightColorIdx = (lightColorIdx + 1) % nLightColors;
+                lightRotation = lightRotations[lightColorIdx];
+                lightDir = glm::vec3(lightRotation * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
             });
             handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
                 debugLightView.x = static_cast<int>(debugLightView.x + 1) % 3;
