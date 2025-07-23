@@ -96,25 +96,25 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
     // Walk
     Utils::handleKeyStateChange(window, GLFW_KEY_W, isKeyPressed_W, [&]() {
         isKeyPressed_W = true;
-        walk();
+        (playerMovementState == PlayerMovementState::Running) ? run() : walk();
     }, [&]() {
         isKeyPressed_W = false;
     });
     Utils::handleKeyStateChange(window, GLFW_KEY_A, isKeyPressed_A, [&]() {
         isKeyPressed_A = true;
-        walk();
+        (playerMovementState == PlayerMovementState::Running) ? run() : walk();
     }, [&]() {
         isKeyPressed_A = false;
     });
     Utils::handleKeyStateChange(window, GLFW_KEY_S, isKeyPressed_S, [&]() {
         isKeyPressed_S = true;
-        walk();
+        (playerMovementState == PlayerMovementState::Running) ? run() : walk();
     }, [&]() {
         isKeyPressed_S = false;
     });
     Utils::handleKeyStateChange(window, GLFW_KEY_D, isKeyPressed_D, [&]() {
         isKeyPressed_D = true;
-        walk();
+        (playerMovementState == PlayerMovementState::Running) ? run() : walk();
     }, [&]() {
         isKeyPressed_D = false;
     });
