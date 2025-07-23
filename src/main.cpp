@@ -8,6 +8,7 @@
 #include "modules/Animations.hpp"
 #include "character/char_manager.hpp"
 #include "character/character.hpp"
+#include "sun_light.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
@@ -188,62 +189,24 @@ class CGProject : public BaseProject {
     const float MAX_CAM_DIST = 7.5;
     const float MIN_CAM_DIST = 1.5;
 
-    const std::vector<glm::vec4> lightColors{
-        glm::vec4(3.0f, 3.0f, 3.0f, 1.0f),      // full day
-        glm::vec4(1.3f, 0.4f, 0.4f, 1.0f),      // sunset
-        glm::vec4(0.3f, 0.3f, 0.6f, 1.0f),      // night with light
-        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),      // night, full dark
+    #define N_SUNLIGHTS 4
+    const LightClipBorders lightClipBorders{
+        -110.0f, 110.0f,
+        -60.0f, 60.0f,
+        -150.0f, 200.0f
     };
-    const int nLightColors = static_cast<int>(lightColors.size());
-    /**
-     * Index of the current light color in scene wrt the array lightColors
-     * NOTE: Also rendered skybox should be changed accordingly, and for this
-     *   lightColors.size() textures for skybox instance are expected in the json file
-     */
-    int lightColorIdx = 0;
-    /**
-     * Matrix defining the light rotation to apply to +z axis to get the light direction.
-     * It is used
-     *  - applied to +z axis to compute light direction
-     *  - applied in its inverse form to compute the light projection matrix for shadow map
-     * It is chosen from a vector of directions, of the same size of lightColors
-     */
-    const std::vector<glm::mat4> lightRotations{
-            glm::rotate(glm::mat4(1), glm::radians(10.0f), glm::vec3(0.0f,1.0f,0.0f)) *
-            glm::rotate(glm::mat4(1), glm::radians(-80.0f), glm::vec3(1.0f,0.0f,0.0f)) *
-            glm::rotate(glm::mat4(1), glm::radians(0.0f),glm::vec3(0.0f,0.0f,1.0f)),
-
-            glm::rotate(glm::mat4(1), glm::radians(-31.0f), glm::vec3(0.0f,1.0f,0.0f)) *
-            glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(1.0f,0.0f,0.0f)) *
-            glm::rotate(glm::mat4(1), glm::radians(0.0f),glm::vec3(0.0f,0.0f,1.0f)),
-
-            glm::rotate(glm::mat4(1), glm::radians(-60.0f), glm::vec3(0.0f,1.0f,0.0f)) *
-            glm::rotate(glm::mat4(1), glm::radians(-5.0f), glm::vec3(1.0f,0.0f,0.0f)) *
-            glm::rotate(glm::mat4(1), glm::radians(0.0f),glm::vec3(0.0f,0.0f,1.0f)),
-
-            glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(0.0f,1.0f,0.0f)) *
-            glm::rotate(glm::mat4(1), glm::radians(-1.0f), glm::vec3(1.0f,0.0f,0.0f)) *
-            glm::rotate(glm::mat4(1), glm::radians(0.0f),glm::vec3(0.0f,0.0f,1.0f)),
+    SunLightManager sunLightManager{
+        lightClipBorders, N_SUNLIGHTS, std::vector<SunLight>{
+            SunLight(glm::vec3(1.0f, 1.0f, 1.0f), -80.0f, 10.0f, 0.0f, 3.0f), // full day
+            SunLight(glm::vec3(1.0f, 0.2f, 0.2f), -30.0f, -31.0f, 0.0f, 1.5f), // sunset
+            SunLight(glm::vec3(0.3f, 0.3f, 0.6f), -5.0f, -60.0f), // night with light
+            SunLight(glm::vec3(0.0f, 0.0f, 0.0f), -1.0f, -90.0f) // night full dark
+        }
     };
-    glm::mat4 lightRotation = lightRotations[lightColorIdx];
-    /**
-     * Directional of the unique directional light in the scene --> Represents the sun light
-     * It points towards the light source
-     */
-    glm::vec3 lightDir = glm::vec3(lightRotation * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-    glm::mat4 lightProj;
-    /**
-     * Parameters used for orthogonal projection of the scene from light pov, in shadow mapping render pass
-     */
-    const float lightWorldLeft = -110.0f, lightWorldRight = 110.0f;
-    const float lightWorldBottom = lightWorldLeft * 1.0f+50, lightWorldTop = lightWorldRight * 1.0f-50;     // Now the shadow map is square (2048x2048)
-    const float lightWorldNear = -150.0f, lightWorldFar = 200.0f;
+
     //TODO: capisci se i bounds trovati per ortho vanno sempre bene o devono essere dinamici
     // Tipo se devono variare con la player position
-    /**
-     * Actual projection matrix used to render the scene from light pov, in shadow mapping render pass
-     */
-    glm::mat4 lightVP;
+
     /** Debug vector present in DSL for shadow map. Basic version is vec4(0,0,0,0)
      * if debugLightView.x == 1.0, the terrain and buildings render only white if lit and black if in shadow
      * if debugLightView.x == 2.0, the terrain and buildings show only the point lights illumination
@@ -286,22 +249,6 @@ class CGProject : public BaseProject {
 	void localInit() {
         Tvoid.init(this, "assets/textures/void.png", VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
-        // ------ LIGHT PROJECTINO MAT COMPUTATION ------
-        /* Light projection matrix is computed using an orthographic projection
-         * A rotation is beforehand applied, to take into account the light direction --> projection from light's pov
-         *      To do this, the inverse of lightRotation matrix is applied
-         *      (inverse because we need to invert the rotation of the world scene to get the light's view)
-         * We need as output NDC coordinates (Normalized Device/Screen Coord) the range [-1,1] for x and y, and [0,1] for z
-         * To do this used glm::orth, fixing
-            - y: is inverted wrt to vulkan    --> apply scale of factor -1
-            - z: in vulkan is [0,1], but ortho (for glm) computes it in [-1,1]    --> apply scale of factor 0.5 and translation of 0.5
-        */
-        auto vulkanCorrection =
-                glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.5f)) *   // translation of axis z
-                glm::scale(glm::mat4(1.0), glm::vec3(1.0f, -1.0f, 0.5f));       // scale of axis y and z
-        lightProj = vulkanCorrection * glm::ortho(lightWorldLeft, lightWorldRight, lightWorldBottom, lightWorldTop, lightWorldNear, lightWorldFar);
-        lightVP = lightProj * glm::inverse(lightRotation); // inverse because we need to invert the rotation of the world scene to get the light's view
-
 		// --------- DSL INITIALIZATION ---------
 		DSLshadowMap.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowMapUBO), 1},
@@ -329,7 +276,7 @@ class CGProject : public BaseProject {
         });
 		DSLskybox.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomSkyboxUBO), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, nLightColors}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, N_SUNLIGHTS}
 		});
         DSLchar.init(this, {
             {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -337,7 +284,7 @@ class CGProject : public BaseProject {
         DSLwater.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO), 1},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,2},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, nLightColors}
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, N_SUNLIGHTS}
 		});
         DSLgrass.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -464,14 +411,14 @@ class CGProject : public BaseProject {
 
         // --------- TECHNIQUES INITIALIZATION ---------
         std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
-        skyboxTexs.reserve(nLightColors);
-        for (int i = 0; i < nLightColors; ++i)
+        skyboxTexs.reserve(N_SUNLIGHTS);
+        for (int i = 0; i < N_SUNLIGHTS; ++i)
             skyboxTexs.push_back({true, i, VkDescriptorImageInfo{}});
         std::vector<TextureDefs> waterTexs;        // automatic fill-up of textures for water
-        waterTexs.reserve(nLightColors+2);
+        waterTexs.reserve(N_SUNLIGHTS+2);
         waterTexs.push_back({true, 0, VkDescriptorImageInfo{}});
         waterTexs.push_back({true, 1, VkDescriptorImageInfo{}});
-        for(int i = 0; i < nLightColors; ++i)
+        for(int i = 0; i < N_SUNLIGHTS; ++i)
             waterTexs.push_back({true, 2 + i, VkDescriptorImageInfo{}});
 
         PRs.resize(9);
@@ -764,10 +711,7 @@ class CGProject : public BaseProject {
         // Handle of command keys
         {
             handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
-                lightColorIdx = (lightColorIdx + 1) % nLightColors;
-                lightRotation = lightRotations[lightColorIdx];
-                lightDir = glm::vec3(lightRotation * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-                lightVP = lightProj * glm::inverse(lightRotation); // inverse because we need to invert the rotation of the world scene to get the light's view
+                sunLightManager.nextLight();
             });
             handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
                 debugLightView.x = static_cast<int>(debugLightView.x + 1) % 3;
@@ -812,8 +756,8 @@ class CGProject : public BaseProject {
         int instanceId;
         int techniqueId = 1;  // First 2 techniques are for characters, so start from 1 (so that after ++ is 2)
 		LightModelUBO lightUbo{
-            .lightDir = lightDir,
-            .lightColor = lightColors[lightColorIdx],
+            .lightDir = sunLightManager.getDirection(),
+            .lightColor = sunLightManager.getColor(),
             .eyePos = cameraPos,
             .nPointLights = 0,
         };
@@ -836,13 +780,13 @@ class CGProject : public BaseProject {
             }
 
         ShadowMapUBO shadowUbo{
-            .lightVP = lightVP
+            .lightVP = sunLightManager.getLightVP()
         };
         ShadowMapUBOChar shadowMapUboChar{
-            .lightVP = lightVP
+            .lightVP = sunLightManager.getLightVP()
         };
         ShadowClipUBO shadowClipUbo{
-            .lightVP = lightVP,
+            .lightVP = sunLightManager.getLightVP(),
             .debug = debugLightView
         };
         TimeUBO timeUbo{.time = static_cast<float>(glfwGetTime())};
@@ -851,10 +795,10 @@ class CGProject : public BaseProject {
                 .debug1 = debug1
         };
         GeomSkyboxUBO geomSkyboxUbo{
-            .skyboxTextureIdx = lightColorIdx,
+            .skyboxTextureIdx = sunLightManager.getIndex(),
             .debug = debugLightView,
         };
-        IndexUBO indexUbo{lightColorIdx};
+        IndexUBO indexUbo{sunLightManager.getIndex()};
         TerrainFactorsUBO terrainFactorsUbo{};
         PbrFactorsUBO pbrUbo{};
 		glm::mat4 AdaptMat =

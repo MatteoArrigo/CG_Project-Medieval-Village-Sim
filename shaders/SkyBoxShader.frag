@@ -7,13 +7,13 @@ layout(location = 2) in vec4 debug;
 
 layout(location = 0) out vec4 outColor;
 
-#define N_LIGHT_COLORS 4
-layout(set = 0, binding = 1) uniform sampler2D texs[N_LIGHT_COLORS];
+#define N_SUNLIGHTS 4
+layout(set = 0, binding = 1) uniform sampler2D texs[N_SUNLIGHTS];
 
 void main() {
 	if(debug.y == 1.0)
 		discard;	// Light orthographic clip space mode, skybox not rendered
-	if(texId<0 || texId>=N_LIGHT_COLORS)
+	if(texId<0 || texId>=N_SUNLIGHTS)
 		discard;	// Invalid texture ID
 
 	float yaw = -(atan(fragTexCoord.x, fragTexCoord.z)/6.2831853+0.5);

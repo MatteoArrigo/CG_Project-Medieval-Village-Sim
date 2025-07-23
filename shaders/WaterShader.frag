@@ -24,9 +24,9 @@ layout(set = 2, binding = 0) uniform IndexUBO {
     int index;
 } indexUbo;
 
-#define N_LIGHT_COLORS 4
+#define N_SUNLIGHTS 4
 layout(set = 2, binding = 1) uniform sampler2D normalMaps[2];
-layout(set = 2, binding = 2) uniform sampler2D envMap[N_LIGHT_COLORS]; // Equirectangular texture
+layout(set = 2, binding = 2) uniform sampler2D envMap[N_SUNLIGHTS]; // Equirectangular texture
 
 // Convert 3D direction vector to UVs for equirectangular map
 vec2 dirToEquirectUV(vec3 dir) {
@@ -66,7 +66,7 @@ vec2 rotateUV(vec2 uv, float angle) {
 const vec3 mainDiffColor = vec3(0.0, 0.2, 0.35);
 
 void main() {
-    if(indexUbo.index < 0 || indexUbo.index >= N_LIGHT_COLORS)
+    if(indexUbo.index < 0 || indexUbo.index >= N_SUNLIGHTS)
         discard;  // Invalid index, skip rendering
 
     // ---- Sample 2 normal maps and blend them ----
