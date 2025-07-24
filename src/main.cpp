@@ -416,7 +416,7 @@ class CGProject : public BaseProject {
         Pwater.setTransparency(true);
 
 		Pchar.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterCookTorrance.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLchar});
-		PcharPbr.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLpbr});
+		PcharPbr.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharPBR_MR.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLpbr});
         Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
 		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
@@ -738,6 +738,14 @@ class CGProject : public BaseProject {
             });
         }
 
+		// Function to show a character's name above its head whenever the player is close enough
+		glm::vec3 playerPos = cameraPos; // TODO: replace with actual player position when implemented
+		auto nearest = charManager.getNearestCharacter(playerPos);
+		if (nearest && nearest->getState() == "Idle") {
+			// Show the character's name above its head
+			txt.print(0.1f, 0.5f, "Press 'E' to interact with " + nearest->getName(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+		}
+
 		// moves the view
 		float deltaT = GameLogic();
 
@@ -819,7 +827,9 @@ class CGProject : public BaseProject {
 					pbrUbo.diffuseFactor = I->diffuseFactor;
 					pbrUbo.specularFactor = I->specularFactor;
 					pbrUbo.glossinessFactor = I->factor1;
+					// std::cout << "PBR metallicFactor: " << I->factor1 << " of characeter " << C->getName() << "\n";
 					pbrUbo.aoFactor = I->factor2;
+					// std::cout << "PBR roughnessFactor: " << I->factor2 << " of characeter " << C->getName() << "\n";
 
                     I->DS[0][0]->map(currentImage, &shadowMapUboChar, 0);
                     I->DS[1][0]->map(currentImage, &lightUbo, 0);
