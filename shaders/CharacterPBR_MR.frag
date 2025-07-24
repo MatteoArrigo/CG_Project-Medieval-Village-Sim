@@ -1,7 +1,9 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 /**
-This shader implements a Physically-Based Rendering (PBR) model using the Metallic-Roughness workflow. It calculates lighting based on material properties, textures, and global parameters. The shader supports normal mapping, diffuse mapping and specular mapping.
+This shader implements a Physically-Based Rendering (PBR) model using the Metallic-Roughness workflow.
+It calculates lighting based on material properties, textures, and global parameters.
+The shader supports normal mapping, diffuse mapping and specular mapping.
 
 Inputs for Vertex Shader:
 fragPos: Fragment position in world space.
@@ -13,11 +15,16 @@ Outputs:
 outColor: Final color output of the fragment.
 
 In particular the texture are handled as:
-- diffuseMap: Base color texture (RGB) with baked-in shading information and alpha for transparency.Implements alpha test: if Alpha channel of albedo is less than 0.5, the fragment is discarded (invisible pixel).
-- normalMap: Normal map texture (RGB) for surface detail. If the normal map is completely black (vec3(0.0)), it falls back to the default normal (surface Z = normal).
+- diffuseMap: Base color texture (RGB) with baked-in shading information and alpha for transparency.
+    Implements alpha test: if Alpha channel of albedo is less than 0.5, the fragment is discarded (invisible pixel).
+- normalMap: Normal map texture (RGB) for surface detail.
+    If the normal map is completely black (vec3(0.0)), it falls back to the default normal (surface Z = normal).
 - specularMap: specular map texture (RGB).
 
-As for how to use the metallic and roughness factors (both scalars), know that blender uses a Principled BSDF to render this textures and all the textures are exported from blender.
+The shader uses the Metallic-Roughness workflow, where:
+- Metallic Factor: Controls how metallic the surface is (0.0 = non-metallic, 1.0 = metallic).
+- Roughness Factor: Controls the surface roughness (0.0 = smooth, 1.0 = rough).
+
 */
 
 layout(location = 0) in vec3 fragPos;
@@ -40,18 +47,15 @@ layout(set = 0, binding = 0) uniform LightModelUBO {
 } lightUbo;
 
 // Material factors (set=2)
-layout(set = 2, binding = 0) uniform PbrFactorsUBO {
-    vec3 diffuseFactor;      // UNUSED (RGB)
-    vec3 specularFactor;     // UNUSED (RGB)
-    float glossinessFactor;   // scalar metallic factor
-    float aoFactor;  // scalar roughness factor
+layout(set = 2, binding = 0) uniform PbrMRFactorsUBO {
+    float metallicFactor;   // scalar metallic factor
+    float roughnessFactor;  // scalar roughness factor
 } matFactors;
 
 // Textures (set = 1)
 layout(set = 2, binding = 1) uniform sampler2D diffuseMap;
 layout(set = 2, binding = 2) uniform sampler2D normalMap;
 layout(set = 2, binding = 3) uniform sampler2D specularMap;
-layout(set = 2, binding = 4) uniform sampler2D aoMap;       // UNUSED
 
 // Constants
 const float PI = 3.14159265359;
@@ -131,9 +135,8 @@ void main() {
     vec3 specColor = texture(specularMap, fragUV).rgb;
 
     // Blend between dielectric F0 and metallic F0 (which is albedo)
-    // TODO: refactor PbrFactorsUBO attributes names
-    float metallicFactor = matFactors.glossinessFactor; // Use glossiness as metallic factor
-    float roughnessFactor = matFactors.aoFactor; // Use aoFactor as roughness
+    float metallicFactor = matFactors.metallicFactor;
+    float roughnessFactor = matFactors.roughnessFactor;
     vec3 F0 = mix(vec3(0.04), albedo, metallicFactor);
     F0 = mix(F0, specColor, 0.5); // optional mix with specular texture
 
@@ -160,7 +163,5 @@ void main() {
     vec3 ambient = vec3(0.03) * albedo;
     vec3 color = ambient + Lo;
 
-    // Gamma correction
-    // color = pow(color, vec3(1.0 / 2.2));
     outColor = vec4(color, 1.0);
 }

@@ -8,7 +8,7 @@
 
 		{"id": "player", "file": "assets/models/Characters/Player/Player.gltf", "format":"GLTF"},
 
-		{"id": "guard", "file": "assets/models/Characters/Guard/CastleGuard(+happy idle).gltf", "format":"GLTF"},
+		{"id": "guard", "file": "assets/models/Characters/Guard/CastleGuard.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 
@@ -587,7 +587,7 @@
 			{
 				"id": "player",
 				"model": "player",
-				"texture": ["player_d", "player_n", "player_s", "white"],
+				"texture": ["player_d", "player_n", "player_s"],
 				"translate": [15.0, 15.0, 15.0],
 				"scale": [10.0, 10.0, 10.0],
 				"metallicFactor": 0.5, "roughnessFactor": 0.5527864098548889
@@ -595,7 +595,7 @@
 			{
 				"id": "guard",
 				"model": "guard",
-				"texture": ["guard_d", "guard_n", "guard_s", "white"],
+				"texture": ["guard_d", "guard_n", "guard_s"],
 				"translate": [20.0, 20.0, 20.0],
 				"metallicFactor": 0.5, "roughnessFactor": 0.7487671971321106
 			}

@@ -97,6 +97,11 @@ struct TimeUBO {
     alignas(4) float time; // scalar
 };
 
+struct PbrMRFactorsUBO {
+	alignas(4) float metallicFactor;	// scalar
+	alignas(4) float roughnessFactor;	// scalar
+};
+
 struct PbrFactorsUBO {
     alignas(16) glm::vec3 diffuseFactor;      // (RGBA)
     alignas(16) glm::vec3 specularFactor;     // (RGB)
@@ -118,7 +123,7 @@ class CGProject : public BaseProject {
     // DSL general
     DescriptorSetLayout DSLlightModel, DSLgeomShadow, DSLgeomShadowTime, DSLgeomShadow4Char;
     // DSL for specific pipelines
-	DescriptorSetLayout DSLpbr, DSLpbrShadow, DSLskybox, DSLterrain,  DSLwater, DSLgrass, DSLchar;
+	DescriptorSetLayout DSLpbr, DSLcharPbr, DSLpbrShadow, DSLskybox, DSLterrain,  DSLwater, DSLgrass, DSLchar;
     // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
 
@@ -335,6 +340,12 @@ class CGProject : public BaseProject {
             {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
             {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
         });
+		DSLcharPbr.init(this, {
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PbrMRFactorsUBO), 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
+			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
+		});
 
 
         // --------- VERTEX DESCRIPTORS INITIALIZATION ---------
@@ -416,7 +427,7 @@ class CGProject : public BaseProject {
         Pwater.setTransparency(true);
 
 		Pchar.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterCookTorrance.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLchar});
-		PcharPbr.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharPBR_MR.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLpbr});
+		PcharPbr.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterPBR_MR.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLcharPbr});
         Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
 		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
@@ -444,13 +455,12 @@ class CGProject : public BaseProject {
                 {},
                 {},
                 {
-                    {true,  0, {}},     // albedo
+                    {true,  0, {}},     // diffuse
                     {true,  1, {}},     // normal
-                    {true,  2, {}},     // specular / glossiness
-                    {true,  3, {}}     // ambient occlusion
+                    {true,  2, {}},     // specular
                     }
                 }}
-        }, 4, &VDchar);
+        }, 3, &VDchar);
         PRs[2].init("SkyBox", {
             {&PshadowMapSky, {} },
             {&Pskybox, {
@@ -646,6 +656,7 @@ class CGProject : public BaseProject {
 	void localCleanup() {
 		DSLgeomShadow4Char.cleanup();
 		DSLpbr.cleanup();
+		DSLcharPbr.cleanup();
         DSLpbrShadow.cleanup();
 		DSLskybox.cleanup();
         DSLgeomShadowTime.cleanup();
@@ -782,6 +793,7 @@ class CGProject : public BaseProject {
         };
         TerrainFactorsUBO terrainFactorsUbo{};
         PbrFactorsUBO pbrUbo{};
+		PbrMRFactorsUBO pbrMRUbo{};
 		glm::mat4 AdaptMat =
 			glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f,0.0f,0.0f));
@@ -824,18 +836,14 @@ class CGProject : public BaseProject {
 					}
 					geomCharUbo.jointsCount = TMsp->size();
 
-					pbrUbo.diffuseFactor = I->diffuseFactor;
-					pbrUbo.specularFactor = I->specularFactor;
-					pbrUbo.glossinessFactor = I->factor1;
-					// std::cout << "PBR metallicFactor: " << I->factor1 << " of characeter " << C->getName() << "\n";
-					pbrUbo.aoFactor = I->factor2;
-					// std::cout << "PBR roughnessFactor: " << I->factor2 << " of characeter " << C->getName() << "\n";
+					pbrMRUbo.metallicFactor = I->factor1;
+					pbrMRUbo.roughnessFactor = I->factor2;
 
                     I->DS[0][0]->map(currentImage, &shadowMapUboChar, 0);
                     I->DS[1][0]->map(currentImage, &lightUbo, 0);
                     I->DS[1][1]->map(currentImage, &geomCharUbo, 0);
                     I->DS[1][1]->map(currentImage, &shadowClipUbo, 1);
-					I->DS[1][2]->map(currentImage, &pbrUbo, 0); // Set 2
+					I->DS[1][2]->map(currentImage, &pbrMRUbo, 0); // Set 2
 				} else {
 					std::cout << "ERROR: Unknown technique for character: " << *(I->TIp->T->id) << "\n";
 				}
