@@ -126,6 +126,7 @@ void PhysicsManager::addCapsulePlayer() {
     // Set some physics properties
     player->body->setFriction(playerConfig.friction);
     player->body->setRollingFriction(playerConfig.rollingFriction);
+    player->body->setRestitution(0.0f);
 
     dynamicsWorld->addRigidBody(player->body);
 }
@@ -604,6 +605,7 @@ void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs,
 
         obj->body->setFriction(0.5f);
         obj->body->setRollingFriction(0.1f);
+        obj->body->setRestitution(0.0f);
 
         dynamicsWorld->addRigidBody(obj->body);
         staticObjects.push_back(std::move(obj));
