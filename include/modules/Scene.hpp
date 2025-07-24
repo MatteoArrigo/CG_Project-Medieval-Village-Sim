@@ -1,3 +1,5 @@
+#pragma once
+#include "Starter.hpp"
 
 struct TechniqueInstances;
 

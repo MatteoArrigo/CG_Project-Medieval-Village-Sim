@@ -3,11 +3,15 @@
 
 #include <json.hpp>
 
-#include <PhysicsManager.hpp>
+#include "modules/Starter.hpp"
+#include "modules/Scene.hpp"
 #include "modules/TextMaker.hpp"
 #include "modules/Animations.hpp"
 #include "character/char_manager.hpp"
 #include "character/character.hpp"
+#include "PhysicsManager.hpp"
+#include "Player.hpp"
+#include "Utils.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 //TODO generale: Ripulisci e Commenta tutto il main
@@ -20,8 +24,8 @@
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
-const bool FLY_MODE = true;
-const std::string SCENE_FILEPATH = "assets/scene.json";
+const bool FLY_MODE = false;
+const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -137,7 +141,7 @@ class CGProject : public BaseProject {
 	std::vector<TechniqueRef> PRs;
 
 	// PhysicsManager for collision detection
-	PhysicsManager PhysicsMgr;
+	PhysicsManager physicsMgr;
 	PlayerConfig physicsConfig;
 
 	// to provide textual feedback
@@ -212,8 +216,9 @@ class CGProject : public BaseProject {
 
 	glm::vec4 debug1 = glm::vec4(0);
 
-	// To manage NPSs
-	CharManager charManager;
+	// Everything related to characters inside the scene
+	CharManager charManager;			// Character manager for animations
+	Player * player;						// Player manger
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -571,12 +576,27 @@ class CGProject : public BaseProject {
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
 
 		// Initialize PhysicsManager
-		if(!PhysicsMgr.initialize(FLY_MODE)) {
+		if(!physicsMgr.initialize(FLY_MODE)) {
 			exit(0);
 		}
 
-		// Add static meshes for collision detection
-		PhysicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
+		// Add player character to the PhysicsManager
+		/*
+		 * TODO: PhysicsMgr.addPlayerFromModel() creates a player object based on a model reference. The problem is that, at the current state of
+		 * this project, getShapeFromModel() is not able to correctly extract a collision shape from the player model we are using.
+		 * That method should be re-implemented to better support different model types.
+		 */
+		// int playerModelIdx = playerCharacter->getInstances()[0]->Mid; // assuming the player has only one instance
+		// const Model * playerModel = SC.M[playerModelIdx];
+		// PhysicsMgr.addPlayerFromModel(playerModel);
+		physicsMgr.addCapsulePlayer();
+
+		// Add static meshes to the PhysicsManager for collision detection
+		physicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
+
+		// Initializes the player Character reference
+		// NOTE: the first character in scene.json is supposed to be the player character
+		player = new Player(charManager.getCharacters()[0], &physicsMgr);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -712,9 +732,6 @@ class CGProject : public BaseProject {
             handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
                 debugLightView.y = 1.0 - debugLightView.y;
             });
-            handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
-                PhysicsMgr.jumpPlayer();
-            });
 
             static int curAnim = 0;
             static AnimBlender *AB = charManager.getCharacters()[0]->getAnimBlender();
@@ -740,6 +757,7 @@ class CGProject : public BaseProject {
 
 		// moves the view
 		float deltaT = GameLogic();
+		player->handleKeyActions(window, deltaT);
 
         // ----- UPDATE UNIFORMS -----
         //NOTE on code style: write all uniform variables in the following section
@@ -952,32 +970,6 @@ class CGProject : public BaseProject {
         firstTime = false;
     }
 
-
-/**
- * Handles key toggle events with debounce logic.
- *
- * @param window       Pointer to the GLFW window.
- * @param key          The GLFW key code to check.
- * @param debounce     Reference to a debounce flag to prevent repeated triggers.
- * @param curDebounce  Reference to the currently debounced key.
- * @param action       Function to execute when the key is toggled.
- *
- * When the specified key is pressed, the action is executed only once until the key is released.
- * This prevents multiple triggers from a single key press.
- */
-void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action) {
-    if (glfwGetKey(window, key)) {
-        if (!debounce) {
-            debounce = true;
-            curDebounce = key;
-            action();  // Execute the custom logic
-        }
-    } else if (curDebounce == key && debounce) {
-        debounce = false;
-        curDebounce = 0;
-    }
-}
-
 	float GameLogic() {
 		// Integration with the timers and the controllers
 		float deltaT;
@@ -987,10 +979,10 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		float MOVE_SPEED = fire ? MOVE_SPEED_RUN : MOVE_SPEED_BASE;
 
 		// Step the physics simulation
-		PhysicsMgr.update(deltaT);
+		physicsMgr.update(deltaT);
 
 		// Get current player position from physics body
-		glm::vec3 Pos = PhysicsMgr.getPlayerPosition();
+		glm::vec3 playerPos = physicsMgr.getPlayerPosition();
 
 		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
 
@@ -1007,9 +999,6 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		glm::vec3 moveDir = MOVE_SPEED * m.x * ux - MOVE_SPEED * m.z * uz;
         if(FLY_MODE)
             moveDir += MOVE_SPEED * m.y * glm::vec3(0,1,0);
-
-		// Apply movement force to physics body
-		PhysicsMgr.movePlayer(moveDir, fire);
 
 		// Camera height adjustment
 		camHeight += MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
@@ -1028,7 +1017,7 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		dampedRelDir = ef * dampedRelDir + (1.0f - ef) * relDir;
 
 		// Final world matrix computation using physics position
-		World = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
+		World = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
 
 		// Projection
 		glm::mat4 Prj = glm::perspective(FOVy, Ar, worldNearPlane, worldFarPlane);
@@ -1036,10 +1025,10 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 
 		// View
 		// Target position based on physics body position
-		glm::vec3 target = Pos + glm::vec3(0.0f, camHeight, 0.0f);
+		glm::vec3 target = playerPos + glm::vec3(0.0f, camHeight, 0.0f);
 
 		// Camera position, depending on Yaw parameter
-		glm::mat4 camWorld = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
+		glm::mat4 camWorld = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
 		cameraPos = camWorld * glm::vec4(0.0f, camHeight + camDist * sin(Pitch), camDist * cos(Pitch), 1.0);
 
 		// Damping of camera
@@ -1048,6 +1037,10 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		glm::mat4 View = glm::lookAt(dampedCamPos, target, glm::vec3(0,1,0));
 
 		ViewPrj = Prj * View;
+
+		// Move the player in the correct position (physics + model update)
+        // Note: + 180 degrees to rotate so that he sees in direction of movement
+		player->move(moveDir, Yaw + glm::radians(180.0f));
 
 		return deltaT;
 	}
