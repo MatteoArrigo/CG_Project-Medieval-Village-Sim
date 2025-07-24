@@ -127,6 +127,8 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
         }
     }, [&]() {
         isKeyPressed_SHIFT = false;
+        // Get back to walking if SHIFT is released and movement keys are pressed
+        if (isKeyPressed_W || isKeyPressed_A || isKeyPressed_S || isKeyPressed_D) walk();
     });
 
     // Handle conclusion of jump animation with smooth transitioning
