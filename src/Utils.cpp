@@ -12,7 +12,7 @@
  * When the specified key is pressed, the action is executed only once until the key is released.
  * This prevents multiple triggers from a single key press.
  */
-void Utils::handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action) {
+void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action) {
     if (glfwGetKey(window, key)) {
         if (!debounce) {
             debounce = true;
@@ -35,7 +35,7 @@ void Utils::handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& cu
  * @param onRelease    Function to execute when the key is released.
  *
  */
-void Utils::handleKeyStateChange(GLFWwindow* window, int key, bool& prevState, std::function<void()> onPress, std::function<void()> onRelease) {
+void handleKeyStateChange(GLFWwindow* window, int key, bool& prevState, std::function<void()> onPress, std::function<void()> onRelease) {
     bool currentState = glfwGetKey(window, key) == GLFW_PRESS;
     if (currentState && !prevState) {
         onPress();

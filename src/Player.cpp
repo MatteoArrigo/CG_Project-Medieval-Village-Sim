@@ -60,20 +60,20 @@ void Player::move(glm::vec3 direction, float rotation) {
 }
 
 void Player::jump() {
-    std::cout << "jump()\n";
+//    std::cout << "jump()\n";
     playerActionState = PlayerActionState::Jumping;
     playerCharacter->getAnimBlender()->Start(ANIM_JUMP_IDX, ANIM_BLEND_T);
     physicsManager->jumpPlayer();
 }
 
 void Player::walk() {
-    std::cout << "walk()\n";
+//    std::cout << "walk()\n";
     playerMovementState = PlayerMovementState::Walking;
     playerCharacter->getAnimBlender()->Start(ANIM_WALKING_IDX, ANIM_BLEND_T);
 }
 
 void Player::run() {
-    std::cout << "run()\n";
+//    std::cout << "run()\n";
     playerMovementState = PlayerMovementState::Running;
     playerCharacter->getAnimBlender()->Start(ANIM_RUNNING_IDX, ANIM_BLEND_T);
 }
@@ -88,31 +88,31 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
     time += deltaT;
 
     // Jump (modifier)
-    Utils::handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
+    handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
         lastJumpTime = time;
         jump();
     });
 
     // Walk
-    Utils::handleKeyStateChange(window, GLFW_KEY_W, isKeyPressed_W, [&]() {
+    handleKeyStateChange(window, GLFW_KEY_W, isKeyPressed_W, [&]() {
         isKeyPressed_W = true;
         (playerMovementState == PlayerMovementState::Running) ? run() : walk();
     }, [&]() {
         isKeyPressed_W = false;
     });
-    Utils::handleKeyStateChange(window, GLFW_KEY_A, isKeyPressed_A, [&]() {
+    handleKeyStateChange(window, GLFW_KEY_A, isKeyPressed_A, [&]() {
         isKeyPressed_A = true;
         (playerMovementState == PlayerMovementState::Running) ? run() : walk();
     }, [&]() {
         isKeyPressed_A = false;
     });
-    Utils::handleKeyStateChange(window, GLFW_KEY_S, isKeyPressed_S, [&]() {
+    handleKeyStateChange(window, GLFW_KEY_S, isKeyPressed_S, [&]() {
         isKeyPressed_S = true;
         (playerMovementState == PlayerMovementState::Running) ? run() : walk();
     }, [&]() {
         isKeyPressed_S = false;
     });
-    Utils::handleKeyStateChange(window, GLFW_KEY_D, isKeyPressed_D, [&]() {
+    handleKeyStateChange(window, GLFW_KEY_D, isKeyPressed_D, [&]() {
         isKeyPressed_D = true;
         (playerMovementState == PlayerMovementState::Running) ? run() : walk();
     }, [&]() {
@@ -120,7 +120,7 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
     });
 
     // Run (modifier)
-    Utils::handleKeyStateChange(window, GLFW_KEY_LEFT_SHIFT, isKeyPressed_SHIFT, [&]() {
+    handleKeyStateChange(window, GLFW_KEY_LEFT_SHIFT, isKeyPressed_SHIFT, [&]() {
         isKeyPressed_SHIFT = true;
         if (playerMovementState == PlayerMovementState::Walking || playerMovementState == PlayerMovementState::Running) {
             run();

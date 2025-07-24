@@ -27,7 +27,7 @@ struct PlayerConfig {
     glm::vec3 startPosition = glm::vec3(30,10,15);
 
     float moveSpeed = 2.3f;
-    float runSpeed = 3.0f;
+    float runSpeed = 3.5f;
     float jumpForce = 350.0f;
     float airControl = 0.3f; // On-air control factor
     float groundDamping = 0.5f; // Damping factor when grounded
