@@ -1,6 +1,7 @@
 #include <PhysicsManager.hpp>
 #include <iostream>
 
+struct VertexDescriptor;
 // Utility functions for GLM <-> Bullet conversion
 btVector3 glmToBt(const glm::vec3& v) {
     return btVector3(v.x, v.y, v.z);
@@ -38,7 +39,6 @@ bool PhysicsManager::initialize(bool flyMode_, const PlayerConfig& playerCfg, co
     try {
         initializePhysicsWorld();
         createTerrain();
-        createPlayer();
 
         std::cout << "PhysicsManager initialized successfully" << std::endl;
         return true;
@@ -94,7 +94,11 @@ void PhysicsManager::createTerrain() {
     dynamicsWorld->addRigidBody(terrain->body);
 }
 
-void PhysicsManager::createPlayer() {
+/*
+ * This function creates a dummy player object with a capsule shape inside the physics world.
+ * The shape is not based on any character model. Will be used configuration settings from `playerConfig`.
+ */
+void PhysicsManager::addCapsulePlayer() {
     player = std::make_unique<PhysicsObject>();
 
     // Create capsule shape
@@ -117,11 +121,45 @@ void PhysicsManager::createPlayer() {
     player->body->setActivationState(DISABLE_DEACTIVATION);
 
     // Set some physics properties
-    player->body->setFriction(0.5f);
-    player->body->setRollingFriction(0.1f);
+    player->body->setFriction(playerConfig.friction);
+    player->body->setRollingFriction(playerConfig.rollingFriction);
 
     dynamicsWorld->addRigidBody(player->body);
 }
+
+void PhysicsManager::addPlayerFromModel(const Model* modelRef) {
+    player = std::make_unique<PhysicsObject>();
+
+    // Create shape from model
+    player->shape = getShapeFromModel(modelRef);
+    if (!player->shape) {
+        std::cerr << "Failed to create collision shape from model." << std::endl;
+        return;
+    }
+
+    btTransform startTransform;
+    startTransform.setIdentity();
+    startTransform.setOrigin(glmToBt(playerConfig.startPosition));
+
+    player->motionState = new btDefaultMotionState(startTransform);
+    player->initialPosition = playerConfig.startPosition;
+
+    btVector3 inertia(0, 0, 0);
+    player->shape->calculateLocalInertia(playerConfig.mass, inertia);
+
+    btRigidBody::btRigidBodyConstructionInfo playerInfo(playerConfig.mass, player->motionState, player->shape, inertia);
+    player->body = new btRigidBody(playerInfo);
+
+    // Prevent deactivation
+    player->body->setActivationState(DISABLE_DEACTIVATION);
+
+    // Set some physics properties
+    player->body->setFriction(playerConfig.friction);
+    player->body->setRollingFriction(playerConfig.rollingFriction);
+
+    dynamicsWorld->addRigidBody(player->body);
+}
+
 
 void PhysicsManager::update(float deltaTime) {
     if (!dynamicsWorld) return;
@@ -284,11 +322,48 @@ btTransform glmMat4ToBtTransform(const glm::mat4& mat) {
     return transform;
 }
 
-//TODO: discuti
-// Se si usano tutte le mesh per le collision, compaiono oggetti invisibili sulle boardwalk...
-// Secondo me sono mesh per cui non viene calcolato bene il posizionamento
-// Per ora ho risolto usando solo gli edifici e il boardwalk per le collision
-// Il problema specifico delle boardwalk sembra essere dato dalle fence
+btCollisionShape * PhysicsManager::getShapeFromModel(const Model* modelRef) {
+    const Model &model = *modelRef;
+    const std::vector<unsigned char> &vertices = model.vertices;
+    const std::vector<uint32_t> &indices = model.indices;
+    const VertexDescriptor *VD = model.VD;
+
+    const uint32_t stride = VD->Bindings[0].stride;
+    const uint32_t posOffset = VD->Position.offset;
+    std::vector<float> Xs, Ys, Zs;
+
+    for (size_t i = 0; i + 3 < indices.size(); i += 4) {
+        for (int j = 0; j < 4; ++j) {
+            const uint32_t idx = indices[i + j];
+            const size_t base = idx * stride + posOffset;
+
+            float x = *reinterpret_cast<const float*>(&vertices[base]);
+            float y = *reinterpret_cast<const float*>(&vertices[base + 4]);
+            float z = *reinterpret_cast<const float*>(&vertices[base + 8]);
+
+            Xs.push_back(x);
+            Ys.push_back(y);
+            Zs.push_back(z);
+        }
+    }
+
+    if (Xs.size() >= 9) {
+        // At least 3 triangles (9 vertices)
+        btTriangleMesh* mesh = new btTriangleMesh();
+
+        // Each 3 vertices form a triangle
+        for (size_t i = 0; i + 2 < Xs.size(); i += 3) {
+            btVector3 v0(Xs[i], Ys[i], Zs[i]);
+            btVector3 v1(Xs[i + 1], Ys[i + 1], Zs[i + 1]);
+            btVector3 v2(Xs[i + 2], Ys[i + 2], Zs[i + 2]);
+            mesh->addTriangle(v0, v1, v2);
+        }
+
+        return new btBvhTriangleMeshShape(mesh, true);
+    };
+
+    return nullptr; // No valid shape created
+}
 
 void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount) {
     for (int instanceIdx=0; instanceIdx<instanceCount; instanceIdx++) {
@@ -307,52 +382,19 @@ void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs,
         const Instance* instanceRef = instanceRefs[instanceIdx];
         const Model* modelRef = modelRefs[modelIdx];
 
-        const Model &model = *modelRef;
-        const std::vector<unsigned char> &vertices = model.vertices;
-        const std::vector<uint32_t> &indices = model.indices;
-        const VertexDescriptor *VD = model.VD;
+        auto obj = std::make_unique<PhysicsObject>();
 
-        uint32_t stride = VD->Bindings[0].stride;
-        uint32_t posOffset = VD->Position.offset;
-        std::vector<float> Xs, Ys, Zs;
+        obj->shape = getShapeFromModel(modelRef);
+        btTransform transform = glmMat4ToBtTransform(instanceRef->Wm);
+        obj->motionState = new btDefaultMotionState(transform);
+        btRigidBody::btRigidBodyConstructionInfo info(0.0f, obj->motionState, obj->shape);
+        obj->body = new btRigidBody(info);
 
-        for (size_t i = 0; i + 3 < indices.size(); i += 4) {
-            for (int j = 0; j < 4; ++j) {
-                uint32_t idx = indices[i + j];
-                size_t base = idx * stride + posOffset;
+        obj->body->setFriction(0.5f);
+        obj->body->setRollingFriction(0.1f);
 
-                float x = *reinterpret_cast<const float*>(&vertices[base]);
-                float y = *reinterpret_cast<const float*>(&vertices[base + 4]);
-                float z = *reinterpret_cast<const float*>(&vertices[base + 8]);
-
-                Xs.push_back(x);
-                Ys.push_back(y);
-                Zs.push_back(z);
-            }
-        }
-
-        if (Xs.size() >= 9) { // At least 3 triangles (9 vertices)
-            btTriangleMesh* mesh = new btTriangleMesh();
-
-            // Each 3 vertices form a triangle
-            for (size_t i = 0; i + 2 < Xs.size(); i += 3) {
-                btVector3 v0(Xs[i], Ys[i], Zs[i]);
-                btVector3 v1(Xs[i + 1], Ys[i + 1], Zs[i + 1]);
-                btVector3 v2(Xs[i + 2], Ys[i + 2], Zs[i + 2]);
-                mesh->addTriangle(v0, v1, v2);
-            }
-
-            auto obj = std::make_unique<PhysicsObject>();
-            obj->shape = new btBvhTriangleMeshShape(mesh, true);
-
-            btTransform transform = glmMat4ToBtTransform(instanceRef->Wm);
-
-            obj->motionState = new btDefaultMotionState(transform);
-            btRigidBody::btRigidBodyConstructionInfo info(0.0f, obj->motionState, obj->shape);
-            obj->body = new btRigidBody(info);
-            dynamicsWorld->addRigidBody(obj->body);
-            staticObjects.push_back(std::move(obj));
-        }
+        dynamicsWorld->addRigidBody(obj->body);
+        staticObjects.push_back(std::move(obj));
     }
 }
 
