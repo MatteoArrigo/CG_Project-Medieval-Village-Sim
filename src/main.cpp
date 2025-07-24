@@ -25,7 +25,7 @@
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = false;
-const std::string SCENE_FILEPATH = "assets/scene.json";
+const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -726,23 +726,23 @@ class CGProject : public BaseProject {
 
         // Handle of command keys
         {
-            Utils::handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
+            handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
                 debugLightView.x = 1.0 - debugLightView.x;
             });
-            Utils::handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
+            handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
                 debugLightView.y = 1.0 - debugLightView.y;
             });
 
             static int curAnim = 0;
             static AnimBlender *AB = charManager.getCharacters()[0]->getAnimBlender();
-            Utils::handleKeyToggle(window, GLFW_KEY_O, debounce, curDebounce, [&]() {
+            handleKeyToggle(window, GLFW_KEY_O, debounce, curDebounce, [&]() {
                 curAnim = (curAnim + 1) % 5;
                 AB->Start(curAnim, 0.5);
                 std::cout << "Playing anim: " << curAnim << "\n";
             });
 
             // Handle the E key for Character interaction
-            Utils::handleKeyToggle(window, GLFW_KEY_E, debounce, curDebounce, [&]() {
+            handleKeyToggle(window, GLFW_KEY_E, debounce, curDebounce, [&]() {
                 glm::vec3 playerPos = cameraPos; // TODO: replace with actual player position when implemented
                 auto nearest = charManager.getNearestCharacter(playerPos);
                 if (nearest) {
@@ -1039,6 +1039,7 @@ class CGProject : public BaseProject {
 		ViewPrj = Prj * View;
 
 		// Move the player in the correct position (physics + model update)
+        // Note: + 180 degrees to rotate so that he sees in direction of movement
 		player->move(moveDir, Yaw + glm::radians(180.0f));
 
 		return deltaT;

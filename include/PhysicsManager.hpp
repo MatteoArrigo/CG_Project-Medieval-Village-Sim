@@ -26,7 +26,7 @@ struct PlayerConfig {
     float mass = 100.0f;
     glm::vec3 startPosition = glm::vec3(30,10,15);
 
-    float moveSpeed = 2.3f;
+    float moveSpeed = 3.5f;
     float runSpeed = 3.5f;
     float jumpForce = 350.0f;
     float airControl = 0.3f; // On-air control factor

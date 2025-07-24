@@ -6,6 +6,12 @@
 		{"id": "a3", "file": "assets/models/Characters/Uomo/pointing.gltf", "format":"GLTF"},
 		{"id": "a4", "file": "assets/models/Characters/Uomo/waving.gltf", "format":"GLTF"},
 
+		{"id": "player", "file": "assets/models/Characters/Player/Player.gltf", "format":"GLTF"},
+		{"id": "player_breathing_idle", "file": "assets/models/Characters/Player/BreathingIdle.gltf", "format":"GLTF"},
+		{"id": "player_running", "file": "assets/models/Characters/Player/Running.gltf", "format":"GLTF"},
+		{"id": "player_jumping", "file": "assets/models/Characters/Player/Jumping.gltf", "format":"GLTF"},
+
+
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
 		{"id":  "water", "file":  "assets/models/Water.gltf", "format":"GLTF"},
@@ -14,6 +20,15 @@
 		{"id": "village_props", "file": "assets/models/Props.gltf", "format":"GLTF"}
 	],
 	"characters": [
+		{
+			"id": "player",
+			"name": "Player",
+			"instanceIds": ["player"],
+			"animList": ["player", "player_breathing_idle", "player_jumping", "player_running"],
+			"startEndFrames": [[0,32], [0,299], [10,45], [0,20]],
+			"charStates": ["Walking", "BreathingIdle", "Jumping", "Running"],
+			"BaseTrackName": "Armature|mixamo.com|Layer0"
+		},
 		{
 			"id": "char1",
 			"name": "Mario",
@@ -30,6 +45,7 @@
 
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
 		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
+		{"id": "player",  "VD": "VDchar",  "model": "Paladin_J_Nordstrom", "node": "Paladin_J_Nordstrom", "meshId": 0, "asset": "player", "format":"ASSET"},
 
 		{"id": "terrain_far_01-00", "VD": "VDtan", "model": "terrain_far_01.001", "node": "terrain_far_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
 		{"id": "terrain_near_01-00", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
@@ -57,6 +73,9 @@
 		{"id": "void", "texture": "assets/textures/void.png", "format": "C"},
 		{"id": "transparent", "texture": "assets/textures/transparent.png", "format": "C"},
 		{"id": "st",    "texture": "assets/textures/uomo/Ch01_1001_Diffuse.png", "format": "C"},
+		{"id": "player_d",    "texture": "assets/textures/player/Paladin_diffuse.png", "format": "C"},
+		{"id": "player_n",    "texture": "assets/textures/player/Paladin_normal.png", "format": "D"},
+		{"id": "player_s",    "texture": "assets/textures/player/Paladin_specular.png", "format": "D"},
 
 		{"id": "terrain_01_m", "texture": "assets/textures/terrain/terrain_01_m.png", "format": "D"},
 		{"id": "terrain_01_n", "texture": "assets/textures/terrain/terrain_01_n.png", "format": "D"},
@@ -100,6 +119,7 @@
 		{"id": "Ferns_Albedo_Opacity", "texture": "assets/textures/vegetation/Ferns_Albedo_Opacity.png", "format": "D"},
 		{"id": "Ferns_Normal", "texture": "assets/textures/vegetation/Ferns_Normal.png", "format": "D"}
 	],
+	"instances_no_visible": [],
 	"instances": [
 		{"technique": "CharCookTorrance", "elements": [
 			{"id": "hm0",  "model": "hm0",   "texture": ["st"],
@@ -111,13 +131,20 @@
 				"scale": [5,5,5]
 			},
 			{"id": "hm2",  "model": "hm0",   "texture": ["st"],
-				"translate": [20, 20, 20]
+				"translate": [20, 20, 20],
+				"scale": [15,15,15]
 			},
 			{"id": "hm3",  "model": "hm1",   "texture": ["st"],
-				"translate": [20, 20, 20]
+				"translate": [20, 20, 20],
+				"scale": [15,15,15]
 			}
 		]},
 		{"technique": "CharPBR", "elements":  [
+			{
+				"id": "player",
+				"model": "player",
+				"texture": ["player_d", "player_n", "player_s", "white"]
+			}
 		]},
 		{"technique": "SkyBox", "elements": [
 			{"id": "skybox",  "model": "skybox",   "texture": ["skybox"]}

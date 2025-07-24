@@ -30,7 +30,7 @@ private:
     PhysicsManager * physicsManager;
 
     // Scaling factor for the player character model. Hardcoded and should be adjusted based on the imported model.
-    glm::vec3 playerScale = glm::vec3(1.33f);;
+    const glm::vec3 playerScale = glm::vec3(1.33f);;
 
     // Current player motion states.
     //      Movements:  motion related to movement of player in scene space

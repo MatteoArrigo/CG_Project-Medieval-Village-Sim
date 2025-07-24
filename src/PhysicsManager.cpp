@@ -365,11 +365,6 @@ btCollisionShape * PhysicsManager::getShapeFromModel(const Model* modelRef) {
     return nullptr; // No valid shape created
 }
 
-//TODO: discuti
-// Se si usano tutte le mesh per le collision, compaiono oggetti invisibili sulle boardwalk...
-// Secondo me sono mesh per cui non viene calcolato bene il posizionamento
-// Per ora ho risolto usando solo gli edifici e il boardwalk per le collision
-// Il problema specifico delle boardwalk sembra essere dato dalle fence
 void PhysicsManager::addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount) {
     for (int instanceIdx=0; instanceIdx<instanceCount; instanceIdx++) {
 
