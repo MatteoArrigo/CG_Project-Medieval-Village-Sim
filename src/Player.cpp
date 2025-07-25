@@ -96,25 +96,25 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
     // Walk
     handleKeyStateChange(window, GLFW_KEY_W, isKeyPressed_W, [&]() {
         isKeyPressed_W = true;
-        (playerMovementState == PlayerMovementState::Running) ? run() : walk();
+        isKeyPressed_SHIFT ? run() : walk();
     }, [&]() {
         isKeyPressed_W = false;
     });
     handleKeyStateChange(window, GLFW_KEY_A, isKeyPressed_A, [&]() {
         isKeyPressed_A = true;
-        (playerMovementState == PlayerMovementState::Running) ? run() : walk();
+        isKeyPressed_SHIFT ? run() : walk();
     }, [&]() {
         isKeyPressed_A = false;
     });
     handleKeyStateChange(window, GLFW_KEY_S, isKeyPressed_S, [&]() {
         isKeyPressed_S = true;
-        (playerMovementState == PlayerMovementState::Running) ? run() : walk();
+        isKeyPressed_SHIFT ? run() : walk();
     }, [&]() {
         isKeyPressed_S = false;
     });
     handleKeyStateChange(window, GLFW_KEY_D, isKeyPressed_D, [&]() {
         isKeyPressed_D = true;
-        (playerMovementState == PlayerMovementState::Running) ? run() : walk();
+        isKeyPressed_SHIFT ? run() : walk();
     }, [&]() {
         isKeyPressed_D = false;
     });
@@ -127,6 +127,8 @@ void Player::handleKeyActions(GLFWwindow * window, double deltaT) {
         }
     }, [&]() {
         isKeyPressed_SHIFT = false;
+        // Get back to walking if SHIFT is released and movement keys are pressed
+        if (isKeyPressed_W || isKeyPressed_A || isKeyPressed_S || isKeyPressed_D) walk();
     });
 
     // Handle conclusion of jump animation with smooth transitioning
