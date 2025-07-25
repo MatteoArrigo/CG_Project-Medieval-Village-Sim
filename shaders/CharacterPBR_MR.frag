@@ -160,7 +160,7 @@ void main() {
     vec3 Lo = (kD * albedo / PI + specular) * irradiance;
 
     // Final color (no IBL for simplicity)
-    vec3 ambient = vec3(0.03) * albedo;
+    vec3 ambient = vec3(0.15) * albedo;
     vec3 color = ambient + Lo;
 
     outColor = vec4(color, 1.0);

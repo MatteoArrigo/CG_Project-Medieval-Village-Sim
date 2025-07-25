@@ -749,14 +749,6 @@ class CGProject : public BaseProject {
             });
         }
 
-		// Function to show a character's name above its head whenever the player is close enough
-		glm::vec3 playerPos = cameraPos; // TODO: replace with actual player position when implemented
-		auto nearest = charManager.getNearestCharacter(playerPos);
-		if (nearest && nearest->getState() == "Idle") {
-			// Show the character's name above its head
-			txt.print(0.1f, 0.5f, "Press 'E' to interact with " + nearest->getName(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
-		}
-
 		// moves the view
 		float deltaT = GameLogic();
 
@@ -835,6 +827,12 @@ class CGProject : public BaseProject {
                         shadowMapUboChar.model[im] = geomCharUbo.mMat[im];
 					}
 					geomCharUbo.jointsCount = TMsp->size();
+
+					// Old code for PBR specular/glossiness
+					// pbrUbo.diffuseFactor = I->diffuseFactor;
+					// pbrUbo.specularFactor = I->specularFactor;
+					// pbrUbo.glossinessFactor = I->factor1;
+					// pbrUbo.aoFactor = I->factor2;
 
 					pbrMRUbo.metallicFactor = I->factor1;
 					pbrMRUbo.roughnessFactor = I->factor2;
