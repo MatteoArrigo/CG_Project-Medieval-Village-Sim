@@ -95,7 +95,7 @@ public:
             std::exit(-1);
         }
 
-        // ------ LIGHT PROJECTINO MAT COMPUTATION ------
+        // ------ LIGHT PROJECTION MAT COMPUTATION ------
         /* Light projection matrix is computed using an orthographic projection
          * A rotation is beforehand applied, to take into account the light direction --> projection from light's pov
          *      To do this, the inverse of lightRotation matrix is applied

@@ -618,7 +618,8 @@
 			{"id": "skybox",  "model": "skybox",   "texture": [
 				"day",
 				"sunset",
-				"night", "night"
+				"night",
+				"night2"
 			]}
 		]},
 		{"technique": "Terrain", "elements": [

@@ -20,11 +20,8 @@
 // Si potrebbe implementare IBL nelle altre tecniche, come PBR+IBL, usando radiance cubemap, quindi preprocessata
 // Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
 
-//TODO: C'è qualcosa che non va con multiple istance di characters dello stesso modello
 
 // TODO: si potrebbe ancora cercare una skybox con la luna fatta meglio
-
-// TODO Ora switch a running tramite left-shift ok, ma quando rilascio shift non torna a walking
 
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
