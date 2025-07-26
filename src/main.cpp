@@ -995,10 +995,14 @@ class CGProject : public BaseProject {
 		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
 		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
 
-		// Calculate desired movement vector
-		glm::vec3 moveDir = MOVE_SPEED * m.x * ux - MOVE_SPEED * m.z * uz;
-        if(FLY_MODE)
-            moveDir += MOVE_SPEED * m.y * glm::vec3(0,1,0);
+		glm::vec3 rawMoveDir = m.x * ux - m.z * uz;
+		if (FLY_MODE)
+			rawMoveDir += m.y * glm::vec3(0,1,0);
+
+		if (glm::length(rawMoveDir) > 0.0f)
+			rawMoveDir = glm::normalize(rawMoveDir);
+
+		glm::vec3 moveDir = MOVE_SPEED * rawMoveDir;
 
 		// Camera height adjustment
 		camHeight += MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
