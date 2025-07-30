@@ -12,14 +12,16 @@
 #include "PhysicsManager.hpp"
 #include "Player.hpp"
 #include "Utils.hpp"
+#include "sun_light.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-//TODO generale: Ripulisci e Commenta tutto il main
-
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
-// Nell'acqua la stiamo usando per la parte speculare
-// Nei fragment shader come PBR si potrebbe usare per parte ambient
+// Nota: nell'acqua usiamo ora la equirectangular map per la reflection, non preprocessata
+// Si potrebbe implementare IBL nelle altre tecniche, come PBR+IBL, usando radiance cubemap, quindi preprocessata
 // Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
+
+
+// TODO: si potrebbe ancora cercare una skybox con la luna fatta meglio
 
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
@@ -53,16 +55,19 @@ struct VertexTan {
 	glm::vec4 tan;
 };
 
-#define MAX_POINT_LIGHTS 10
+#define MAX_POINT_LIGHTS 20
 struct LightModelUBO {
 	alignas(16) glm::vec3 lightDir;
 	alignas(16) glm::vec4 lightColor;
 	alignas(16) glm::vec3 eyePos;
 
-    alignas(4) int nPointLights;
-    alignas(16) glm::vec3 pointLightPositions[MAX_POINT_LIGHTS];
+    // For padding mismatch reasons, positions are in vec4 format, but the last coordinate is not used
+    alignas(16) glm::vec4 pointLightPositions[MAX_POINT_LIGHTS];
 	alignas(16) glm::vec4 pointLightColors[MAX_POINT_LIGHTS];
+    alignas(4) int nPointLights;
 };
+// NOTE: Up to now, the point light calculations are present only in terrain and buidlings pipelines.
+// If you want the torches to enlight also other meshes, add those calculations in the corresponding pipelines, too
 
 #define MAX_JOINTS 100
 struct GeomCharUBO {
@@ -94,11 +99,16 @@ struct ShadowClipUBO {
 
 struct GeomSkyboxUBO {
 	alignas(16) glm::mat4 mvpMat;
+    alignas(4) int skyboxTextureIdx;
     alignas(16) glm::vec4 debug;
 };
 
 struct TimeUBO {
     alignas(4) float time; // scalar
+};
+
+struct IndexUBO {
+    alignas(4) int idx;
 };
 
 struct PbrFactorsUBO {
@@ -122,7 +132,8 @@ class CGProject : public BaseProject {
     // DSL general
     DescriptorSetLayout DSLlightModel, DSLgeomShadow, DSLgeomShadowTime, DSLgeomShadow4Char;
     // DSL for specific pipelines
-	DescriptorSetLayout DSLpbr, DSLpbrShadow, DSLskybox, DSLterrain,  DSLwater, DSLgrass, DSLchar;
+	DescriptorSetLayout DSLpbr, DSLpbrShadow, DSLskybox, DSLterrain, DSLwater,
+                        DSLgrass, DSLchar, DSLtorches;
     // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
 
@@ -132,8 +143,10 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDpos;
 	VertexDescriptor VDtan;
 	RenderPass RPshadow, RP;
-	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings;
+	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings, Ptorches;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
+
+    Texture Tvoid;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Scene SC;
@@ -179,37 +192,27 @@ class CGProject : public BaseProject {
     const float MAX_CAM_DIST = 7.5;
     const float MIN_CAM_DIST = 1.5;
 
+    #define N_SUNLIGHTS 4
+    const LightClipBorders lightClipBorders{
+        -110.0f, 110.0f,
+        -60.0f, 60.0f,
+        -150.0f, 200.0f
+    };
+    SunLightManager sunLightManager{
+        lightClipBorders, N_SUNLIGHTS, std::vector<SunLight>{
+            SunLight(glm::vec3(1.0f, 1.0f, 1.0f), -80.0f, 10.0f, 0.0f, 3.0f), // full day
+            SunLight(glm::vec3(1.0f, 0.2f, 0.2f), -30.0f, -31.0f, 0.0f, 1.5f), // sunset
+            SunLight(glm::vec3(0.3f, 0.3f, 0.6f), -5.0f, -60.0f), // night with light
+            SunLight(glm::vec3(0.0f, 0.0f, 0.0f), -1.0f, -90.0f) // night full dark
+        }
+    };
 
-    const glm::vec4 lightColor = glm::vec4(1.0f, 0.7f, 0.7f, 1.0f);
-    /**
-     * Matrix defining the light rotation to apply to +z axis to get the light direction.
-     * It is used
-     *  - applied to +z axis to compute light direction
-     *  - applied in its inverse form to compute the light projection matrix for shadow map
-     */
-    const glm::mat4 lightRotation = glm::rotate(glm::mat4(1), glm::radians(-31.0f),
-        glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-30.0f),
-         glm::vec3(1.0f,0.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(0.0f),
-         glm::vec3(0.0f,0.0f,1.0f));
-    /**
-     * Directional of the unique directional light in the scene --> Represents the sun light
-     * It points towards the light source
-     */
-    const glm::vec3 lightDir = glm::vec3(lightRotation * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-    /**
-     * Parameters used for orthogonal projection of the scene from light pov, in shadow mapping render pass
-     */
-    const float lightWorldLeft = -110.0f, lightWorldRight = 110.0f;
-    const float lightWorldBottom = lightWorldLeft * 1.0f+50, lightWorldTop = lightWorldRight * 1.0f-50;     // Now the shadow map is square (2048x2048)
-    const float lightWorldNear = -150.0f, lightWorldFar = 200.0f;
     //TODO: capisci se i bounds trovati per ortho vanno sempre bene o devono essere dinamici
     // Tipo se devono variare con la player position
-    /**
-     * Actual projection matrix used to render the scene from light pov, in shadow mapping render pass
-     */
-    glm::mat4 lightVP;
+
     /** Debug vector present in DSL for shadow map. Basic version is vec4(0,0,0,0)
-     * if debugLightView.x == 1.0, the terrain renders only white if lit and black if in shadow
+     * if debugLightView.x == 1.0, the terrain and buildings render only white if lit and black if in shadow
+     * if debugLightView.x == 2.0, the terrain and buildings show only the point lights illumination
      * if debugLightView.y == 1.0, the light's clip space is visualized instead of the basic perspective view
      */
     glm::vec4 debugLightView = glm::vec4(0.0);
@@ -248,22 +251,7 @@ class CGProject : public BaseProject {
 	}
 
 	void localInit() {
-
-        // ------ LIGHT PROJECTINO MAT COMPUTATION ------
-        /* Light projection matrix is computed using an orthographic projection
-         * A rotation is beforehand applied, to take into account the light direction --> projection from light's pov
-         *      To do this, the inverse of lightRotation matrix is applied
-         *      (inverse because we need to invert the rotation of the world scene to get the light's view)
-         * We need as output NDC coordinates (Normalized Device/Screen Coord) the range [-1,1] for x and y, and [0,1] for z
-         * To do this used glm::orth, fixing
-            - y: is inverted wrt to vulkan    --> apply scale of factor -1
-            - z: in vulkan is [0,1], but ortho (for glm) computes it in [-1,1]    --> apply scale of factor 0.5 and translation of 0.5
-        */
-        auto vulkanCorrection =
-                glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.5f)) *   // translation of axis z
-                glm::scale(glm::mat4(1.0), glm::vec3(1.0f, -1.0f, 0.5f));       // scale of axis y and z
-        glm::mat4 lightProj = vulkanCorrection * glm::ortho(lightWorldLeft, lightWorldRight, lightWorldBottom, lightWorldTop, lightWorldNear, lightWorldFar);
-        lightVP = lightProj * glm::inverse(lightRotation); // inverse because we need to invert the rotation of the world scene to get the light's view
+        Tvoid.init(this, "assets/textures/void.png", VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 		// --------- DSL INITIALIZATION ---------
 		DSLshadowMap.init(this, {
@@ -284,7 +272,7 @@ class CGProject : public BaseProject {
 		DSLgeomShadowTime.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomUBO),       1},
 			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
-			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO),       1},
+			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, sizeof(TimeUBO),       1},
 		});
 		DSLgeomShadow4Char.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomCharUBO),   1},
@@ -292,21 +280,15 @@ class CGProject : public BaseProject {
         });
 		DSLskybox.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomSkyboxUBO), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, N_SUNLIGHTS}
 		});
         DSLchar.init(this, {
             {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
         DSLwater.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
-			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
-			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4,1},
-			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5,1},
-			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6,1},
-			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7,1}
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO), 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,2},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, N_SUNLIGHTS}
 		});
         DSLgrass.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -339,6 +321,9 @@ class CGProject : public BaseProject {
             {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
             {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
             {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
+        });
+		DSLtorches.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
         });
 
 
@@ -380,7 +365,6 @@ class CGProject : public BaseProject {
 		VDRs[2].init("VDpos",   &VDpos);
 		VDRs[3].init("VDtan",   &VDtan);
 
-
         // --------- RENDER PASSES INITIALIZATION ---------
         /* RP 1: used for shadow map, rendered from light point of view
          * The options set, different by default ones, are for writing a depth buffer instead of color
@@ -393,7 +377,8 @@ class CGProject : public BaseProject {
 		/* RP 2: used for the main rendering
 		 * Now default options of starter.hpp are used, so it will write color and depth  */
         RP.init(this);
-		RP.properties[0].clearValue = {0.0f,0.9f,1.0f,1.0f};
+        // Grey as default clear value
+		RP.properties[0].clearValue = {0.5f,0.5f,0.5f,1.0f};
         /* Actual creation of the Render Pass for shadow mapping.
             It is done here to be sure the attachment of RPshadow is created and can be linked as input in RP */
         RPshadow.create();
@@ -424,11 +409,23 @@ class CGProject : public BaseProject {
 		PcharPbr.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLpbr});
         Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
-		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
-		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
+		Pbuildings.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
+		Pprops.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
+		Ptorches.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/TorchPinShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLtorches});
 
         // --------- TECHNIQUES INITIALIZATION ---------
-        PRs.resize(8);
+        std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
+        skyboxTexs.reserve(N_SUNLIGHTS);
+        for (int i = 0; i < N_SUNLIGHTS; ++i)
+            skyboxTexs.push_back({true, i, VkDescriptorImageInfo{}});
+        std::vector<TextureDefs> waterTexs;        // automatic fill-up of textures for water
+        waterTexs.reserve(N_SUNLIGHTS+2);
+        waterTexs.push_back({true, 0, VkDescriptorImageInfo{}});
+        waterTexs.push_back({true, 1, VkDescriptorImageInfo{}});
+        for(int i = 0; i < N_SUNLIGHTS; ++i)
+            waterTexs.push_back({true, 2 + i, VkDescriptorImageInfo{}});
+
+        PRs.resize(9);
 		PRs[0].init("CharCookTorrance", {
             {&PshadowMapChar, {{
                 {true, 0, {} },     // Shadow map UBO
@@ -453,17 +450,15 @@ class CGProject : public BaseProject {
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}}     // ambient occlusion
-                    }
-                }}
+                }
+            }}
         }, 4, &VDchar);
         PRs[2].init("SkyBox", {
             {&PshadowMapSky, {} },
             {&Pskybox, {
-                {
-                    {true,  0, {}}
-                }
+                     skyboxTexs
             }}
-        }, 1, &VDpos);
+        }, static_cast<int>(skyboxTexs.size()), &VDpos);
         PRs[3].init("Terrain", {
             {&PshadowMap, {{
                 {true, 1, {} },     // Shadow map UBO
@@ -482,8 +477,7 @@ class CGProject : public BaseProject {
                     {true,  7, {} },
                     {true,  8, {} },
                     {false,  9, RPshadow.attachments[0].getViewAndSampler() }
-                },
-                {}
+                }
             }}
         }, 9, &VDtan);
         PRs[4].init("Water", {
@@ -491,18 +485,11 @@ class CGProject : public BaseProject {
             {&Pwater, {
                 {},
                 {},
-                {
-                    {true, 0, {} },
-                    {true, 1, {} },     // 6 textures for cubemap faces
-                    {true, 2, {} },     // Order is: +x, -x, +y, -y, +z, -z
-                    {true, 3, {} },
-                    {true, 4, {} },
-                    {true, 5, {} },
-                    {true, 6, {} },
-                    {true, 7, {} }
-                }
+                waterTexs
+                /* water textures, with expected order: 2 normal maps, 6 reflection maps for each lightColor, in order +x, -x, +y, -y, +z, -z
+                 * */
             }}
-        }, 8, &VDnormUV);
+        }, static_cast<int>(waterTexs.size()), &VDnormUV);
         PRs[5].init("Grass", {
             {&PshadowMap, {{
                 {true, 0, {} },     // Shadow map UBO
@@ -528,7 +515,7 @@ class CGProject : public BaseProject {
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}},     // ambient occlusion
-                        {false,  -1, RPshadow.attachments[0].getViewAndSampler() }
+                    {false,  4, RPshadow.attachments[0].getViewAndSampler() }
                 }
             }}
         }, 4, &VDtan);
@@ -547,6 +534,18 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 4, &VDtan);
+        PRs[8].init("Torches", {
+            {&PshadowMap, {{
+                {false, 0, Tvoid.getViewAndSampler() },     // Shadow map UBO
+            }} },
+            {&Ptorches, {
+                {},
+                {},
+                {
+                        {true, 0, {}}
+                }
+            }}
+        }, 1, &VDtan);
 
 
         // --------- SCENE INITIALIZATION ---------
@@ -623,20 +622,20 @@ class CGProject : public BaseProject {
         Pterrain.create(&RP);
         std::cout << "\t7: Creating Pprops\n";
         Pprops.create(&RP);
-        std::cout << "\t8: Creating Pbuildings\n";
+        std::cout << "\t8: Creating Ptorches\n";
+        Ptorches.create(&RP);
+        std::cout << "\t9: Creating Pbuildings\n";
         Pbuildings.create(&RP);
-        std::cout << "\t9: Creating PshadowMap\n";
+        std::cout << "\t10: Creating PshadowMap\n";
         PshadowMap.create(&RPshadow);
-        std::cout << "\t10: Creating PshadowMapChar\n";
+        std::cout << "\t11: Creating PshadowMapChar\n";
         PshadowMapChar.create(&RPshadow);
-        std::cout << "\t11: Creating PshadowMapSky\n";
+        std::cout << "\t12: Creating PshadowMapSky\n";
         PshadowMapSky.create(&RPshadow);
-        std::cout << "\t12: Creating PshadowMapWater\n";
+        std::cout << "\t13: Creating PshadowMapWater\n";
         PshadowMapWater.create(&RPshadow);
 
-
         std::cout << "Creating descriptor sets\n";
-
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
 
@@ -651,6 +650,7 @@ class CGProject : public BaseProject {
         Pgrass.cleanup();
 		Pterrain.cleanup();
         Pprops.cleanup();
+        Ptorches.cleanup();
         Pbuildings.cleanup();
         PshadowMap.cleanup();
         PshadowMapChar.cleanup();
@@ -666,6 +666,7 @@ class CGProject : public BaseProject {
 	void localCleanup() {
 		DSLgeomShadow4Char.cleanup();
 		DSLpbr.cleanup();
+        DSLchar.cleanup();
         DSLpbrShadow.cleanup();
 		DSLskybox.cleanup();
         DSLgeomShadowTime.cleanup();
@@ -683,6 +684,7 @@ class CGProject : public BaseProject {
         Pwater.destroy();
         Pgrass.destroy();
         Pprops.destroy();
+        Ptorches.destroy();
         Pbuildings.destroy();
 		Pterrain.destroy();
         PshadowMap.destroy();
@@ -696,6 +698,7 @@ class CGProject : public BaseProject {
 		SC.localCleanup();	
 		txt.localCleanup();
 
+        Tvoid.cleanup();
 		charManager.cleanup();
 	}
 
@@ -722,12 +725,13 @@ class CGProject : public BaseProject {
         
         static bool firstTime = true;
 
-        // TODO Detect running by pressing SHIFT key (currently hardcoded as walking all the time)
-
         // Handle of command keys
         {
+            handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
+                sunLightManager.nextLight();
+            });
             handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
-                debugLightView.x = 1.0 - debugLightView.x;
+                debugLightView.x = static_cast<int>(debugLightView.x + 1) % 3;
             });
             handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
                 debugLightView.y = 1.0 - debugLightView.y;
@@ -767,19 +771,37 @@ class CGProject : public BaseProject {
         int instanceId;
         int techniqueId = 1;  // First 2 techniques are for characters, so start from 1 (so that after ++ is 2)
 		LightModelUBO lightUbo{
-            .lightDir = lightDir,
-            .lightColor = lightColor,
-            .eyePos = cameraPos
-        //TODO: aggiungi point lights!
+            .lightDir = sunLightManager.getDirection(),
+            .lightColor = sunLightManager.getColor(),
+            .eyePos = cameraPos,
+            .nPointLights = 0,
         };
+        for (const auto& kv : SC.placeholderPos) {
+            if (kv.first.find("torch_fire") != std::string::npos) {
+                if (lightUbo.nPointLights > MAX_POINT_LIGHTS) {
+                    std::cout << "ERROR: Too many point lights in the scene.\n";
+                    std::exit(-1);  // Stop adding if we exceed the limit
+                }
+                lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(kv.second, 1.0f);
+                lightUbo.pointLightColors[lightUbo.nPointLights] = glm::vec4(10,0,0,1);
+                lightUbo.nPointLights++;
+            }
+        }
+
+        if(firstTime)
+            for (int i = 0; i < lightUbo.nPointLights; ++i) {
+                const glm::vec4& pos = lightUbo.pointLightPositions[i];
+                std::cout << "PointLight " << i << ": (" << pos.x << ", " << pos.y << ", " << pos.z << ", " << pos.w << ")\n";
+            }
+
         ShadowMapUBO shadowUbo{
-            .lightVP = lightVP
+            .lightVP = sunLightManager.getLightVP()
         };
         ShadowMapUBOChar shadowMapUboChar{
-            .lightVP = lightVP
+            .lightVP = sunLightManager.getLightVP()
         };
         ShadowClipUBO shadowClipUbo{
-            .lightVP = lightVP,
+            .lightVP = sunLightManager.getLightVP(),
             .debug = debugLightView
         };
         TimeUBO timeUbo{.time = static_cast<float>(glfwGetTime())};
@@ -788,8 +810,10 @@ class CGProject : public BaseProject {
                 .debug1 = debug1
         };
         GeomSkyboxUBO geomSkyboxUbo{
-            .debug = debugLightView
+            .skyboxTextureIdx = sunLightManager.getIndex(),
+            .debug = debugLightView,
         };
+        IndexUBO indexUbo{sunLightManager.getIndex()};
         TerrainFactorsUBO terrainFactorsUbo{};
         PbrFactorsUBO pbrUbo{};
 		glm::mat4 AdaptMat =
@@ -810,6 +834,7 @@ class CGProject : public BaseProject {
 			SKA->Sample(*AB);
 			std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
 			for (Instance* I : C->getInstances()) {
+                if(firstTime) std::cout << "\tInstance: " << *(I->id) << "\n";
 				std::string techniqueName = *(I->TIp->T->id);
 				if (techniqueName == "CharCookTorrance") {
 					// CookTorrance technique ubo update
@@ -885,6 +910,7 @@ class CGProject : public BaseProject {
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &geomUbo, 0);
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &timeUbo, 2);
+        SC.TI[techniqueId].I[0].DS[1][2]->map(currentImage, &indexUbo, 0);
 
         // TECHNIQUE Vegetation/Grass
         techniqueId++;
@@ -945,6 +971,23 @@ class CGProject : public BaseProject {
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
             SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &pbrUbo, 0);
+        }
+
+        // TECHNIQUE Torch Pin
+        techniqueId++;
+        if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
+        for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+            geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
+
+            shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
+
+            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &timeUbo, 2);
         }
 
 
