@@ -41,7 +41,7 @@ layout(location = 5) in vec4 debug;
 layout(location = 0) out vec4 outColor;
 
 // Global UBO (set=0)
-#define MAX_POINT_LIGHTS 10
+#define MAX_POINT_LIGHTS 20
 layout(set = 0, binding = 0) uniform LightModelUBO {
     vec3 lightDir;
     vec4 lightColor;
@@ -49,6 +49,7 @@ layout(set = 0, binding = 0) uniform LightModelUBO {
 
     vec3 pointLightPositions[MAX_POINT_LIGHTS];
     vec4 pointLightColors[MAX_POINT_LIGHTS];
+    int nPointLights;
 } lightUbo;
 
 // Material factors (set=2)
