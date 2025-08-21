@@ -26,13 +26,13 @@ struct PlayerConfig {
     float mass = 100.0f;
     glm::vec3 startPosition = glm::vec3(30,10,15);
 
-    float moveSpeed = 3.5f;
+    float moveSpeed = 2.3f;
     float runSpeed = 3.5f;
     float jumpForce = 350.0f;
     float airControl = 0.3f; // On-air control factor
     float groundDamping = 0.5f; // Damping factor when grounded
     float friction = 2.5f; // Friction coefficient
-    float rollingFriction = 2.1f; // Rolling friction coefficient
+    float rollingFriction = 5.1f; // Rolling friction coefficient
 };
 
 // Background terrain configuration.
@@ -64,12 +64,26 @@ private:
     bool isGrounded;
     float groundCheckDistance;
     bool flyMode; // If true, player can fly and has no gravity nor inertia, for debug purposes
+    float slopeAngle;
+    bool canClimbStep;
+    float coyoteTime;
+    float lastGroundedTime;
+    float velocitySmoothing;
+    glm::vec3 groundNormal;
+    glm::vec3 lastVelocity;
 
     // Helper methods
     void initializePhysicsWorld();
     void createTerrain();
     bool checkGrounded();
     static btCollisionShape * getShapeFromModel(const Model* modelRef);
+    glm::vec3 projectMovementOntoSlope(const glm::vec3& movement);
+    void handleSlopeMovement(float deltaTime);
+    void handleStepClimbing(float deltaTime);
+    void applyMovementCorrections(float deltaTime);
+    float getGroundSlopeAngle() const;
+    glm::vec3 getGroundNormal() const;
+    bool canJump() const;
 
 public:
     PhysicsManager();
