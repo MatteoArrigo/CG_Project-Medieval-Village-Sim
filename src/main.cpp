@@ -13,6 +13,7 @@
 #include "Player.hpp"
 #include "Utils.hpp"
 #include "sun_light.hpp"
+#include "InteractionObjManager.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
@@ -222,6 +223,8 @@ class CGProject : public BaseProject {
 	// Everything related to characters inside the scene
 	CharManager charManager;			// Character manager for animations
 	Player * player;						// Player manger
+
+    InteractionObjManager interactionManager;
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -566,6 +569,12 @@ class CGProject : public BaseProject {
 			exit(0);
 		}
 
+        if (interactionManager.init(SCENE_FILEPATH) != 0) {
+			std::cout << "ERROR LOADING INTERACTABLES\n";
+			exit(0);
+		}
+        std::cout << "Scanned " << interactionManager.getAllInteractionObj().size() << " interactable objects\n";
+
 		// initializes the textual output
 		txt.init(this, windowWidth, windowHeight);
 
@@ -726,6 +735,7 @@ class CGProject : public BaseProject {
         static bool firstTime = true;
 
         // Handle of command keys
+        interactionManager.updateNearInteractable(physicsMgr.getPlayerPosition());
         {
             handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
                 sunLightManager.nextLight();
@@ -739,7 +749,7 @@ class CGProject : public BaseProject {
 
             static int curAnim = 0;
             static AnimBlender *AB = charManager.getCharacters()[0]->getAnimBlender();
-            handleKeyToggle(window, GLFW_KEY_O, debounce, curDebounce, [&]() {
+            handleKeyToggle(window, GLFW_KEY_9, debounce, curDebounce, [&]() {
                 curAnim = (curAnim + 1) % 5;
                 AB->Start(curAnim, 0.5);
                 std::cout << "Playing anim: " << curAnim << "\n";
@@ -747,7 +757,7 @@ class CGProject : public BaseProject {
 
             // Handle the E key for Character interaction
             handleKeyToggle(window, GLFW_KEY_E, debounce, curDebounce, [&]() {
-                glm::vec3 playerPos = cameraPos; // TODO: replace with actual player position when implemented
+                glm::vec3 playerPos = physicsMgr.getPlayerPosition();
                 auto nearest = charManager.getNearestCharacter(playerPos);
                 if (nearest) {
                     nearest->interact();
@@ -756,6 +766,14 @@ class CGProject : public BaseProject {
                 } else {
                     std::cout << "No Character nearby to interact with.\n";
                 }
+            });
+
+            // Handle the Z key for Character interaction
+            handleKeyToggle(window, GLFW_KEY_Z, debounce, curDebounce, [&]() {
+                if(!interactionManager.isNearInteractable())
+                    return;
+                InteractionObj obj = interactionManager.getNearInteractable();
+                // TODO: da scrivere
             });
         }
 
@@ -776,18 +794,17 @@ class CGProject : public BaseProject {
             .eyePos = cameraPos,
             .nPointLights = 0,
         };
-        for (const auto& kv : SC.placeholderPos) {
-            if (kv.first.find("torch_fire") != std::string::npos) {
+        for (const auto& obj : interactionManager.getAllInteractionObj()) {
+            if (obj.id.find("torch_fire") != std::string::npos) {
                 if (lightUbo.nPointLights > MAX_POINT_LIGHTS) {
                     std::cout << "ERROR: Too many point lights in the scene.\n";
                     std::exit(-1);  // Stop adding if we exceed the limit
                 }
-                lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(kv.second, 1.0f);
+                lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(obj.position, 1.0f);
                 lightUbo.pointLightColors[lightUbo.nPointLights] = glm::vec4(10,0,0,1);
                 lightUbo.nPointLights++;
             }
         }
-
         if(firstTime)
             for (int i = 0; i < lightUbo.nPointLights; ++i) {
                 const glm::vec4& pos = lightUbo.pointLightPositions[i];
@@ -1008,8 +1025,14 @@ class CGProject : public BaseProject {
 			elapsedT = 0.0f;
 		    countedFrames = 0;
 		}
-		
-		txt.updateCommandBuffer();
+
+        // Update message for interaction Obj in the nearby
+        if(interactionManager.isNearInteractable()) {
+            auto obj = interactionManager.getNearInteractable();
+            txt.print(0.5f, 0.05f, "Press Z to interact with "+obj.id, 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+        }
+
+        txt.updateCommandBuffer();
         firstTime = false;
     }
 
