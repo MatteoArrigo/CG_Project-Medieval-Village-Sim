@@ -10,6 +10,7 @@
 		{"id": "player_breathing_idle", "file": "assets/models/Characters/Player/BreathingIdle.gltf", "format":"GLTF"},
 		{"id": "player_running", "file": "assets/models/Characters/Player/Running.gltf", "format":"GLTF"},
 		{"id": "player_jumping", "file": "assets/models/Characters/Player/Jumping.gltf", "format":"GLTF"},
+		{"id": "guard", "file": "assets/models/Characters/Guard/CastleGuard.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
@@ -38,12 +39,12 @@
 			"BaseTrackName": "Armature|mixamo.com|Layer0"
 		},
 		{
-			"id": "char2",
+			"id": "guard1",
 			"name": "Luigi",
-			"instanceIds": ["hm2", "hm3"],
-			"animList": ["hm", "a1", "a2", "a3", "a4"],
-			"startEndFrames": [[0,32], [0,16], [0,263], [0,83], [0,16]],
-			"charStates": ["Walking", "Running", "Idle", "Pointing", "Waving"],
+			"instanceIds": ["guard"],
+			"animList": ["guard"],
+			"startEndFrames": [[0,61]],
+			"charStates": ["Idle"],
 			"BaseTrackName": "Armature|mixamo.com|Layer0"
 		}
 	],
@@ -54,6 +55,7 @@
 		{"id": "hm0",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 0, "asset": "hm", "format":"ASSET"},
 		{"id": "hm1",  "VD": "VDchar",  "model": "Mesh", "node": "Ch01_Body", "meshId": 1, "asset": "hm", "format":"ASSET"},
 		{"id": "player",  "VD": "VDchar",  "model": "Paladin_J_Nordstrom", "node": "Paladin_J_Nordstrom", "meshId": 0, "asset": "player", "format":"ASSET"},
+		{"id": "guard",  "VD": "VDchar",  "model": "Guard02", "node": "Guard02", "meshId": 0, "asset": "guard", "format":"ASSET"},
 
 		{"id": "terrain_far_01-00", "VD": "VDtan", "model": "terrain_far_01.001", "node": "terrain_far_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
 		{"id": "terrain_near_01-00", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
@@ -85,6 +87,9 @@
 		{"id": "player_d",    "texture": "assets/textures/player/Paladin_diffuse.png", "format": "C"},
 		{"id": "player_n",    "texture": "assets/textures/player/Paladin_normal.png", "format": "D"},
 		{"id": "player_s",    "texture": "assets/textures/player/Paladin_specular.png", "format": "D"},
+		{"id": "guard_d",    "texture": "assets/textures/guard/Guard_02__diffuse.png", "format": "C"},
+		{"id": "guard_n",    "texture": "assets/textures/guard/Guard_02__normal.png", "format": "D"},
+		{"id": "guard_s",    "texture": "assets/textures/guard/Guard_02__specular.png", "format": "D"},
 
 		{"id": "day", "texture": "assets/textures/skybox/day.jpg", "format": "C"},
 		{"id": "sunset", "texture": "assets/textures/skybox/sunset.jpg", "format": "C"},
@@ -172,19 +177,22 @@
 			{"id": "hm1",  "model": "hm1",   "texture": ["st"],
 				"translate": [-40, 6.5, 6],
 				"scale": [5,5,5]
-			},
-			{"id": "hm2",  "model": "hm0",   "texture": ["st"],
-				"translate": [20, 20, 20]
-			},
-			{"id": "hm3",  "model": "hm1",   "texture": ["st"],
-				"translate": [20, 20, 20]
 			}
 		]},
 		{"technique": "CharPBR", "elements":  [
 			{
 				"id": "player",
 				"model": "player",
-				"texture": ["player_d", "player_n", "player_s", "white"]
+				"texture": ["player_d", "player_n", "player_s"],
+				"metallicFactor": 0.5, "roughnessFactor": 0.5527864098548889
+			},
+			{
+				"id": "guard",
+				"model": "guard",
+				"texture": ["guard_d", "guard_n", "guard_s"],
+				"translate": [33.0, 5.25, 13.0],
+				"eulerAngles": [0.0, -90.0, 0.0],
+				"metallicFactor": 0.5, "roughnessFactor": 0.7487671971321106
 			}
 		]},
 		{"technique": "SkyBox", "elements": [

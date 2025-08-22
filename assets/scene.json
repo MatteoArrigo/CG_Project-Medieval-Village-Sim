@@ -614,15 +614,14 @@
 				"id": "player",
 				"model": "player",
 				"texture": ["player_d", "player_n", "player_s"],
-				"translate": [15.0, 15.0, 15.0],
-				"scale": [10.0, 10.0, 10.0],
 				"metallicFactor": 0.5, "roughnessFactor": 0.5527864098548889
 			},
 			{
 				"id": "guard",
 				"model": "guard",
 				"texture": ["guard_d", "guard_n", "guard_s"],
-				"translate": [20.0, 20.0, 20.0],
+				"translate": [33.0, 5.25, 13.0],
+				"eulerAngles": [0.0, -90.0, 0.0],
 				"metallicFactor": 0.5, "roughnessFactor": 0.7487671971321106
 			}
 		]},
