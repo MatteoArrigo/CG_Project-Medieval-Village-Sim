@@ -1,3 +1,5 @@
+#pragma once
+#include "Starter.hpp"
 
 struct TechniqueInstances;
 
@@ -99,6 +101,8 @@ class Scene {
 
     Instance **I_physics;
     int InstancePhysicsCount = 0;
+
+    std::unordered_map<std::string, glm::vec3> placeholderPos;
 
 	// Pipelines, DSL and Vertex Formats
 	std::unordered_map<std::string, TechniqueRef *> TechniqueIds;
@@ -314,7 +318,7 @@ std::cout << "}\n";
                 else if( is[j].contains("tilingFactor") )
                     TI[k].I[j].factor2 = is[j]["tilingFactor"];
                 else
-                    TI[k].I[j].factor2 = 1.0f; // Default ambient occlusion factor
+                    TI[k].I[j].factor2 = 0.5f; // Default ambient occlusion factor --> half contribution of ambient occlusion
 
 				nlohmann::json TMjson = is[j]["transform"];
 				if(TMjson.is_null()) {
@@ -466,6 +470,18 @@ std::cout << "Creating physics-only instances\n";
 		}
 std::cout << " Physics-only instances created\n";
 
+    std::cout << "Reading placeholders' positions\n";
+    nlohmann::json placeholders = js["placeholders"];
+    for (const auto& placeholder : placeholders) {
+        std::cout << "Read placeholder: " << placeholder["id"] << "\n";
+        std::string name = placeholder["id"];
+        nlohmann::json pos = placeholder["pos"];
+        if (pos.is_array() && pos.size() == 3) {
+            placeholderPos[name] = glm::vec3(pos[0], pos[1], pos[2]);
+        } else {
+            std::cout << "Invalid position for placeholder: " << name << "\n";
+        }
+    }
 
 /*		} catch (const nlohmann::json::exception& e) {
 		std::cout << "\n\n\nException while parsing JSON file: " << file << "\n";

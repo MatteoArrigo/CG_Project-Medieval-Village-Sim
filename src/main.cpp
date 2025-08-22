@@ -3,25 +3,31 @@
 
 #include <json.hpp>
 
-#include <PhysicsManager.hpp>
+#include "modules/Starter.hpp"
+#include "modules/Scene.hpp"
 #include "modules/TextMaker.hpp"
 #include "modules/Animations.hpp"
 #include "character/char_manager.hpp"
 #include "character/character.hpp"
+#include "PhysicsManager.hpp"
+#include "Player.hpp"
+#include "Utils.hpp"
+#include "sun_light.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-//TODO generale: Ripulisci e Commenta tutto il main
-
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
-// Nell'acqua la stiamo usando per la parte speculare
-// Nei fragment shader come PBR si potrebbe usare per parte ambient
+// Nota: nell'acqua usiamo ora la equirectangular map per la reflection, non preprocessata
+// Si potrebbe implementare IBL nelle altre tecniche, come PBR+IBL, usando radiance cubemap, quindi preprocessata
 // Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
+
+
+// TODO: si potrebbe ancora cercare una skybox con la luna fatta meglio
 
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
-const bool FLY_MODE = true;
-const std::string SCENE_FILEPATH = "assets/scene.json";
+const bool FLY_MODE = false;
+const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -49,16 +55,19 @@ struct VertexTan {
 	glm::vec4 tan;
 };
 
-#define MAX_POINT_LIGHTS 10
+#define MAX_POINT_LIGHTS 20
 struct LightModelUBO {
 	alignas(16) glm::vec3 lightDir;
 	alignas(16) glm::vec4 lightColor;
 	alignas(16) glm::vec3 eyePos;
 
-    alignas(4) int nPointLights;
-    alignas(16) glm::vec3 pointLightPositions[MAX_POINT_LIGHTS];
+    // For padding mismatch reasons, positions are in vec4 format, but the last coordinate is not used
+    alignas(16) glm::vec4 pointLightPositions[MAX_POINT_LIGHTS];
 	alignas(16) glm::vec4 pointLightColors[MAX_POINT_LIGHTS];
+    alignas(4) int nPointLights;
 };
+// NOTE: Up to now, the point light calculations are present only in terrain and buidlings pipelines.
+// If you want the torches to enlight also other meshes, add those calculations in the corresponding pipelines, too
 
 #define MAX_JOINTS 100
 struct GeomCharUBO {
@@ -90,6 +99,7 @@ struct ShadowClipUBO {
 
 struct GeomSkyboxUBO {
 	alignas(16) glm::mat4 mvpMat;
+    alignas(4) int skyboxTextureIdx;
     alignas(16) glm::vec4 debug;
 };
 
@@ -100,6 +110,10 @@ struct TimeUBO {
 struct PbrMRFactorsUBO {
 	alignas(4) float metallicFactor;	// scalar
 	alignas(4) float roughnessFactor;	// scalar
+};
+
+struct IndexUBO {
+    alignas(4) int idx;
 };
 
 struct PbrFactorsUBO {
@@ -123,7 +137,7 @@ class CGProject : public BaseProject {
     // DSL general
     DescriptorSetLayout DSLlightModel, DSLgeomShadow, DSLgeomShadowTime, DSLgeomShadow4Char;
     // DSL for specific pipelines
-	DescriptorSetLayout DSLpbr, DSLcharPbr, DSLpbrShadow, DSLskybox, DSLterrain,  DSLwater, DSLgrass, DSLchar;
+	DescriptorSetLayout DSLpbr, DSLcharPbr, DSLpbrShadow, DSLskybox, DSLterrain,  DSLwater, DSLgrass, DSLchar, DSLtorches;
     // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
 
@@ -133,8 +147,10 @@ class CGProject : public BaseProject {
 	VertexDescriptor VDpos;
 	VertexDescriptor VDtan;
 	RenderPass RPshadow, RP;
-	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings;
+	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings, Ptorches;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
+
+    Texture Tvoid;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Scene SC;
@@ -142,7 +158,7 @@ class CGProject : public BaseProject {
 	std::vector<TechniqueRef> PRs;
 
 	// PhysicsManager for collision detection
-	PhysicsManager PhysicsMgr;
+	PhysicsManager physicsMgr;
 	PlayerConfig physicsConfig;
 
 	// to provide textual feedback
@@ -180,45 +196,36 @@ class CGProject : public BaseProject {
     const float MAX_CAM_DIST = 7.5;
     const float MIN_CAM_DIST = 1.5;
 
+    #define N_SUNLIGHTS 4
+    const LightClipBorders lightClipBorders{
+        -110.0f, 110.0f,
+        -60.0f, 60.0f,
+        -150.0f, 200.0f
+    };
+    SunLightManager sunLightManager{
+        lightClipBorders, N_SUNLIGHTS, std::vector<SunLight>{
+            SunLight(glm::vec3(1.0f, 1.0f, 1.0f), -80.0f, 10.0f, 0.0f, 3.0f), // full day
+            SunLight(glm::vec3(1.0f, 0.2f, 0.2f), -30.0f, -31.0f, 0.0f, 1.5f), // sunset
+            SunLight(glm::vec3(0.3f, 0.3f, 0.6f), -5.0f, -60.0f), // night with light
+            SunLight(glm::vec3(0.0f, 0.0f, 0.0f), -1.0f, -90.0f) // night full dark
+        }
+    };
 
-    const glm::vec4 lightColor = glm::vec4(1.0f, 0.7f, 0.7f, 1.0f);
-    /**
-     * Matrix defining the light rotation to apply to +z axis to get the light direction.
-     * It is used
-     *  - applied to +z axis to compute light direction
-     *  - applied in its inverse form to compute the light projection matrix for shadow map
-     */
-    const glm::mat4 lightRotation = glm::rotate(glm::mat4(1), glm::radians(-31.0f),
-        glm::vec3(0.0f,1.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(-30.0f),
-         glm::vec3(1.0f,0.0f,0.0f)) * glm::rotate(glm::mat4(1), glm::radians(0.0f),
-         glm::vec3(0.0f,0.0f,1.0f));
-    /**
-     * Directional of the unique directional light in the scene --> Represents the sun light
-     * It points towards the light source
-     */
-    const glm::vec3 lightDir = glm::vec3(lightRotation * glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
-    /**
-     * Parameters used for orthogonal projection of the scene from light pov, in shadow mapping render pass
-     */
-    const float lightWorldLeft = -110.0f, lightWorldRight = 110.0f;
-    const float lightWorldBottom = lightWorldLeft * 1.0f+50, lightWorldTop = lightWorldRight * 1.0f-50;     // Now the shadow map is square (2048x2048)
-    const float lightWorldNear = -150.0f, lightWorldFar = 200.0f;
     //TODO: capisci se i bounds trovati per ortho vanno sempre bene o devono essere dinamici
     // Tipo se devono variare con la player position
-    /**
-     * Actual projection matrix used to render the scene from light pov, in shadow mapping render pass
-     */
-    glm::mat4 lightVP;
+
     /** Debug vector present in DSL for shadow map. Basic version is vec4(0,0,0,0)
-     * if debugLightView.x == 1.0, the terrain renders only white if lit and black if in shadow
+     * if debugLightView.x == 1.0, the terrain and buildings render only white if lit and black if in shadow
+     * if debugLightView.x == 2.0, the terrain and buildings show only the point lights illumination
      * if debugLightView.y == 1.0, the light's clip space is visualized instead of the basic perspective view
      */
     glm::vec4 debugLightView = glm::vec4(0.0);
 
 	glm::vec4 debug1 = glm::vec4(0);
 
-	// To manage NPSs
-	CharManager charManager;
+	// Everything related to characters inside the scene
+	CharManager charManager;			// Character manager for animations
+	Player * player;						// Player manger
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -248,22 +255,7 @@ class CGProject : public BaseProject {
 	}
 
 	void localInit() {
-
-        // ------ LIGHT PROJECTINO MAT COMPUTATION ------
-        /* Light projection matrix is computed using an orthographic projection
-         * A rotation is beforehand applied, to take into account the light direction --> projection from light's pov
-         *      To do this, the inverse of lightRotation matrix is applied
-         *      (inverse because we need to invert the rotation of the world scene to get the light's view)
-         * We need as output NDC coordinates (Normalized Device/Screen Coord) the range [-1,1] for x and y, and [0,1] for z
-         * To do this used glm::orth, fixing
-            - y: is inverted wrt to vulkan    --> apply scale of factor -1
-            - z: in vulkan is [0,1], but ortho (for glm) computes it in [-1,1]    --> apply scale of factor 0.5 and translation of 0.5
-        */
-        auto vulkanCorrection =
-                glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.5f)) *   // translation of axis z
-                glm::scale(glm::mat4(1.0), glm::vec3(1.0f, -1.0f, 0.5f));       // scale of axis y and z
-        glm::mat4 lightProj = vulkanCorrection * glm::ortho(lightWorldLeft, lightWorldRight, lightWorldBottom, lightWorldTop, lightWorldNear, lightWorldFar);
-        lightVP = lightProj * glm::inverse(lightRotation); // inverse because we need to invert the rotation of the world scene to get the light's view
+        Tvoid.init(this, "assets/textures/void.png", VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 		// --------- DSL INITIALIZATION ---------
 		DSLshadowMap.init(this, {
@@ -284,7 +276,7 @@ class CGProject : public BaseProject {
 		DSLgeomShadowTime.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomUBO),       1},
 			{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ShadowClipUBO), 1},
-			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(TimeUBO),       1},
+			{2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS, sizeof(TimeUBO),       1},
 		});
 		DSLgeomShadow4Char.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomCharUBO),   1},
@@ -292,21 +284,15 @@ class CGProject : public BaseProject {
         });
 		DSLskybox.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomSkyboxUBO), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, N_SUNLIGHTS}
 		});
         DSLchar.init(this, {
             {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
         });
         DSLwater.init(this, {
-			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
-			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
-			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4,1},
-			{5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5,1},
-			{6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 6,1},
-			{7, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 7,1}
+			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO), 1},
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,2},
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, N_SUNLIGHTS}
 		});
         DSLgrass.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -346,6 +332,9 @@ class CGProject : public BaseProject {
 			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
 			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
 		});
+		DSLtorches.init(this, {
+            {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
+        });
 
 
         // --------- VERTEX DESCRIPTORS INITIALIZATION ---------
@@ -386,7 +375,6 @@ class CGProject : public BaseProject {
 		VDRs[2].init("VDpos",   &VDpos);
 		VDRs[3].init("VDtan",   &VDtan);
 
-
         // --------- RENDER PASSES INITIALIZATION ---------
         /* RP 1: used for shadow map, rendered from light point of view
          * The options set, different by default ones, are for writing a depth buffer instead of color
@@ -399,7 +387,8 @@ class CGProject : public BaseProject {
 		/* RP 2: used for the main rendering
 		 * Now default options of starter.hpp are used, so it will write color and depth  */
         RP.init(this);
-		RP.properties[0].clearValue = {0.0f,0.9f,1.0f,1.0f};
+        // Grey as default clear value
+		RP.properties[0].clearValue = {0.5f,0.5f,0.5f,1.0f};
         /* Actual creation of the Render Pass for shadow mapping.
             It is done here to be sure the attachment of RPshadow is created and can be linked as input in RP */
         RPshadow.create();
@@ -430,11 +419,23 @@ class CGProject : public BaseProject {
 		PcharPbr.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterPBR_MR.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLcharPbr});
         Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
         Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
-		Pbuildings.init(this, &VDtan, "shaders/BuildingPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
-		Pprops.init(this, &VDtan, "shaders/PropsPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
+		Pbuildings.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
+		Pprops.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
+		Ptorches.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/TorchPinShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLtorches});
 
         // --------- TECHNIQUES INITIALIZATION ---------
-        PRs.resize(8);
+        std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
+        skyboxTexs.reserve(N_SUNLIGHTS);
+        for (int i = 0; i < N_SUNLIGHTS; ++i)
+            skyboxTexs.push_back({true, i, VkDescriptorImageInfo{}});
+        std::vector<TextureDefs> waterTexs;        // automatic fill-up of textures for water
+        waterTexs.reserve(N_SUNLIGHTS+2);
+        waterTexs.push_back({true, 0, VkDescriptorImageInfo{}});
+        waterTexs.push_back({true, 1, VkDescriptorImageInfo{}});
+        for(int i = 0; i < N_SUNLIGHTS; ++i)
+            waterTexs.push_back({true, 2 + i, VkDescriptorImageInfo{}});
+
+        PRs.resize(9);
 		PRs[0].init("CharCookTorrance", {
             {&PshadowMapChar, {{
                 {true, 0, {} },     // Shadow map UBO
@@ -464,11 +465,9 @@ class CGProject : public BaseProject {
         PRs[2].init("SkyBox", {
             {&PshadowMapSky, {} },
             {&Pskybox, {
-                {
-                    {true,  0, {}}
-                }
+                     skyboxTexs
             }}
-        }, 1, &VDpos);
+        }, static_cast<int>(skyboxTexs.size()), &VDpos);
         PRs[3].init("Terrain", {
             {&PshadowMap, {{
                 {true, 1, {} },     // Shadow map UBO
@@ -487,8 +486,7 @@ class CGProject : public BaseProject {
                     {true,  7, {} },
                     {true,  8, {} },
                     {false,  9, RPshadow.attachments[0].getViewAndSampler() }
-                },
-                {}
+                }
             }}
         }, 9, &VDtan);
         PRs[4].init("Water", {
@@ -496,18 +494,11 @@ class CGProject : public BaseProject {
             {&Pwater, {
                 {},
                 {},
-                {
-                    {true, 0, {} },
-                    {true, 1, {} },     // 6 textures for cubemap faces
-                    {true, 2, {} },     // Order is: +x, -x, +y, -y, +z, -z
-                    {true, 3, {} },
-                    {true, 4, {} },
-                    {true, 5, {} },
-                    {true, 6, {} },
-                    {true, 7, {} }
-                }
+                waterTexs
+                /* water textures, with expected order: 2 normal maps, 6 reflection maps for each lightColor, in order +x, -x, +y, -y, +z, -z
+                 * */
             }}
-        }, 8, &VDnormUV);
+        }, static_cast<int>(waterTexs.size()), &VDnormUV);
         PRs[5].init("Grass", {
             {&PshadowMap, {{
                 {true, 0, {} },     // Shadow map UBO
@@ -533,7 +524,7 @@ class CGProject : public BaseProject {
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}},     // ambient occlusion
-                        {false,  -1, RPshadow.attachments[0].getViewAndSampler() }
+                    {false,  4, RPshadow.attachments[0].getViewAndSampler() }
                 }
             }}
         }, 4, &VDtan);
@@ -552,6 +543,18 @@ class CGProject : public BaseProject {
                 }
             }}
         }, 4, &VDtan);
+        PRs[8].init("Torches", {
+            {&PshadowMap, {{
+                {false, 0, Tvoid.getViewAndSampler() },     // Shadow map UBO
+            }} },
+            {&Ptorches, {
+                {},
+                {},
+                {
+                        {true, 0, {}}
+                }
+            }}
+        }, 1, &VDtan);
 
 
         // --------- SCENE INITIALIZATION ---------
@@ -581,12 +584,27 @@ class CGProject : public BaseProject {
 		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
 
 		// Initialize PhysicsManager
-		if(!PhysicsMgr.initialize(FLY_MODE)) {
+		if(!physicsMgr.initialize(FLY_MODE)) {
 			exit(0);
 		}
 
-		// Add static meshes for collision detection
-		PhysicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
+		// Add player character to the PhysicsManager
+		/*
+		 * TODO: PhysicsMgr.addPlayerFromModel() creates a player object based on a model reference. The problem is that, at the current state of
+		 * this project, getShapeFromModel() is not able to correctly extract a collision shape from the player model we are using.
+		 * That method should be re-implemented to better support different model types.
+		 */
+		// int playerModelIdx = playerCharacter->getInstances()[0]->Mid; // assuming the player has only one instance
+		// const Model * playerModel = SC.M[playerModelIdx];
+		// PhysicsMgr.addPlayerFromModel(playerModel);
+		physicsMgr.addCapsulePlayer();
+
+		// Add static meshes to the PhysicsManager for collision detection
+		physicsMgr.addStaticMeshes(SC.M, SC.I, SC.InstanceCount);
+
+		// Initializes the player Character reference
+		// NOTE: the first character in scene.json is supposed to be the player character
+		player = new Player(charManager.getCharacters()[0], &physicsMgr);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -613,20 +631,20 @@ class CGProject : public BaseProject {
         Pterrain.create(&RP);
         std::cout << "\t7: Creating Pprops\n";
         Pprops.create(&RP);
-        std::cout << "\t8: Creating Pbuildings\n";
+        std::cout << "\t8: Creating Ptorches\n";
+        Ptorches.create(&RP);
+        std::cout << "\t9: Creating Pbuildings\n";
         Pbuildings.create(&RP);
-        std::cout << "\t9: Creating PshadowMap\n";
+        std::cout << "\t10: Creating PshadowMap\n";
         PshadowMap.create(&RPshadow);
-        std::cout << "\t10: Creating PshadowMapChar\n";
+        std::cout << "\t11: Creating PshadowMapChar\n";
         PshadowMapChar.create(&RPshadow);
-        std::cout << "\t11: Creating PshadowMapSky\n";
+        std::cout << "\t12: Creating PshadowMapSky\n";
         PshadowMapSky.create(&RPshadow);
-        std::cout << "\t12: Creating PshadowMapWater\n";
+        std::cout << "\t13: Creating PshadowMapWater\n";
         PshadowMapWater.create(&RPshadow);
 
-
         std::cout << "Creating descriptor sets\n";
-
 		SC.pipelinesAndDescriptorSetsInit();
 		txt.pipelinesAndDescriptorSetsInit();
 
@@ -641,6 +659,7 @@ class CGProject : public BaseProject {
         Pgrass.cleanup();
 		Pterrain.cleanup();
         Pprops.cleanup();
+        Ptorches.cleanup();
         Pbuildings.cleanup();
         PshadowMap.cleanup();
         PshadowMapChar.cleanup();
@@ -674,6 +693,7 @@ class CGProject : public BaseProject {
         Pwater.destroy();
         Pgrass.destroy();
         Pprops.destroy();
+        Ptorches.destroy();
         Pbuildings.destroy();
 		Pterrain.destroy();
         PshadowMap.destroy();
@@ -687,6 +707,7 @@ class CGProject : public BaseProject {
 		SC.localCleanup();	
 		txt.localCleanup();
 
+        Tvoid.cleanup();
 		charManager.cleanup();
 	}
 
@@ -713,18 +734,16 @@ class CGProject : public BaseProject {
         
         static bool firstTime = true;
 
-        // TODO Detect running by pressing SHIFT key (currently hardcoded as walking all the time)
-
         // Handle of command keys
         {
+            handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
+                sunLightManager.nextLight();
+            });
             handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
-                debugLightView.x = 1.0 - debugLightView.x;
+                debugLightView.x = static_cast<int>(debugLightView.x + 1) % 3;
             });
             handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
                 debugLightView.y = 1.0 - debugLightView.y;
-            });
-            handleKeyToggle(window, GLFW_KEY_SPACE, debounce, curDebounce, [&]() {
-                PhysicsMgr.jumpPlayer();
             });
 
             static int curAnim = 0;
@@ -751,6 +770,7 @@ class CGProject : public BaseProject {
 
 		// moves the view
 		float deltaT = GameLogic();
+		player->handleKeyActions(window, deltaT);
 
         // ----- UPDATE UNIFORMS -----
         //NOTE on code style: write all uniform variables in the following section
@@ -760,19 +780,37 @@ class CGProject : public BaseProject {
         int instanceId;
         int techniqueId = 1;  // First 2 techniques are for characters, so start from 1 (so that after ++ is 2)
 		LightModelUBO lightUbo{
-            .lightDir = lightDir,
-            .lightColor = lightColor,
-            .eyePos = cameraPos
-        //TODO: aggiungi point lights!
+            .lightDir = sunLightManager.getDirection(),
+            .lightColor = sunLightManager.getColor(),
+            .eyePos = cameraPos,
+            .nPointLights = 0,
         };
+        for (const auto& kv : SC.placeholderPos) {
+            if (kv.first.find("torch_fire") != std::string::npos) {
+                if (lightUbo.nPointLights > MAX_POINT_LIGHTS) {
+                    std::cout << "ERROR: Too many point lights in the scene.\n";
+                    std::exit(-1);  // Stop adding if we exceed the limit
+                }
+                lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(kv.second, 1.0f);
+                lightUbo.pointLightColors[lightUbo.nPointLights] = glm::vec4(10,0,0,1);
+                lightUbo.nPointLights++;
+            }
+        }
+
+        if(firstTime)
+            for (int i = 0; i < lightUbo.nPointLights; ++i) {
+                const glm::vec4& pos = lightUbo.pointLightPositions[i];
+                std::cout << "PointLight " << i << ": (" << pos.x << ", " << pos.y << ", " << pos.z << ", " << pos.w << ")\n";
+            }
+
         ShadowMapUBO shadowUbo{
-            .lightVP = lightVP
+            .lightVP = sunLightManager.getLightVP()
         };
         ShadowMapUBOChar shadowMapUboChar{
-            .lightVP = lightVP
+            .lightVP = sunLightManager.getLightVP()
         };
         ShadowClipUBO shadowClipUbo{
-            .lightVP = lightVP,
+            .lightVP = sunLightManager.getLightVP(),
             .debug = debugLightView
         };
         TimeUBO timeUbo{.time = static_cast<float>(glfwGetTime())};
@@ -781,8 +819,10 @@ class CGProject : public BaseProject {
                 .debug1 = debug1
         };
         GeomSkyboxUBO geomSkyboxUbo{
-            .debug = debugLightView
+            .skyboxTextureIdx = sunLightManager.getIndex(),
+            .debug = debugLightView,
         };
+        IndexUBO indexUbo{sunLightManager.getIndex()};
         TerrainFactorsUBO terrainFactorsUbo{};
         PbrFactorsUBO pbrUbo{};
 		PbrMRFactorsUBO pbrMRUbo{};
@@ -804,6 +844,7 @@ class CGProject : public BaseProject {
 			SKA->Sample(*AB);
 			std::vector<glm::mat4> *TMsp = SKA->getTransformMatrices();
 			for (Instance* I : C->getInstances()) {
+                if(firstTime) std::cout << "\tInstance: " << *(I->id) << "\n";
 				std::string techniqueName = *(I->TIp->T->id);
 				if (techniqueName == "CharCookTorrance") {
 					// CookTorrance technique ubo update
@@ -883,6 +924,7 @@ class CGProject : public BaseProject {
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &geomUbo, 0);
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &timeUbo, 2);
+        SC.TI[techniqueId].I[0].DS[1][2]->map(currentImage, &indexUbo, 0);
 
         // TECHNIQUE Vegetation/Grass
         techniqueId++;
@@ -945,6 +987,23 @@ class CGProject : public BaseProject {
             SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &pbrUbo, 0);
         }
 
+        // TECHNIQUE Torch Pin
+        techniqueId++;
+        if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
+        for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
+            geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
+            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
+
+            shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
+
+            SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
+            SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &timeUbo, 2);
+        }
+
 
         // ---- updates the FPS -----
 		static float elapsedT = 0.0f;
@@ -968,32 +1027,6 @@ class CGProject : public BaseProject {
         firstTime = false;
     }
 
-
-/**
- * Handles key toggle events with debounce logic.
- *
- * @param window       Pointer to the GLFW window.
- * @param key          The GLFW key code to check.
- * @param debounce     Reference to a debounce flag to prevent repeated triggers.
- * @param curDebounce  Reference to the currently debounced key.
- * @param action       Function to execute when the key is toggled.
- *
- * When the specified key is pressed, the action is executed only once until the key is released.
- * This prevents multiple triggers from a single key press.
- */
-void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDebounce, const std::function<void()>& action) {
-    if (glfwGetKey(window, key)) {
-        if (!debounce) {
-            debounce = true;
-            curDebounce = key;
-            action();  // Execute the custom logic
-        }
-    } else if (curDebounce == key && debounce) {
-        debounce = false;
-        curDebounce = 0;
-    }
-}
-
 	float GameLogic() {
 		// Integration with the timers and the controllers
 		float deltaT;
@@ -1003,10 +1036,10 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		float MOVE_SPEED = fire ? MOVE_SPEED_RUN : MOVE_SPEED_BASE;
 
 		// Step the physics simulation
-		PhysicsMgr.update(deltaT);
+		physicsMgr.update(deltaT);
 
 		// Get current player position from physics body
-		glm::vec3 Pos = PhysicsMgr.getPlayerPosition();
+		glm::vec3 playerPos = physicsMgr.getPlayerPosition();
 
 		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
 
@@ -1019,13 +1052,14 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
 		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
 
-		// Calculate desired movement vector
-		glm::vec3 moveDir = MOVE_SPEED * m.x * ux - MOVE_SPEED * m.z * uz;
-        if(FLY_MODE)
-            moveDir += MOVE_SPEED * m.y * glm::vec3(0,1,0);
+		glm::vec3 rawMoveDir = m.x * ux - m.z * uz;
+		if (FLY_MODE)
+			rawMoveDir += m.y * glm::vec3(0,1,0);
 
-		// Apply movement force to physics body
-		PhysicsMgr.movePlayer(moveDir, fire);
+		if (glm::length(rawMoveDir) > 0.0f)
+			rawMoveDir = glm::normalize(rawMoveDir);
+
+		glm::vec3 moveDir = MOVE_SPEED * rawMoveDir;
 
 		// Camera height adjustment
 		camHeight += MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
@@ -1044,7 +1078,7 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		dampedRelDir = ef * dampedRelDir + (1.0f - ef) * relDir;
 
 		// Final world matrix computation using physics position
-		World = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
+		World = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
 
 		// Projection
 		glm::mat4 Prj = glm::perspective(FOVy, Ar, worldNearPlane, worldFarPlane);
@@ -1052,10 +1086,10 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 
 		// View
 		// Target position based on physics body position
-		glm::vec3 target = Pos + glm::vec3(0.0f, camHeight, 0.0f);
+		glm::vec3 target = playerPos + glm::vec3(0.0f, camHeight, 0.0f);
 
 		// Camera position, depending on Yaw parameter
-		glm::mat4 camWorld = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
+		glm::mat4 camWorld = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
 		cameraPos = camWorld * glm::vec4(0.0f, camHeight + camDist * sin(Pitch), camDist * cos(Pitch), 1.0);
 
 		// Damping of camera
@@ -1064,6 +1098,10 @@ void handleKeyToggle(GLFWwindow* window, int key, bool& debounce, int& curDeboun
 		glm::mat4 View = glm::lookAt(dampedCamPos, target, glm::vec3(0,1,0));
 
 		ViewPrj = Prj * View;
+
+		// Move the player in the correct position (physics + model update)
+        // Note: + 180 degrees to rotate so that he sees in direction of movement
+		player->move(moveDir, Yaw + glm::radians(180.0f));
 
 		return deltaT;
 	}

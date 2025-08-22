@@ -21,16 +21,18 @@ struct PhysicsObject {
 
 // Physical parameters for the player
 struct PlayerConfig {
-    float capsuleRadius = 0.3f;
-    float capsuleHeight = 1.6f;
-    float mass = 80.0f;
+    float capsuleRadius = 0.15f;
+    float capsuleHeight = 1.3f;
+    float mass = 100.0f;
     glm::vec3 startPosition = glm::vec3(30,10,15);
 
     float moveSpeed = 2.3f;
     float runSpeed = 3.5f;
-    float jumpForce = 400.0f;
+    float jumpForce = 350.0f;
     float airControl = 0.3f; // On-air control factor
     float groundDamping = 0.5f; // Damping factor when grounded
+    float friction = 2.5f; // Friction coefficient
+    float rollingFriction = 5.1f; // Rolling friction coefficient
 };
 
 // Background terrain configuration.
@@ -62,12 +64,26 @@ private:
     bool isGrounded;
     float groundCheckDistance;
     bool flyMode; // If true, player can fly and has no gravity nor inertia, for debug purposes
+    float slopeAngle;
+    bool canClimbStep;
+    float coyoteTime;
+    float lastGroundedTime;
+    float velocitySmoothing;
+    glm::vec3 groundNormal;
+    glm::vec3 lastVelocity;
 
     // Helper methods
     void initializePhysicsWorld();
     void createTerrain();
-    void createPlayer();
     bool checkGrounded();
+    static btCollisionShape * getShapeFromModel(const Model* modelRef);
+    glm::vec3 projectMovementOntoSlope(const glm::vec3& movement);
+    void handleSlopeMovement(float deltaTime);
+    void handleStepClimbing(float deltaTime);
+    void applyMovementCorrections(float deltaTime);
+    float getGroundSlopeAngle() const;
+    glm::vec3 getGroundNormal() const;
+    bool canJump() const;
 
 public:
     PhysicsManager();
@@ -92,6 +108,8 @@ public:
     PhysicsObject* addStaticBox(const glm::vec3& position, const glm::vec3& size);
     PhysicsObject* addStaticSphere(const glm::vec3& position, float radius);
     void addStaticMeshes(Model **modelRefs, Instance **instanceRefs, int instanceCount);
+    void addPlayerFromModel(const Model* modelRef);
+    void addCapsulePlayer();
 
     // Utility
     void setGravity(const glm::vec3& gravity);
