@@ -13,7 +13,7 @@
 #include "Player.hpp"
 #include "Utils.hpp"
 #include "sun_light.hpp"
-#include "InteractionObjManager.hpp"
+#include "InteractionsManager.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
@@ -225,7 +225,7 @@ class CGProject : public BaseProject {
 	CharManager charManager;			// Character manager for animations
 	Player * player;						// Player manger
 
-    InteractionObjManager interactionManager;
+    InteractionsManager interactionsManager;
     InteractableState interactableState;
 
     // Here you set the main application parameters
@@ -572,11 +572,11 @@ class CGProject : public BaseProject {
 			exit(0);
 		}
 
-        if (interactionManager.init(SCENE_FILEPATH) != 0) {
-			std::cout << "ERROR LOADING INTERACTABLES\n";
+        if (interactionsManager.init(SCENE_FILEPATH) != 0) {
+			std::cout << "ERROR LOADING INTERACTION POINTS\n";
 			exit(0);
 		}
-        std::cout << "Scanned " << interactionManager.getAllInteractionObj().size() << " interactable objects\n";
+        std::cout << "Scanned " << interactionsManager.getAllInteractions().size() << " interactable points\n";
 
 		// initializes the textual output
 		txt.init(this, windowWidth, windowHeight);
@@ -610,14 +610,14 @@ class CGProject : public BaseProject {
 		player = new Player(charManager.getCharacters()[0], &physicsMgr);
 
         lightUbo.nPointLights = 0;
-        for (const auto& obj : interactionManager.getAllInteractionObj()) {
-            if (obj.id.find("torch_fire") != std::string::npos) {
+        for (const auto& interaction : interactionsManager.getAllInteractions()) {
+            if (interaction.id.find("torch_fire") != std::string::npos) {
                 interactableState.torchesOn.push_back(true);
                 if (lightUbo.nPointLights > MAX_POINT_LIGHTS) {
                     std::cout << "ERROR: Too many point lights in the scene.\n";
                     std::exit(-1);  // Stop adding if we exceed the limit
                 }
-                lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(obj.position, 1.0f);
+                lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(interaction.position, 1.0f);
                 lightUbo.pointLightColors[lightUbo.nPointLights] = glm::vec4(10,0,0,1);
                 lightUbo.nPointLights++;
             }
@@ -752,7 +752,7 @@ class CGProject : public BaseProject {
         static bool firstTime = true;
 
         // Handle of command keys
-        interactionManager.updateNearInteractable(physicsMgr.getPlayerPosition());
+        interactionsManager.updateNearInteractable(physicsMgr.getPlayerPosition());
         {
             handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
                 sunLightManager.nextLight();
@@ -785,9 +785,9 @@ class CGProject : public BaseProject {
                 }
             });
 
-            // Handle the Z key for Character interaction
+            // Handle the Z key for interaction with interaction point (if any in the nearby)
             handleKeyToggle(window, GLFW_KEY_Z, debounce, curDebounce, [&]() {
-                interactionManager.interact(interactableState);
+                interactionsManager.interact(interactableState);
             });
         }
 
@@ -1035,10 +1035,10 @@ class CGProject : public BaseProject {
 		    countedFrames = 0;
 		}
 
-        // Update message for interaction Obj in the nearby
-        if(interactionManager.isNearInteractable()) {
-            auto obj = interactionManager.getNearInteractable();
-            txt.print(0.5f, 0.05f, "Press Z to interact with "+obj.id, 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+        // Update message for interaction point in the nearby
+        if(interactionsManager.isNearInteractable()) {
+            auto interaction = interactionsManager.getNearInteractable();
+            txt.print(0.5f, 0.05f, "Press Z to interact with "+interaction.id, 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
         }
 
         txt.updateCommandBuffer();
