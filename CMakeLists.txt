@@ -34,6 +34,7 @@ if(APPLE)
 
     # Define the project executable
     add_executable(CGProject ${SOURCES} ${HEADERS})
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wno-unused-result)
 
     # Include directories
     target_include_directories(CGProject PRIVATE ${GLM_INCLUDE_DIRS})
@@ -120,6 +121,7 @@ elseif(WIN32)
     add_subdirectory(external/bullet3)
 
     add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wno-unused-result -Wno-nodiscard)
 
     find_package(Vulkan REQUIRED)
 
@@ -167,6 +169,7 @@ elseif(UNIX AND NOT APPLE)
     file(GLOB_RECURSE HEADERS include/*.h include/*.hpp)
 
     add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wno-unused-result)
 
     find_package(Vulkan REQUIRED)
     find_package(glfw3 REQUIRED)

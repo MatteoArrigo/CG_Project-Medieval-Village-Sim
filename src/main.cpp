@@ -193,20 +193,7 @@ class CGProject : public BaseProject {
     const float MAX_CAM_DIST = 7.5;
     const float MIN_CAM_DIST = 1.5;
 
-    #define N_SUNLIGHTS 4
-    const LightClipBorders lightClipBorders{
-        -110.0f, 110.0f,
-        -60.0f, 60.0f,
-        -150.0f, 200.0f
-    };
-    SunLightManager sunLightManager{
-        lightClipBorders, N_SUNLIGHTS, std::vector<SunLight>{
-            SunLight(glm::vec3(1.0f, 1.0f, 1.0f), -80.0f, 10.0f, 0.0f, 3.0f), // full day
-            SunLight(glm::vec3(1.0f, 0.2f, 0.2f), -30.0f, -31.0f, 0.0f, 1.5f), // sunset
-            SunLight(glm::vec3(0.3f, 0.3f, 0.6f), -5.0f, -60.0f), // night with light
-            SunLight(glm::vec3(0.0f, 0.0f, 0.0f), -1.0f, -90.0f) // night full dark
-        }
-    };
+    SunLightManager sunLightManager;
     LightModelUBO lightUbo;
 
     //TODO: capisci se i bounds trovati per ortho vanno sempre bene o devono essere dinamici
@@ -285,7 +272,7 @@ class CGProject : public BaseProject {
         });
 		DSLskybox.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, sizeof(GeomSkyboxUBO), 1},
-			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, N_SUNLIGHTS}
+			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sunLightManager.getNumLights()}
 		});
         DSLchar.init(this, {
             {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -293,7 +280,7 @@ class CGProject : public BaseProject {
         DSLwater.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO), 1},
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,2},
-			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, N_SUNLIGHTS}
+			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2, sunLightManager.getNumLights()}
 		});
         DSLgrass.init(this, {
 			{0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1},
@@ -421,14 +408,14 @@ class CGProject : public BaseProject {
 
         // --------- TECHNIQUES INITIALIZATION ---------
         std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
-        skyboxTexs.reserve(N_SUNLIGHTS);
-        for (int i = 0; i < N_SUNLIGHTS; ++i)
+        skyboxTexs.reserve(sunLightManager.getNumLights());
+        for (int i = 0; i < sunLightManager.getNumLights(); ++i)
             skyboxTexs.push_back({true, i, VkDescriptorImageInfo{}});
         std::vector<TextureDefs> waterTexs;        // automatic fill-up of textures for water
-        waterTexs.reserve(N_SUNLIGHTS+2);
+        waterTexs.reserve(sunLightManager.getNumLights()+2);
         waterTexs.push_back({true, 0, VkDescriptorImageInfo{}});
         waterTexs.push_back({true, 1, VkDescriptorImageInfo{}});
-        for(int i = 0; i < N_SUNLIGHTS; ++i)
+        for(int i = 0; i < sunLightManager.getNumLights(); ++i)
             waterTexs.push_back({true, 2 + i, VkDescriptorImageInfo{}});
 
         PRs.resize(9);
@@ -612,13 +599,13 @@ class CGProject : public BaseProject {
         lightUbo.nPointLights = 0;
         for (const auto& interaction : interactionsManager.getAllInteractions()) {
             if (interaction.id.find("torch_fire") != std::string::npos) {
-                interactableState.torchesOn.push_back(true);
+                interactableState.torchesOn.push_back(false);
                 if (lightUbo.nPointLights > MAX_POINT_LIGHTS) {
                     std::cout << "ERROR: Too many point lights in the scene.\n";
                     std::exit(-1);  // Stop adding if we exceed the limit
                 }
                 lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(interaction.position, 1.0f);
-                lightUbo.pointLightColors[lightUbo.nPointLights] = glm::vec4(10,0,0,1);
+                lightUbo.pointLightColors[lightUbo.nPointLights] = glm::vec4(0,0,0,1);
                 lightUbo.nPointLights++;
             }
         }
@@ -755,7 +742,7 @@ class CGProject : public BaseProject {
         interactionsManager.updateNearInteractable(physicsMgr.getPlayerPosition());
         {
             handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
-                sunLightManager.nextLight();
+                sunLightManager.nextLight(interactableState);
             });
             handleKeyToggle(window, GLFW_KEY_1, debounce, curDebounce, [&]() {
                 debugLightView.x = static_cast<int>(debugLightView.x + 1) % 3;
