@@ -79,3 +79,27 @@ InteractionObj InteractionObjManager::getNearInteractable() const {
         return InteractionObj{};
     }
 }
+
+/**
+ * Executes the interaction with the nearest interactable object, if any.
+ * Updates the provided state accordingly.
+ * @param state Interactable state of the main logic, modified by this method
+ */
+void InteractionObjManager::interact(InteractableState& state) const {
+    if (!isNearInteractable())
+        return;
+    InteractionObj obj = getNearInteractable();
+    // Cases of interactions handled simply through list of ifs, recognized by querying the id of interactable object
+
+    std::string id = obj.id;
+    if (id.find("torch_fire") != std::string::npos) {
+        int torchIdx = std::stoi(id.substr(id.find_last_of('.') + 1));
+        if (torchIdx >= 0 && torchIdx < static_cast<int>(state.torchesOn.size())) {
+            state.torchesOn[torchIdx] = !state.torchesOn[torchIdx];
+        } else {
+            std::cout << "Invalid torch index: " << torchIdx << "\n";
+        }
+    } else {
+        std::cout << "Interaction ID not recognized\n";
+    }
+}

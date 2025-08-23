@@ -6,6 +6,18 @@
 #include "modules/Scene.hpp"
 
 /**
+ * Represents the state of interactable objects in the scene.
+ * It should be made of simple control objects, that the main logic can easily check to change behaviour.
+ * This way, the interaction is indirectly handled by changing this object.
+ * Currently, it includes
+ *    - the state of torches (on/off). When the torch is on, it emits light and emissive/flickering effect is enabled
+ *      When the torch is off, the corresponding point light is disabled, and only the basic texture is rendered.
+ */
+struct InteractableState{
+    std::vector<bool> torchesOn;
+};
+
+/**
  * Represents an interactable object in the scene.
  * @param id Unique identifier for the interaction.
  * @param instaceIds List of instance IDs associated with this interaction.
@@ -59,6 +71,13 @@ public:
      * @return Reference to the vector of InteractionObj.
      */
     inline const std::vector<InteractionObj>& getAllInteractionObj() { return interactionObjects; }
+
+    /**
+     * Executes the interaction with the nearest interactable object, if any.
+     * Updates the provided state accordingly.
+     * @param state Interactable state of the main logic, modified by this method
+     */
+    void interact(InteractableState& state) const;
 
 private:
     /**

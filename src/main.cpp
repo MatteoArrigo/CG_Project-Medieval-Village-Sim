@@ -207,6 +207,7 @@ class CGProject : public BaseProject {
             SunLight(glm::vec3(0.0f, 0.0f, 0.0f), -1.0f, -90.0f) // night full dark
         }
     };
+    LightModelUBO lightUbo;
 
     //TODO: capisci se i bounds trovati per ortho vanno sempre bene o devono essere dinamici
     // Tipo se devono variare con la player position
@@ -225,6 +226,7 @@ class CGProject : public BaseProject {
 	Player * player;						// Player manger
 
     InteractionObjManager interactionManager;
+    InteractableState interactableState;
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -326,7 +328,8 @@ class CGProject : public BaseProject {
             {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
         });
 		DSLtorches.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
+            {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO),1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
         });
 
 
@@ -605,6 +608,20 @@ class CGProject : public BaseProject {
 		// Initializes the player Character reference
 		// NOTE: the first character in scene.json is supposed to be the player character
 		player = new Player(charManager.getCharacters()[0], &physicsMgr);
+
+        lightUbo.nPointLights = 0;
+        for (const auto& obj : interactionManager.getAllInteractionObj()) {
+            if (obj.id.find("torch_fire") != std::string::npos) {
+                interactableState.torchesOn.push_back(true);
+                if (lightUbo.nPointLights > MAX_POINT_LIGHTS) {
+                    std::cout << "ERROR: Too many point lights in the scene.\n";
+                    std::exit(-1);  // Stop adding if we exceed the limit
+                }
+                lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(obj.position, 1.0f);
+                lightUbo.pointLightColors[lightUbo.nPointLights] = glm::vec4(10,0,0,1);
+                lightUbo.nPointLights++;
+            }
+        }
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -770,10 +787,7 @@ class CGProject : public BaseProject {
 
             // Handle the Z key for Character interaction
             handleKeyToggle(window, GLFW_KEY_Z, debounce, curDebounce, [&]() {
-                if(!interactionManager.isNearInteractable())
-                    return;
-                InteractionObj obj = interactionManager.getNearInteractable();
-                // TODO: da scrivere
+                interactionManager.interact(interactableState);
             });
         }
 
@@ -788,22 +802,12 @@ class CGProject : public BaseProject {
         // Common uniforms and general variables
         int instanceId;
         int techniqueId = 1;  // First 2 techniques are for characters, so start from 1 (so that after ++ is 2)
-		LightModelUBO lightUbo{
-            .lightDir = sunLightManager.getDirection(),
-            .lightColor = sunLightManager.getColor(),
-            .eyePos = cameraPos,
-            .nPointLights = 0,
-        };
-        for (const auto& obj : interactionManager.getAllInteractionObj()) {
-            if (obj.id.find("torch_fire") != std::string::npos) {
-                if (lightUbo.nPointLights > MAX_POINT_LIGHTS) {
-                    std::cout << "ERROR: Too many point lights in the scene.\n";
-                    std::exit(-1);  // Stop adding if we exceed the limit
-                }
-                lightUbo.pointLightPositions[lightUbo.nPointLights] = glm::vec4(obj.position, 1.0f);
-                lightUbo.pointLightColors[lightUbo.nPointLights] = glm::vec4(10,0,0,1);
-                lightUbo.nPointLights++;
-            }
+        lightUbo.lightDir = sunLightManager.getDirection();
+        lightUbo.lightColor = sunLightManager.getColor();
+        lightUbo.eyePos = cameraPos;
+        for(int i=0 ; i<lightUbo.nPointLights; i++) {
+            lightUbo.pointLightColors[i] = interactableState.torchesOn[i] ?
+                    glm::vec4(10,0,0,1) : glm::vec4(0,0,0,1);
         }
         if(firstTime)
             for (int i = 0; i < lightUbo.nPointLights; ++i) {
@@ -830,7 +834,7 @@ class CGProject : public BaseProject {
             .skyboxTextureIdx = sunLightManager.getIndex(),
             .debug = debugLightView,
         };
-        IndexUBO indexUbo{sunLightManager.getIndex()};
+        IndexUBO indexUbo;
         TerrainFactorsUBO terrainFactorsUbo{};
         PbrFactorsUBO pbrUbo{};
 		glm::mat4 AdaptMat =
@@ -923,6 +927,7 @@ class CGProject : public BaseProject {
         geomUbo.mMat   = SC.TI[techniqueId].I[0].Wm;
         geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
         geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
+        indexUbo.idx = sunLightManager.getIndex();
         SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &lightUbo, 0);
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &geomUbo, 0);
         SC.TI[techniqueId].I[0].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
@@ -1000,11 +1005,15 @@ class CGProject : public BaseProject {
 
             shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
 
+            std::string torchId = *SC.TI[techniqueId].I[instanceId].id;
+            indexUbo.idx = std::stoi(torchId.substr(torchId.find_last_of('.') + 1)); // expects torch id in form "torch_#"
+
             SC.TI[techniqueId].I[instanceId].DS[0][0]->map(currentImage, &shadowUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][0]->map(currentImage, &lightUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &geomUbo, 0);
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &shadowClipUbo, 1);
             SC.TI[techniqueId].I[instanceId].DS[1][1]->map(currentImage, &timeUbo, 2);
+            SC.TI[techniqueId].I[instanceId].DS[1][2]->map(currentImage, &indexUbo, 0);
         }
 
 
