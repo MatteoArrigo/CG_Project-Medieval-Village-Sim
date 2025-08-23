@@ -21,9 +21,11 @@ struct Instance {
     /**
      * Factor 1 is used for
      *  - glossiness in PBR SpecularGlossiness
+     *  - metallic in PBR MetallicRoughness
      *  - mask blend factor in Terrain
      * Factor 2 is used for
      *  - ambient occlusion in PBR SpecularGlossiness
+     *  - roughness in PBR MetallicRoughness
      *  - tiling factor in Terrain
      * */
     float factor1;
@@ -303,12 +305,16 @@ std::cout << "}\n";
                     TI[k].I[j].specularFactor = glm::vec3(1.0f, 1.0f, 1.0f); // Default specular factor
                 if (is[j].contains("glossinessFactor"))
                     TI[k].I[j].factor1 = is[j]["glossinessFactor"];
+                else if( is[j].contains("metallicFactor") )
+                	TI[k].I[j].factor1 = is[j]["metallicFactor"];
                 else if( is[j].contains("maskBlendFactor") )
                     TI[k].I[j].factor1 = is[j]["maskBlendFactor"];
                 else
                     TI[k].I[j].factor1 = 0.5f; // Default glossiness factor
                 if (is[j].contains("aoFactor"))
                     TI[k].I[j].factor2 = is[j]["aoFactor"];
+				else if(is[j].contains("roughnessFactor"))
+					TI[k].I[j].factor2 = is[j]["roughnessFactor"];
                 else if( is[j].contains("tilingFactor") )
                     TI[k].I[j].factor2 = is[j]["tilingFactor"];
                 else
