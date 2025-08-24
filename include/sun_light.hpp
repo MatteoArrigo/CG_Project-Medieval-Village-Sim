@@ -1,6 +1,7 @@
 #ifndef CGPROJECT_SUNLIGHT_HPP
 #define CGPROJECT_SUNLIGHT_HPP
 
+#include "InteractionsManager.hpp"
 
 /**
  * Parameters used for orthogonal projection of the scene from light pov, in shadow mapping render pass
@@ -87,14 +88,8 @@ public:
      * @param nLights_ The number of SunLight objects.
      * @param lights_ A vector of SunLight objects.
      */
-    SunLightManager(const LightClipBorders& borders_, int nLights, std::vector<SunLight>&& lights_)
-        : borders(borders_), lights(std::move(lights_)), index(0) {
-        if (lights.size() != static_cast<size_t>(nLights)) {
-            std::cerr << "Error: sunLights vector size (" << lights.size()
-                      << ") does not match nLights (" << nLights << ")." << std::endl;
-            std::exit(-1);
-        }
-
+    SunLightManager()
+        : index(0) {
         // ------ LIGHT PROJECTION MAT COMPUTATION ------
         /* Light projection matrix is computed using an orthographic projection
          * A rotation is beforehand applied, to take into account the light direction --> projection from light's pov
@@ -111,17 +106,24 @@ public:
         lightProj = vulkanCorrection * glm::ortho(borders.left, borders.right, borders.bottom, borders.top, borders.near, borders.far);
 
         // Compute the light view-projection matrices for each light
-        lightVPs.reserve(nLights);
-        for(int i = 0; i < nLights; ++i) {
+        lightVPs.reserve(lights.size());
+        for(int i = 0; i < lights.size(); ++i) {
             lightVPs[i] = lightProj * glm::inverse(lights[i].getRotationMatrix());
         }
     }
 
     /**
      * Changes the current light to the next one in the vector, in circular fashion.
+     * If switching from night to day, turns off the torches. If switching from day to night, turns on the torches.
      */
-    void nextLight() {
+    void nextLight(InteractableState& interactableState) {
+        bool wasNight = glm::length(glm::vec3(getColor())) < 0.1f;
         index = (index + 1) % lights.size();
+        bool isNight = glm::length(glm::vec3(getColor())) < 0.1f;
+        if(wasNight && !isNight)
+            std::fill(interactableState.torchesOn.begin(), interactableState.torchesOn.end(), false);
+        else if(!wasNight && isNight)
+            std::fill(interactableState.torchesOn.begin(), interactableState.torchesOn.end(), true);
     }
 
     const glm::vec3& getDirection() const { return lights[index].getDirection(); }
@@ -129,6 +131,7 @@ public:
         return lights[index].getColor(); }
     const glm::mat4& getLightVP() const { return lightVPs[index]; }
     const int getIndex() const { return index; }
+    const int getNumLights() const { return lights.size(); }
 
 private:
     /**
@@ -141,12 +144,21 @@ private:
      * Borders for the orthographic projection of the scene from light pov, in shadow mapping render pass
      * Used to compute the light projection matrix
      */
-    const LightClipBorders borders;
+    const LightClipBorders borders{
+        -110.0f, 110.0f,
+        -60.0f, 60.0f,
+        -150.0f, 200.0f
+    };
     /**
      * Vector of SunLight objects representing the different light conditions in the scene.
      * The size of this vector must match nLights.
      */
-    const std::vector<SunLight> lights;
+    const std::vector<SunLight> lights{
+        SunLight(glm::vec3(1.0f, 1.0f, 1.0f), -80.0f, 10.0f, 0.0f, 3.0f), // full day
+        SunLight(glm::vec3(1.0f, 0.2f, 0.2f), -30.0f, -31.0f, 0.0f, 1.5f), // sunset
+        SunLight(glm::vec3(0.3f, 0.3f, 0.6f), -5.0f, -60.0f), // night with light
+        SunLight(glm::vec3(0.0f, 0.0f, 0.0f), -1.0f, -90.0f) // night full dark
+    };
     /**
      * Light Projection matrix
      * Used to compute the orthographic projection from light pov, in shadow mapping render pass
