@@ -16,6 +16,8 @@
 #include "InteractionsManager.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
+std::ostringstream oss;
+
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
 // Nota: nell'acqua usiamo ora la equirectangular map per la reflection, non preprocessata
 // Si potrebbe implementare IBL nelle altre tecniche, come PBR+IBL, usando radiance cubemap, quindi preprocessata
@@ -28,7 +30,7 @@
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = false;
-const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
+const std::string SCENE_FILEPATH = "assets/scene.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -618,6 +620,10 @@ class CGProject : public BaseProject {
                 lightUbo.nPointLights++;
             }
         }
+
+		// Initialize crane wheel interaction states
+		for (int craneWheelIdx = 0; craneWheelIdx < 3; craneWheelIdx++)
+			interactableState.craneWheelsRotating.push_back(true);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -1121,6 +1127,23 @@ class CGProject : public BaseProject {
 		// Move the player in the correct position (physics + model update)
         // Note: + 180 degrees to rotate so that he sees in direction of movement
 		player->move(moveDir, Yaw + glm::radians(180.0f));
+
+		// Prop animation updates
+		// -> Crane wheel rotation at defined speed per frame
+		float craneWheelSpeed = 0.5f; // degrees per frame
+		for (int wheelId = 0; wheelId < 3; wheelId++) {
+			if (interactableState.craneWheelsRotating[wheelId]) {
+				// Get the instances related to the wheel
+				oss << std::setw(2) << std::setfill('0') << wheelId;
+				std::string wheelIdStr = oss.str();
+				oss.str(""); // Clear the stream for next use
+				auto craneWheelInstanceA = SC.InstanceIds.at("build_crane_01_wheel-00." + wheelIdStr);
+				auto craneWheelInstanceB = SC.InstanceIds.at("build_crane_01_wheel-01." + wheelIdStr);
+				// Rotate the wheel
+				SC.I[craneWheelInstanceA]->Wm = glm::rotate(SC.I[craneWheelInstanceA]->Wm, glm::radians(craneWheelSpeed), glm::vec3(0,0,1));
+				SC.I[craneWheelInstanceB]->Wm = glm::rotate(SC.I[craneWheelInstanceB]->Wm, glm::radians(craneWheelSpeed), glm::vec3(0,0,1));
+			}
+		}
 
 		return deltaT;
 	}
