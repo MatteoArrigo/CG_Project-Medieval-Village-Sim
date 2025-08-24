@@ -26,13 +26,13 @@ struct PlayerConfig {
     float mass = 100.0f;
     glm::vec3 startPosition = glm::vec3(30,10,15);
 
-    float moveSpeed = 3.5f;
+    float moveSpeed = 2.3f;
     float runSpeed = 3.5f;
     float jumpForce = 350.0f;
     float airControl = 0.3f; // On-air control factor
     float groundDamping = 0.5f; // Damping factor when grounded
     float friction = 2.5f; // Friction coefficient
-    float rollingFriction = 2.1f; // Rolling friction coefficient
+    float rollingFriction = 5.1f; // Rolling friction coefficient
 };
 
 // Background terrain configuration.
