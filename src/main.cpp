@@ -3,6 +3,7 @@
 
 #include <json.hpp>
 
+#include "AnimatedProps.hpp"
 #include "modules/Starter.hpp"
 #include "modules/Scene.hpp"
 #include "modules/TextMaker.hpp"
@@ -15,8 +16,6 @@
 #include "sun_light.hpp"
 #include "InteractionsManager.hpp"
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
-std::ostringstream oss;
 
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
 // Nota: nell'acqua usiamo ora la equirectangular map per la reflection, non preprocessata
@@ -220,6 +219,7 @@ class CGProject : public BaseProject {
 
     InteractionsManager interactionsManager;
     InteractableState interactableState;
+	AnimatedProps* animatedProps;
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -621,9 +621,8 @@ class CGProject : public BaseProject {
             }
         }
 
-		// Initialize crane wheel interaction states
-		for (int craneWheelIdx = 0; craneWheelIdx < 3; craneWheelIdx++)
-			interactableState.craneWheelsRotating.push_back(true);
+		// Initialize animated props
+		animatedProps = new AnimatedProps(&interactionsManager, &interactableState, &SC);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -1128,22 +1127,8 @@ class CGProject : public BaseProject {
         // Note: + 180 degrees to rotate so that he sees in direction of movement
 		player->move(moveDir, Yaw + glm::radians(180.0f));
 
-		// Prop animation updates
-		// -> Crane wheel rotation at defined speed per frame
-		float craneWheelSpeed = 0.5f; // degrees per frame
-		for (int wheelId = 0; wheelId < 3; wheelId++) {
-			if (interactableState.craneWheelsRotating[wheelId]) {
-				// Get the instances related to the wheel
-				oss << std::setw(2) << std::setfill('0') << wheelId;
-				std::string wheelIdStr = oss.str();
-				oss.str(""); // Clear the stream for next use
-				auto craneWheelInstanceA = SC.InstanceIds.at("build_crane_01_wheel-00." + wheelIdStr);
-				auto craneWheelInstanceB = SC.InstanceIds.at("build_crane_01_wheel-01." + wheelIdStr);
-				// Rotate the wheel
-				SC.I[craneWheelInstanceA]->Wm = glm::rotate(SC.I[craneWheelInstanceA]->Wm, glm::radians(craneWheelSpeed), glm::vec3(0,0,1));
-				SC.I[craneWheelInstanceB]->Wm = glm::rotate(SC.I[craneWheelInstanceB]->Wm, glm::radians(craneWheelSpeed), glm::vec3(0,0,1));
-			}
-		}
+		// Update animated props
+		animatedProps->update(deltaT);
 
 		return deltaT;
 	}
