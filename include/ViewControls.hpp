@@ -10,8 +10,11 @@
 enum class ViewMode {
     THIRD_PERSON = 0,
     FIRST_PERSON,
-    ISOMETRIC,
 	SHADOW_CLIP,
+    ISOMETRIC,
+	DIMETRIC,
+	TRIMETRIC,
+	CABINET,
 	COUNT	// Helper to get the number of view modes. Must be the last one
 };
 
@@ -46,8 +49,6 @@ public:
     const glm::vec3& getMoveDir() const {return moveDir;}
     const glm::mat4& getViewPrj() const {return ViewPrj;}
     const glm::vec3& getCameraPos() const {return cameraPos;}
-    const glm::mat4& getWorld() const {return World;}
-	//TODO: capisci a che serve World, non sembra essere usata...
 
 private:
 	/**
@@ -70,25 +71,25 @@ private:
     const float ROT_SPEED = glm::radians(120.0f);
     const float MOVE_SPEED_BASE = PlayerConfig::moveSpeed;
     const float MOVE_SPEED_RUN = PlayerConfig::runSpeed;
-    const float JUMP_FORCE = PlayerConfig::jumpForce;
 
     // Camera FOV-y, Near Plane and Far Plane
     const float FOVy = glm::radians(45.0f);
-    const float worldNearPlane = 0.1f;
-    const float worldFarPlane = 500.f;
+    const float prospNearPlane = 0.1f;
+    const float prospFarPlane = 500.f;
+    const float orthoNearPlane = -1000.0f;
+    const float orthoFarPlane = 500.f;
+	const float orthoSize = 20.0f; 		// in slide it's w --> the large it is, the more zoomed out
 
     // Camera rotation controls
     float yaw = glm::radians(0.0f);
     float pitch = glm::radians(0.0f);
     float roll = glm::radians(0.0f);
     float ef; // Exponential smoothing factor for camera damping
-    float relDir = glm::radians(0.0f);
-    float dampedRelDir = glm::radians(0.0f);
-    glm::vec3 dampedCamPos = PlayerConfig::startPosition;
 
     // Camera target height and distance
-    float camHeight = 1.5;
+    const float camHeight = 2.0f;
     const float camDist = 4.5f;
+    glm::vec3 dampedCamPos = PlayerConfig::startPosition;
 
     // Player position and movement
     float moveSpeed;
@@ -97,6 +98,5 @@ private:
 
     // Final results per frame
     glm::mat4 ViewPrj;
-    glm::mat4 World;
     glm::vec3 cameraPos;
 };

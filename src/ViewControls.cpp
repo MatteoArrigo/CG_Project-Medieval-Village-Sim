@@ -27,20 +27,11 @@ void ViewControls::updateFrame(float deltaT, glm::vec3 moveInput, glm::vec3 rotI
     moveDir = moveSpeed * rawMoveDir;
 
     // Camera height adjustment
-    camHeight += moveSpeed * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
-    camHeight -= moveSpeed * 0.1f * (glfwGetKey(window, GLFW_KEY_E) ? 1.0f : 0.0f) * deltaT;
-    camHeight = glm::clamp(camHeight, 0.5f, 3.0f);
-
-    // Rotational independence from view with damping
-    if(glm::length(glm::vec3(moveDir.x, 0.0f, moveDir.z)) > 0.001f) {
-        relDir = yaw + atan2(moveDir.x, moveDir.z);
-        dampedRelDir = dampedRelDir > relDir + 3.1416f ? dampedRelDir - 6.28f :
-                       dampedRelDir < relDir - 3.1416f ? dampedRelDir + 6.28f : dampedRelDir;
-    }
-    dampedRelDir = ef * dampedRelDir + (1.0f - ef) * relDir;
+//    camHeight += moveSpeed * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
+//    camHeight -= moveSpeed * 0.1f * (glfwGetKey(window, GLFW_KEY_E) ? 1.0f : 0.0f) * deltaT;
+//    camHeight = glm::clamp(camHeight, 0.5f, 3.0f);
 
     // Final results computation
-    World = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
     updateViewPrj();
 }
 
@@ -49,38 +40,108 @@ void ViewControls::updateFrame(float deltaT, glm::vec3 moveInput, glm::vec3 rotI
  * current position, orientation, and view mode.
  */
 void ViewControls::updateViewPrj() {
+	glm::mat4 Prj, View;
+
     switch(viewMode) {
         case ViewMode::THIRD_PERSON: {
-            // Projection matrix for perspective
-            glm::mat4 Prj = glm::perspective(FOVy, ar, worldNearPlane, worldFarPlane);
-            Prj[1][1] *= -1;
+			Prj = glm::perspective(FOVy, ar, prospNearPlane, prospFarPlane);
+			Prj[1][1] *= -1;
 
-            // Target position based on physics player position
             glm::vec3 target = playerPos + glm::vec3(0.0f, camHeight, 0.0f);
-            // Camera position, depending on Yaw parameter
-            glm::mat4 camWorld = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0,1,0));
-            cameraPos = camWorld * glm::vec4(0.0f, camHeight + camDist * sin(pitch), camDist * cos(pitch), 1.0);
-            // Damping of camera
+            glm::mat4 camWorld = glm::translate(glm::mat4(1), playerPos) *
+					glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0,1,0));
+            cameraPos = camWorld * glm::vec4(0.0f, camHeight - camDist * sin(pitch), camDist * cos(pitch), 1.0);
             dampedCamPos = ef * dampedCamPos + (1.0f - ef) * cameraPos;
+            View = glm::lookAt(dampedCamPos, target, glm::vec3(0,1,0));
 
-            glm::mat4 View = glm::lookAt(dampedCamPos, target, glm::vec3(0,1,0));
-            ViewPrj = Prj * View;
-            break;
+			ViewPrj = Prj * View;
+			break;
         }
 
         case ViewMode::FIRST_PERSON: {
-            break;
-        }
+			Prj = glm::perspective(FOVy, ar, prospNearPlane, prospFarPlane);
+			Prj[1][1] *= -1;
 
-        case ViewMode::ISOMETRIC: {
-            break;
+			glm::vec3 viewPos = playerPos + glm::vec3(0,2.1,0);		// More or less elevated to player's head
+			View =	glm::rotate(glm::mat4(1.0f), -roll, glm::vec3(0,0,1)) *
+					glm::rotate(glm::mat4(1.0f), -pitch, glm::vec3(1,0,0)) *
+					glm::rotate(glm::mat4(1.0f), -yaw, glm::vec3(0,1,0)) *
+					glm::translate(glm::mat4(1), -viewPos);
+
+			ViewPrj = Prj * View;
+			break;
         }
 
 		case ViewMode::SHADOW_CLIP: {
 			ViewPrj = sunLightManager.getLightVP();
 			break;
 		}
-    }
+
+        case ViewMode::ISOMETRIC: {
+			Prj = glm::ortho(-orthoSize, orthoSize,
+							 -orthoSize / ar,orthoSize / ar,
+							 orthoNearPlane, orthoFarPlane );
+			Prj[1][1] *= -1;
+
+			View =	glm::rotate(glm::mat4(1), glm::radians(35.26f), glm::vec3(1,0,0)) *
+					glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(0,1,0)) *
+					glm::translate(glm::mat4(1), -playerPos);
+
+			ViewPrj = Prj * View;
+			break;
+        }
+
+		case ViewMode::DIMETRIC: {
+			Prj = glm::ortho(-orthoSize, orthoSize,
+							 -orthoSize / ar,orthoSize / ar,
+							 orthoNearPlane, orthoFarPlane );
+			Prj[1][1] *= -1;
+
+			View =	glm::rotate(glm::mat4(1), glm::radians(20.0f), glm::vec3(1,0,0)) *
+					  glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(0,1,0)) *
+					  glm::translate(glm::mat4(1), -playerPos);
+
+			ViewPrj = Prj * View;
+			break;
+		}
+
+		case ViewMode::TRIMETRIC: {
+			Prj = glm::ortho(-orthoSize, orthoSize,
+							 -orthoSize / ar,orthoSize / ar,
+							 orthoNearPlane, orthoFarPlane );
+			Prj[1][1] *= -1;
+
+			View =	glm::rotate(glm::mat4(1), glm::radians(30.0f), glm::vec3(1,0,0)) *
+					  glm::rotate(glm::mat4(1), glm::radians(-60.0f), glm::vec3(0,1,0)) *
+					  glm::translate(glm::mat4(1), -playerPos);
+
+			ViewPrj = Prj * View;
+			break;
+		}
+
+		case ViewMode::CABINET: {
+			Prj = glm::ortho(-orthoSize, orthoSize,
+							 -orthoSize / ar, orthoSize / ar,
+							 orthoNearPlane, orthoFarPlane );
+			Prj[1][1] *= -1;
+
+			// cabinet shear factors
+			float alpha = glm::radians(45.0f); // angle of projection
+			float l = 0.5f;                     // depth scale factor
+			glm::mat4 shear(1.0f);
+			shear[2][0] = -l * cos(alpha); // z affects x
+			shear[2][1] = -l * sin(alpha); // z affects y
+
+			// just translate the scene by -playerPos
+			View = shear * glm::translate(glm::mat4(1.0f), -playerPos);
+
+			ViewPrj = Prj * View;
+			break;
+		}
+
+		case ViewMode::COUNT:
+			break;
+	}
 }
 
 /**
