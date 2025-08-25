@@ -598,7 +598,10 @@
 		{"id": "torch_fire.13", "instances": ["prop_torch_01-00.13"], "pos": [63.550777435302734, 6.5642499923706055, 36.7805061340332]},
 		{"id": "torch_fire.14", "instances": ["prop_torch_01-00.14"], "pos": [-12.000165939331055, 4.903113842010498, 29.635643005371094]},
 		{"id": "torch_fire.15", "instances": ["prop_torch_01-00.15"], "pos": [-46.15494155883789, 4.74786901473999, 51.90578079223633]},
-		{"id": "torch_fire.16", "instances": ["prop_torch_01-00.16"], "pos": [25.170127868652344, 5.572113990783691, 32.292381286621094]}
+		{"id": "torch_fire.16", "instances": ["prop_torch_01-00.16"], "pos": [25.170127868652344, 5.572113990783691, 32.292381286621094]},
+		{"id": "crane_wheel.00", "instances": ["build_crane_01_wheel-00.00", "build_crane_01_wheel-01.00"], "pos": [-58.373558044433594, 7.0, -48.053470611572266]},
+		{"id": "crane_wheel.01", "instances": ["build_crane_01_wheel-00.01", "build_crane_01_wheel-01.01"], "pos": [86.69046783447266, 5.3, -0.7466176152229309]},
+		{"id": "crane_wheel.02", "instances": ["build_crane_01_wheel-00.02", "build_crane_01_wheel-01.02"], "pos": [54.602909088134766, 4.5, 33.61199188232422]}
 	],
 	"instances": [
 		{"technique": "CharCookTorrance", "elements": [
@@ -2469,13 +2472,13 @@
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0,
 				"physics": true
 			},
-			{"id": "build_crane_01_wheel-00.00", "model": "build_crane_01_wheel-00", "texture": ["build_crane_01_a", "build_crane_01_n", "void", "build_crane_01_o"],
+			{"id": "build_crane_01_wheel-00.01", "model": "build_crane_01_wheel-00", "texture": ["build_crane_01_a", "build_crane_01_n", "void", "build_crane_01_o"],
 				"translate": [86.69046783447266, 10.3947172164917, -0.7466176152229309],
 				"eulerAngles": [0.0, -79.89368375836865, 0.0],
 				"diffuseFactor": [0.623193741, 0.623193741, 0.623193741], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.03200000151991844, "aoFactor": 0.25,
 				"physics": true
 			},
-			{"id": "build_crane_01_wheel-01.00", "model": "build_crane_01_wheel-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01_wheel-01.01", "model": "build_crane_01_wheel-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [86.69046783447266, 10.3947172164917, -0.7466176152229309],
 				"eulerAngles": [0.0, -79.89368375836865, 0.0],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0,
@@ -2499,13 +2502,13 @@
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0,
 				"physics": true
 			},
-			{"id": "build_crane_01_wheel-00.00", "model": "build_crane_01_wheel-00", "texture": ["build_crane_01_a", "build_crane_01_n", "void", "build_crane_01_o"],
+			{"id": "build_crane_01_wheel-00.02", "model": "build_crane_01_wheel-00", "texture": ["build_crane_01_a", "build_crane_01_n", "void", "build_crane_01_o"],
 				"translate": [54.602909088134766, 9.687273025512695, 33.61199188232422],
 				"eulerAngles": [-0.49970789916543484, 136.43743864995983, 1.288569040489071],
 				"diffuseFactor": [0.623193741, 0.623193741, 0.623193741], "specularFactor": [0.03310476, 0.03310476, 0.03310476], "glossinessFactor": 0.03200000151991844, "aoFactor": 0.25,
 				"physics": true
 			},
-			{"id": "build_crane_01_wheel-01.00", "model": "build_crane_01_wheel-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
+			{"id": "build_crane_01_wheel-01.02", "model": "build_crane_01_wheel-01", "texture": ["white", "build_crane_02_n", "build_crane_02_sg", "build_crane_02_o"],
 				"translate": [54.602909088134766, 9.687273025512695, 33.61199188232422],
 				"eulerAngles": [-0.49970789916543484, 136.43743864995983, 1.288569040489071],
 				"diffuseFactor": [0.0815087855, 0.0815087855, 0.0815087855], "specularFactor": [1.0, 1.0, 1.0], "glossinessFactor": 1.0, "aoFactor": 1.0,

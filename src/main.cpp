@@ -3,6 +3,7 @@
 
 #include <json.hpp>
 
+#include "AnimatedProps.hpp"
 #include "modules/Starter.hpp"
 #include "modules/Scene.hpp"
 #include "modules/TextMaker.hpp"
@@ -28,7 +29,7 @@
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = false;
-const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
+const std::string SCENE_FILEPATH = "assets/scene.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -218,6 +219,7 @@ class CGProject : public BaseProject {
 
     InteractionsManager interactionsManager;
     InteractableState interactableState;
+	AnimatedProps* animatedProps;
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -618,6 +620,9 @@ class CGProject : public BaseProject {
                 lightUbo.nPointLights++;
             }
         }
+
+		// Initialize animated props
+		animatedProps = new AnimatedProps(&interactionsManager, &interactableState, &SC);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -1121,6 +1126,9 @@ class CGProject : public BaseProject {
 		// Move the player in the correct position (physics + model update)
         // Note: + 180 degrees to rotate so that he sees in direction of movement
 		player->move(moveDir, Yaw + glm::radians(180.0f));
+
+		// Update animated props
+		animatedProps->update(deltaT);
 
 		return deltaT;
 	}
