@@ -15,6 +15,8 @@
 #include "Utils.hpp"
 #include "sun_light.hpp"
 #include "InteractionsManager.hpp"
+#include "ViewControls.hpp"
+
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
@@ -22,14 +24,11 @@
 // Si potrebbe implementare IBL nelle altre tecniche, come PBR+IBL, usando radiance cubemap, quindi preprocessata
 // Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
 
-
-// TODO: si potrebbe ancora cercare una skybox con la luna fatta meglio
-
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = false;
-const std::string SCENE_FILEPATH = "assets/scene.json";
+const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -133,76 +132,42 @@ struct TerrainFactorsUBO {
 // MAIN ! 
 class CGProject : public BaseProject {
 	protected:
-	// Here you list all the Vulkan objects you need:
-	
-	// --- DESCRIPTOR SET LAYOUTS ---
+
+	// --- VULKAN GRAPHICS OBJECTS ---
     // DSL general
     DescriptorSetLayout DSLlightModel, DSLgeomShadow, DSLgeomShadowTime, DSLgeomShadow4Char;
     // DSL for specific pipelines
 	DescriptorSetLayout DSLpbr, DSLcharPbr, DSLpbrShadow, DSLskybox, DSLterrain,  DSLwater, DSLgrass, DSLchar, DSLtorches;
     // DSL for shadow mapping
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
-
-	// Vertex formants, Pipelines [Shader couples] and Render passes
-	VertexDescriptor VDchar;
-	VertexDescriptor VDnormUV;
-	VertexDescriptor VDpos;
-	VertexDescriptor VDtan;
+    // VD, RP, Pipelines
+	VertexDescriptor VDchar, VDnormUV, VDpos, VDtan;
 	RenderPass RPshadow, RP;
 	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings, Ptorches;
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
-
-    Texture Tvoid;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Scene SC;
 	std::vector<VertexDescriptorRef>  VDRs;
 	std::vector<TechniqueRef> PRs;
 
-	// PhysicsManager for collision detection
-	PhysicsManager physicsMgr;
-	PlayerConfig physicsConfig;
-
 	// to provide textual feedback
 	TextMaker txt;
-	
-	// Other application parameters
-	float Ar;	// Aspect ratio
 
-	glm::mat4 ViewPrj;
-	glm::mat4 World;
-	glm::vec3 cameraPos;
-
-    // Camera rotation controls
-	float Yaw = glm::radians(0.0f);
-	float Pitch = glm::radians(0.0f);
-	float Roll = glm::radians(0.0f);
-    float relDir = glm::radians(0.0f);
-    float dampedRelDir = glm::radians(0.0f);
-    glm::vec3 dampedCamPos = physicsConfig.startPosition;
-    // Camera FOV-y, Near Plane and Far Plane
-    const float FOVy = glm::radians(45.0f);
-    const float worldNearPlane = 0.1f;
-    const float worldFarPlane = 500.f;
-    // Camera target height and distance
-    float camHeight = 1.5;
-    float camDist = 5;
-    // Camera Pitch limits
-    const float minPitch = glm::radians(-40.0f);
-    const float maxPitch = glm::radians(80.0f);
-    // Rotation and motion speed
-    const float ROT_SPEED = glm::radians(120.0f);
-    const float MOVE_SPEED_BASE = physicsConfig.moveSpeed;
-    const float MOVE_SPEED_RUN = physicsConfig.runSpeed;
-    const float JUMP_FORCE = physicsConfig.jumpForce;
-    const float MAX_CAM_DIST = 7.5;
-    const float MIN_CAM_DIST = 1.5;
-
+	// Controller classes
+	PhysicsManager physicsMgr;
+    ViewControls* viewControls;
     SunLightManager sunLightManager;
-    LightModelUBO lightUbo;
+	CharManager charManager;			// Character manager for animations
+	Player * player;						// Player manger
+    InteractionsManager interactionsManager;
+    InteractableState interactableState;
+	AnimatedProps* animatedProps;
 
-    //TODO: capisci se i bounds trovati per ortho vanno sempre bene o devono essere dinamici
-    // Tipo se devono variare con la player position
+	// Other application parameters / objects
+	float ar;	// Aspect ratio
+    Texture Tvoid;
+    LightModelUBO lightUbo;
 
     /** Debug vector present in DSL for shadow map. Basic version is vec4(0,0,0,0)
      * if debugLightView.x == 1.0, the terrain and buildings render only white if lit and black if in shadow
@@ -210,16 +175,7 @@ class CGProject : public BaseProject {
      * if debugLightView.y == 1.0, the light's clip space is visualized instead of the basic perspective view
      */
     glm::vec4 debugLightView = glm::vec4(0.0);
-
-	glm::vec4 debug1 = glm::vec4(0);
-
-	// Everything related to characters inside the scene
-	CharManager charManager;			// Character manager for animations
-	Player * player;						// Player manger
-
-    InteractionsManager interactionsManager;
-    InteractableState interactableState;
-	AnimatedProps* animatedProps;
+	glm::vec4 debug1 = glm::vec4(0);        // TODO: secondo me si può togliere
 
     // Here you set the main application parameters
 	void setWindowParameters() {
@@ -232,13 +188,13 @@ class CGProject : public BaseProject {
     	windowResizable = GLFW_FALSE;
 
 		// Initial aspect ratio
-		Ar = (float)windowWidth / (float)windowHeight;
+		ar = (float)windowWidth / (float)windowHeight;
 	}
 	
 	// What to do when the window changes size
 	void onWindowResize(int w, int h) {
 		std::cout << "Window resized to: " << w << " x " << h << "\n";
-		Ar = (float)w / (float)h;
+        ar = (float)w / (float)h;
 		// Update Render Pass
 		RP.width = w;
 		RP.height = h;
@@ -623,6 +579,9 @@ class CGProject : public BaseProject {
 
 		// Initialize animated props
 		animatedProps = new AnimatedProps(&interactionsManager, &interactableState, &SC);
+
+		// Initialize view controls
+        viewControls = new ViewControls(FLY_MODE, window, ar, physicsMgr);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -805,7 +764,7 @@ class CGProject : public BaseProject {
         int techniqueId = 1;  // First 2 techniques are for characters, so start from 1 (so that after ++ is 2)
         lightUbo.lightDir = sunLightManager.getDirection();
         lightUbo.lightColor = sunLightManager.getColor();
-        lightUbo.eyePos = cameraPos;
+        lightUbo.eyePos = viewControls->getCameraPos();
         for(int i=0 ; i<lightUbo.nPointLights; i++) {
             lightUbo.pointLightColors[i] = interactableState.torchesOn[i] ?
                     glm::vec4(10,0,0,1) : glm::vec4(0,0,0,1);
@@ -863,7 +822,7 @@ class CGProject : public BaseProject {
 					// CookTorrance technique ubo update
 					for(int im = 0; im < TMsp->size(); im++) {
 						geomCharUbo.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
-						geomCharUbo.mvpMat[im] = ViewPrj * geomCharUbo.mMat[im];
+						geomCharUbo.mvpMat[im] = viewControls->getViewPrj() * geomCharUbo.mMat[im];
 						geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
                         shadowMapUboChar.model[im] = geomCharUbo.mMat[im];
 					}
@@ -876,7 +835,7 @@ class CGProject : public BaseProject {
 				} else if(techniqueName == "CharPBR") {
 					for(int im = 0; im < TMsp->size(); im++) {
 						geomCharUbo.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
-						geomCharUbo.mvpMat[im] = ViewPrj * geomCharUbo.mMat[im];
+						geomCharUbo.mvpMat[im] = viewControls->getViewPrj() * geomCharUbo.mMat[im];
 						geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
                         shadowMapUboChar.model[im] = geomCharUbo.mMat[im];
 					}
@@ -904,7 +863,7 @@ class CGProject : public BaseProject {
 
         techniqueId++;
         if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
-		geomSkyboxUbo.mvpMat = ViewPrj * glm::translate(glm::mat4(1), cameraPos) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
+		geomSkyboxUbo.mvpMat = viewControls->getViewPrj() * glm::translate(glm::mat4(1), viewControls->getCameraPos()) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
 		SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &geomSkyboxUbo, 0);
 
         // TECHNIQUE Terrain
@@ -912,7 +871,7 @@ class CGProject : public BaseProject {
         if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.mvpMat = viewControls->getViewPrj() * geomUbo.mMat;
             geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
 
             terrainFactorsUbo.maskBlendFactor = SC.TI[techniqueId].I[instanceId].factor1;
@@ -931,7 +890,7 @@ class CGProject : public BaseProject {
         techniqueId++;
         if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         geomUbo.mMat   = SC.TI[techniqueId].I[0].Wm;
-        geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+        geomUbo.mvpMat = viewControls->getViewPrj() * geomUbo.mMat;
         geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
         indexUbo.idx = sunLightManager.getIndex();
         SC.TI[techniqueId].I[0].DS[1][0]->map(currentImage, &lightUbo, 0);
@@ -945,7 +904,7 @@ class CGProject : public BaseProject {
         if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.mvpMat = viewControls->getViewPrj() * geomUbo.mMat;
             geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
 
             shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
@@ -962,7 +921,7 @@ class CGProject : public BaseProject {
         if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.mvpMat = viewControls->getViewPrj() * geomUbo.mMat;
             geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
 
             pbrUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
@@ -984,7 +943,7 @@ class CGProject : public BaseProject {
         if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.mvpMat = viewControls->getViewPrj() * geomUbo.mMat;
             geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
 
             pbrUbo.diffuseFactor = SC.TI[techniqueId].I[instanceId].diffuseFactor;
@@ -1006,7 +965,7 @@ class CGProject : public BaseProject {
         if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
         for(instanceId = 0; instanceId < SC.TI[techniqueId].InstanceCount; instanceId++) {
             geomUbo.mMat   = SC.TI[techniqueId].I[instanceId].Wm;
-            geomUbo.mvpMat = ViewPrj * geomUbo.mMat;
+            geomUbo.mvpMat = viewControls->getViewPrj() * geomUbo.mMat;
             geomUbo.nMat   = glm::inverse(glm::transpose(geomUbo.mMat));
 
             shadowUbo.model = SC.TI[techniqueId].I[instanceId].Wm;
@@ -1057,75 +1016,13 @@ class CGProject : public BaseProject {
 		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 		bool fire = false;
 		getSixAxis(deltaT, m, r, fire);
-		float MOVE_SPEED = fire ? MOVE_SPEED_RUN : MOVE_SPEED_BASE;
 
-		// Step the physics simulation
 		physicsMgr.update(deltaT);
-
-		// Get current player position from physics body
-		glm::vec3 playerPos = physicsMgr.getPlayerPosition();
-
-		camDist = (MIN_CAM_DIST + MAX_CAM_DIST) / 2.0f;
-
-		// Update camera rotation
-		Yaw = Yaw - ROT_SPEED * deltaT * r.y;
-		Pitch = Pitch - ROT_SPEED * deltaT * r.x;
-		Pitch = Pitch < minPitch ? minPitch : (Pitch > maxPitch ? maxPitch : Pitch);
-
-		// Calculate movement direction based on camera orientation
-		glm::vec3 ux = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
-		glm::vec3 uz = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
-
-		glm::vec3 rawMoveDir = m.x * ux - m.z * uz;
-		if (FLY_MODE)
-			rawMoveDir += m.y * glm::vec3(0,1,0);
-
-		if (glm::length(rawMoveDir) > 0.0f)
-			rawMoveDir = glm::normalize(rawMoveDir);
-
-		glm::vec3 moveDir = MOVE_SPEED * rawMoveDir;
-
-		// Camera height adjustment
-		camHeight += MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
-		camHeight -= MOVE_SPEED * 0.1f * (glfwGetKey(window, GLFW_KEY_E) ? 1.0f : 0.0f) * deltaT;
-		camHeight = glm::clamp(camHeight, 0.5f, 3.0f);
-
-		// Exponential smoothing factor for camera damping
-		float ef = exp(-10.0 * deltaT);
-
-		// Rotational independence from view with damping
-		if(glm::length(glm::vec3(moveDir.x, 0.0f, moveDir.z)) > 0.001f) {
-			relDir = Yaw + atan2(moveDir.x, moveDir.z);
-			dampedRelDir = dampedRelDir > relDir + 3.1416f ? dampedRelDir - 6.28f :
-						   dampedRelDir < relDir - 3.1416f ? dampedRelDir + 6.28f : dampedRelDir;
-		}
-		dampedRelDir = ef * dampedRelDir + (1.0f - ef) * relDir;
-
-		// Final world matrix computation using physics position
-		World = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), dampedRelDir, glm::vec3(0,1,0));
-
-		// Projection
-		glm::mat4 Prj = glm::perspective(FOVy, Ar, worldNearPlane, worldFarPlane);
-		Prj[1][1] *= -1;
-
-		// View
-		// Target position based on physics body position
-		glm::vec3 target = playerPos + glm::vec3(0.0f, camHeight, 0.0f);
-
-		// Camera position, depending on Yaw parameter
-		glm::mat4 camWorld = glm::translate(glm::mat4(1), playerPos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
-		cameraPos = camWorld * glm::vec4(0.0f, camHeight + camDist * sin(Pitch), camDist * cos(Pitch), 1.0);
-
-		// Damping of camera
-		dampedCamPos = ef * dampedCamPos + (1.0f - ef) * cameraPos;
-
-		glm::mat4 View = glm::lookAt(dampedCamPos, target, glm::vec3(0,1,0));
-
-		ViewPrj = Prj * View;
+        viewControls->updateFrame(deltaT, m, r, fire);
 
 		// Move the player in the correct position (physics + model update)
         // Note: + 180 degrees to rotate so that he sees in direction of movement
-		player->move(moveDir, Yaw + glm::radians(180.0f));
+		player->move(viewControls->getMoveDir(), viewControls->getYaw() + glm::radians(180.0f));
 
 		// Update animated props
 		animatedProps->update(deltaT);
