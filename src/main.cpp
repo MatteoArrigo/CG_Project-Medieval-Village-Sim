@@ -1000,10 +1000,17 @@ class CGProject : public BaseProject {
 		    countedFrames = 0;
 		}
 
+		// Print current projection mode
+		txt.print(-0.98f, -0.99f, "View: "+viewControls->getViewModeStr(), 2, "SS",
+				  false, false, true, TAL_LEFT, TRH_LEFT, TRV_TOP,
+				  {1,1,1,1}, {0,0,0,1}, {0.5f, 0.5f, 0.5f, 0.2f}, 1,1);
+
         // Update message for interaction point in the nearby
         if(interactionsManager.isNearInteractable()) {
             auto interaction = interactionsManager.getNearInteractable();
-            txt.print(0.5f, 0.05f, "Press Z to interact with "+interaction.id, 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+            txt.print(0.96f, -0.97f, "Press Z to interact\nwith "+interaction.id, 3, "SS", false, false, true,
+					  TAL_RIGHT, TRH_RIGHT, TRV_TOP, {1,1,1,1}, {0.5,0,0,1},
+					  {0.5,0,0,0.5}, 1.2, 1.2);
         }
 
         txt.updateCommandBuffer();

@@ -49,6 +49,7 @@ public:
     const glm::vec3& getMoveDir() const {return moveDir;}
     const glm::mat4& getViewPrj() const {return ViewPrj;}
     const glm::vec3& getCameraPos() const {return cameraPos;}
+	const std::string getViewModeStr();
 
 private:
 	/**

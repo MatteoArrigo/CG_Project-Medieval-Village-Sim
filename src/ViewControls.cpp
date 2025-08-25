@@ -152,3 +152,16 @@ void ViewControls::nextViewMode() {
     mode = (mode + 1) % static_cast<int>(ViewMode::COUNT);
     viewMode = static_cast<ViewMode>(mode);
 }
+
+const std::string ViewControls::getViewModeStr() {
+	switch(viewMode) {;
+		case ViewMode::FIRST_PERSON: return "First Person";
+		case ViewMode::THIRD_PERSON: return "Third Person";
+		case ViewMode::ISOMETRIC: return "Isometric";
+		case ViewMode::DIMETRIC: return "Dimetric";
+		case ViewMode::TRIMETRIC: return "Trimetric";
+		case ViewMode::CABINET: return "Cabinet";
+		case ViewMode::SHADOW_CLIP: return "Shadow Clip";
+		case ViewMode::COUNT: return "";
+	}
+}
