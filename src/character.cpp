@@ -4,7 +4,7 @@ Character::Character(const std::string& name, const glm::vec3& pos, std::shared_
     : name(name), position(pos), stateNames(stateNames), currentStateIdx(getStateIndex("Idle")), currentDialogue(0), AB(AB), SKA(SKA) {
     
     // Inizializza i dialoghi di default
-    dialogues = {"Walking dialogue",
+    dialogues = {"Hello there!",
                  "Running dialogue",
                  "Idle dialogue",
                  "Pointing dialogue",
@@ -66,17 +66,17 @@ void Character::nextDialogue() {
 
 void Character::interact() {
     if (getState() == "Idle") {
-        setState("Waving");
-        // Trova l'indice dello stato "Waving" e avvia l'animazione corrispondente
-        int wavingIdx = -1;
+        setState("Salute");
+        // Trova l'indice dello stato "Salute" e avvia l'animazione corrispondente
+        int nextAnimId = -1;
         for (size_t i = 0; i < stateNames.size(); ++i) {
-            if (stateNames[i] == "Waving") { 
-                wavingIdx = (int)i; 
+            if (stateNames[i] == "Salute") {
+                nextAnimId = (int)i;
                 break; 
             }
         }
-        if (wavingIdx >= 0)
-            AB->Start(wavingIdx, 0.5);
+        if (nextAnimId >= 0)
+            AB->Start(nextAnimId, 0.5);
     }
 }
 
@@ -91,4 +91,11 @@ std::string Character::charStateToString(const std::string& stateName) const {
 std::vector<glm::mat4>* Character::getTransformMatrices() {
     SKA->Sample(*AB.get());
     return SKA->getTransformMatrices();
+}
+
+void Character::setIdle() {
+    setState("Idle");
+    AB->Start(getStateIndex("Idle"), 0.5);
+    currentDialogue = 0;
+    return;
 }

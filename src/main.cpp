@@ -28,7 +28,7 @@
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = false;
-const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
+const std::string SCENE_FILEPATH = "assets/scene.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -749,6 +749,10 @@ class CGProject : public BaseProject {
 
         // Handle of command keys
         interactionsManager.updateNearInteractable(physicsMgr.getPlayerPosition());
+		static std::shared_ptr<Character> lastCharInteracted;
+		if (firstTime)
+			 lastCharInteracted = nullptr;
+		glm::vec3 playerPos = physicsMgr.getPlayerPosition();
         {
             handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
                 sunLightManager.nextLight(interactableState);
@@ -770,12 +774,12 @@ class CGProject : public BaseProject {
 
             // Handle the E key for Character interaction
             handleKeyToggle(window, GLFW_KEY_E, debounce, curDebounce, [&]() {
-                glm::vec3 playerPos = physicsMgr.getPlayerPosition();
-                auto nearest = charManager.getNearestCharacter(playerPos);
-                if (nearest) {
-                    nearest->interact();
-                    txt.print(0.5f, 0.1f, nearest->getCurrentDialogue(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
-                    std::cout << "Character in state : " << nearest->getState() << "\n";
+            	auto nearestCharacter = charManager.getNearestCharacter(playerPos);
+                if (nearestCharacter) {
+                    nearestCharacter->interact();
+                	lastCharInteracted = nearestCharacter;
+                    txt.print(0.5f, 0.1f, nearestCharacter->getCurrentDialogue(), 3, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+                    std::cout << "Character in state : " << nearestCharacter->getState() << "\n";
                 } else {
                     std::cout << "No Character nearby to interact with.\n";
                 }
@@ -786,6 +790,13 @@ class CGProject : public BaseProject {
                 interactionsManager.interact(interactableState);
             });
         }
+
+		// when a player walks away from a character he interacted with, it stops the interaction
+		if (lastCharInteracted != nullptr && glm::distance(lastCharInteracted->getPosition(), playerPos) > charManager.getMaxDistance()) {
+			lastCharInteracted->setIdle();
+			lastCharInteracted = nullptr;
+			txt.removeText(3);
+		}
 
 		// moves the view
 		float deltaT = GameLogic();
@@ -1036,11 +1047,23 @@ class CGProject : public BaseProject {
 		    countedFrames = 0;
 		}
 
+		// Update message for interaction with idle Characters nearby
+		if(charManager.getNearestCharacter(physicsMgr.getPlayerPosition()) != nullptr) {
+			auto character = charManager.getNearestCharacter(physicsMgr.getPlayerPosition());
+			txt.print(0.5f, 0.1f, "Press E to talk with "+character->getName(), 2, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+		}
+		else {
+			txt.removeText(2);		// remove the text to interact if no idle character is nearby
+		}
+
         // Update message for interaction point in the nearby
         if(interactionsManager.isNearInteractable()) {
             auto interaction = interactionsManager.getNearInteractable();
-            txt.print(0.5f, 0.05f, "Press Z to interact with "+interaction.id, 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+            txt.print(0.5f, 0.05f, "Press Z to interact with "+interaction.id, 4, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
         }
+		else
+			txt.removeText(4);		// remove the text if no interaction point is nearby
+
 
         txt.updateCommandBuffer();
         firstTime = false;

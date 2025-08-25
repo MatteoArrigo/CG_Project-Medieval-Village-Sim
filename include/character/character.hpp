@@ -46,6 +46,8 @@ public:
     std::string charStateToString(const std::string& stateName) const;
     std::vector<glm::mat4>* getTransformMatrices();
 
+    void setIdle();
+
 private:
     std::string name;
     glm::vec3 position;

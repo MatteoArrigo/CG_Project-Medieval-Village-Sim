@@ -12,6 +12,7 @@
 		{"id": "player_jumping", "file": "assets/models/Characters/Player/Jumping.gltf", "format":"GLTF"},
 
 		{"id": "guard", "file": "assets/models/Characters/Guard/CastleGuard.gltf", "format":"GLTF"},
+		{"id": "guard_salute", "file": "assets/models/Characters/Guard/Salute.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 
@@ -46,9 +47,10 @@
 			"id": "guard1",
 			"name": "Luigi",
 			"instanceIds": ["guard"],
-			"animList": ["guard"],
-			"startEndFrames": [[0,61]],
-			"charStates": ["Idle"],
+			"animList": ["guard", "guard_salute"],
+			"startEndFrames": [[0,61], [0,86]],
+			"charStates": ["Idle", "Salute"],
+			"dialogues": ["Greetings Sir, welcome back to our village!", "All clear, sir!"],
 			"BaseTrackName": "Armature|mixamo.com|Layer0"
 		}
 	],

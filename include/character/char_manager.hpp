@@ -92,6 +92,7 @@ public:
             auto animList = charJson.value("animList", std::vector<std::string>{});
             auto assetFilesList = sceneJson["assetfiles"];
             auto charStates = charJson.value("charStates", std::vector<std::string>{});
+            auto dialogues = charJson.value("dialogues", std::vector<std::string>{});
             auto startEndFrames = charJson.value("startEndFrames", std::vector<std::vector<int>>{});
             std::string baseTrack = charJson.value("BaseTrackName", "");
 
@@ -135,6 +136,9 @@ public:
 
             // Crea Character e aggiungi
             auto charac = std::make_shared<Character>(name, pos, ab, SKA, charStates);
+            if (!dialogues.empty()) {
+                charac->setDialogues(dialogues);
+            }
             addChar(charac);
 
             // Aggiunta riferimento instances al charcter
@@ -171,10 +175,14 @@ public:
         // characters.clear();
     }
 
+    float getMaxDistance() const {
+        return maxDistance;
+    }
+
 
 
 private:
     std::vector<std::shared_ptr<Character>> characters;
     std::vector<std::vector<Animations>> Anims; // Per cleanuppare le animazioni degli Character
-    float maxDistance = 7.5f; // Distanza massima per considerare un Character "vicino"
+    float maxDistance = 5.0f; // Distanza massima per considerare un Character "vicino"
 };
