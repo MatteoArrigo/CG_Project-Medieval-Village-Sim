@@ -75,6 +75,11 @@ void ViewControls::updateViewPrj() {
         case ViewMode::ISOMETRIC: {
             break;
         }
+
+		case ViewMode::SHADOW_CLIP: {
+			ViewPrj = sunLightManager.getLightVP();
+			break;
+		}
     }
 }
 
@@ -83,6 +88,6 @@ void ViewControls::updateViewPrj() {
  */
 void ViewControls::nextViewMode() {
     int mode = static_cast<int>(viewMode);
-    mode = (mode + 1) % N_VIEW_MODES;
+    mode = (mode + 1) % static_cast<int>(ViewMode::COUNT);
     viewMode = static_cast<ViewMode>(mode);
 }

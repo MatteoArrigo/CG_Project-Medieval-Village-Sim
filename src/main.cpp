@@ -581,7 +581,7 @@ class CGProject : public BaseProject {
 		animatedProps = new AnimatedProps(&interactionsManager, &interactableState, &SC);
 
 		// Initialize view controls
-        viewControls = new ViewControls(FLY_MODE, window, ar, physicsMgr);
+        viewControls = new ViewControls(FLY_MODE, window, ar, physicsMgr, sunLightManager);
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
@@ -721,7 +721,7 @@ class CGProject : public BaseProject {
                 debugLightView.x = static_cast<int>(debugLightView.x + 1) % 3;
             });
             handleKeyToggle(window, GLFW_KEY_2, debounce, curDebounce, [&]() {
-                debugLightView.y = 1.0 - debugLightView.y;
+				viewControls->nextViewMode();
             });
 
             static int curAnim = 0;

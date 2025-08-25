@@ -50,31 +50,19 @@ void main() {
 		fragPos = (charUbo.mMat[0] * vec4(inPosition, 1.0)).xyz;
 		fragNorm = (charUbo.nMat[0] * vec4(inNorm, 0.0)).xyz;
 	} else {
-		if(shadowClipUbo.debug.y == 1.0)
-			gl_Position = inJointWeight.x * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.x] * vec4(inPosition, 1.0);
-		else
-			gl_Position = inJointWeight.x * charUbo.mvpMat[inJointIndex.x] * vec4(inPosition, 1.0);
+		gl_Position = inJointWeight.x * charUbo.mvpMat[inJointIndex.x] * vec4(inPosition, 1.0);
 		fragPos = inJointWeight.x * (charUbo.mMat[inJointIndex.x] * vec4(inPosition, 1.0)).xyz;
 		fragNorm = inJointWeight.x * (charUbo.nMat[inJointIndex.x] * vec4(inNorm, 0.0)).xyz;
 
-		if(shadowClipUbo.debug.y == 1.0)
-			gl_Position += inJointWeight.y * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.y] * vec4(inPosition, 1.0);
-		else
-			gl_Position += inJointWeight.y * charUbo.mvpMat[inJointIndex.y] * vec4(inPosition, 1.0);
+		gl_Position += inJointWeight.y * charUbo.mvpMat[inJointIndex.y] * vec4(inPosition, 1.0);
 		fragPos += inJointWeight.y * (charUbo.mMat[inJointIndex.y] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.y * (charUbo.nMat[inJointIndex.y] * vec4(inNorm, 0.0)).xyz;
-		
-		if(shadowClipUbo.debug.y == 1.0)
-			gl_Position += inJointWeight.z * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.z] * vec4(inPosition, 1.0);
-		else
-			gl_Position += inJointWeight.z * charUbo.mvpMat[inJointIndex.z] * vec4(inPosition, 1.0);
+
+		gl_Position += inJointWeight.z * charUbo.mvpMat[inJointIndex.z] * vec4(inPosition, 1.0);
 		fragPos += inJointWeight.z * (charUbo.mMat[inJointIndex.z] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.z * (charUbo.nMat[inJointIndex.z] * vec4(inNorm, 0.0)).xyz;
-		
-		if(shadowClipUbo.debug.y == 1.0)
-			gl_Position += inJointWeight.w * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.w] * vec4(inPosition, 1.0);
-		else
-			gl_Position += inJointWeight.w * charUbo.mvpMat[inJointIndex.w] * vec4(inPosition, 1.0);
+
+		gl_Position += inJointWeight.w * charUbo.mvpMat[inJointIndex.w] * vec4(inPosition, 1.0);
 		fragPos += inJointWeight.w * (charUbo.mMat[inJointIndex.w] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.w * (charUbo.nMat[inJointIndex.w] * vec4(inNorm, 0.0)).xyz;
 	}

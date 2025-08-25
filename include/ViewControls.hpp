@@ -2,15 +2,17 @@
 
 #include <glm/glm.hpp>
 #include "PhysicsManager.hpp"
+#include "sun_light.hpp"
 
-#define N_VIEW_MODES 3
 /**
  * Enum to indicate the current view mode (how 3D world is projected to 2D screen)
  */
 enum class ViewMode {
     THIRD_PERSON = 0,
     FIRST_PERSON,
-    ISOMETRIC
+    ISOMETRIC,
+	SHADOW_CLIP,
+	COUNT	// Helper to get the number of view modes. Must be the last one
 };
 
 /**
@@ -22,8 +24,9 @@ enum class ViewMode {
  */
 class ViewControls{
 public:
-    ViewControls(bool isFlying_, GLFWwindow* window_, const float& ar_, const PhysicsManager& physicsManager_) :
-        isFlying(isFlying_), window(window_), ar(ar_), physicsMgr(physicsManager_),
+    ViewControls(bool isFlying_, GLFWwindow* window_, const float& ar_,
+				 const PhysicsManager& physicsManager_, const SunLightManager& sunLightManager_):
+        isFlying(isFlying_), window(window_), ar(ar_), physicsMgr(physicsManager_), sunLightManager(sunLightManager_),
         moveSpeed(MOVE_SPEED_BASE), moveDir(0.0f) {}
 
 	/**
@@ -57,6 +60,7 @@ private:
     GLFWwindow* window;
     const float& ar;
     const PhysicsManager& physicsMgr;
+	const SunLightManager& sunLightManager;
     ViewMode viewMode = ViewMode::THIRD_PERSON;
 
     // Camera Pitch limits
