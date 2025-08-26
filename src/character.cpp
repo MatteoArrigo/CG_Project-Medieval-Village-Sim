@@ -26,7 +26,7 @@ void Character::setState(const std::string& stateName) {
     }
 }
 
-std::string Character::getState() const {
+std::string Character::getCurrentState() const {
     if (currentStateIdx >= 0 && currentStateIdx < (int)stateNames.size())
         return stateNames[currentStateIdx];
     return "Unknown";
@@ -65,16 +65,10 @@ void Character::nextDialogue() {
 }
 
 void Character::interact() {
-    if (getState() == "Idle") {
-        setState("Salute");
+    if (getCurrentState() == "Idle") {
+        setState(stateNames[1]); // Cambia allo succesivo a quello Idle (assumendo che sia il secondo stato)
         // Trova l'indice dello stato "Salute" e avvia l'animazione corrispondente
-        int nextAnimId = -1;
-        for (size_t i = 0; i < stateNames.size(); ++i) {
-            if (stateNames[i] == "Salute") {
-                nextAnimId = (int)i;
-                break; 
-            }
-        }
+        int nextAnimId = getStateIndex(getCurrentState());
         if (nextAnimId >= 0)
             AB->Start(nextAnimId, 0.5);
     }

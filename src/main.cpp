@@ -779,7 +779,7 @@ class CGProject : public BaseProject {
                     nearestCharacter->interact();
                 	lastCharInteracted = nearestCharacter;
                     txt.print(0.5f, 0.1f, nearestCharacter->getCurrentDialogue(), 3, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
-                    std::cout << "Character in state : " << nearestCharacter->getState() << "\n";
+                    std::cout << "Character in state : " << nearestCharacter->getCurrentState() << "\n";
                 } else {
                     std::cout << "No Character nearby to interact with.\n";
                 }

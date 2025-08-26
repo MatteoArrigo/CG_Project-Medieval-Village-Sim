@@ -17,7 +17,7 @@ public:
         float minDist = maxDistance;
         for (const auto& charac : characters) {
             float dist = glm::distance(charac->getPosition(), playerPos);
-            if (dist < minDist && charac->getState() == "Idle") {
+            if (dist < minDist && charac->getCurrentState() == "Idle") {
                 minDist = dist;
                 nearest = charac;
             }
