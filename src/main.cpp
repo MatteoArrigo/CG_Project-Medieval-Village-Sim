@@ -26,7 +26,7 @@
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = false;
-const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
+const std::string SCENE_FILEPATH = "assets/scene.json";
 
 struct VertexChar {
 	glm::vec3 pos;
