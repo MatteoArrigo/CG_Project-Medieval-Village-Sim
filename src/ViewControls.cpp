@@ -41,11 +41,6 @@ void ViewControls::updateFrame(float deltaT, glm::vec3 moveInput, glm::vec3 rotI
         rawMoveDir = glm::normalize(rawMoveDir);
     moveDir = moveSpeed * rawMoveDir;
 
-    // Camera height adjustment
-//    camHeight += moveSpeed * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
-//    camHeight -= moveSpeed * 0.1f * (glfwGetKey(window, GLFW_KEY_E) ? 1.0f : 0.0f) * deltaT;
-//    camHeight = glm::clamp(camHeight, 0.5f, 3.0f);
-
     // Final results computation
     updateViewPrj();
 }
@@ -77,11 +72,11 @@ void ViewControls::updateViewPrj() {
 			Prj = glm::perspective(FOVy, ar, prospNearPlane, prospFarPlane);
 			Prj[1][1] *= -1;
 
-			glm::vec3 viewPos = playerPos + glm::vec3(0,2.1,0);		// More or less elevated to player's head
+			cameraPos = playerPos + glm::vec3(0,2.1,0);		// More or less elevated to player's head
 			View =	glm::rotate(glm::mat4(1.0f), -roll, glm::vec3(0,0,1)) *
 					glm::rotate(glm::mat4(1.0f), -pitch, glm::vec3(1,0,0)) *
 					glm::rotate(glm::mat4(1.0f), -yaw, glm::vec3(0,1,0)) *
-					glm::translate(glm::mat4(1), -viewPos);
+					glm::translate(glm::mat4(1), -cameraPos);
 
 			ViewPrj = Prj * View;
 			break;
@@ -101,6 +96,7 @@ void ViewControls::updateViewPrj() {
 			View =	glm::rotate(glm::mat4(1), glm::radians(35.26f), glm::vec3(1,0,0)) *
 					glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(0,1,0)) *
 					glm::translate(glm::mat4(1), -playerPos);
+			cameraPos = playerPos;
 
 			ViewPrj = Prj * View;
 			break;
@@ -115,6 +111,7 @@ void ViewControls::updateViewPrj() {
 			View =	glm::rotate(glm::mat4(1), glm::radians(20.0f), glm::vec3(1,0,0)) *
 					  glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(0,1,0)) *
 					  glm::translate(glm::mat4(1), -playerPos);
+			cameraPos = playerPos;
 
 			ViewPrj = Prj * View;
 			break;
@@ -129,6 +126,7 @@ void ViewControls::updateViewPrj() {
 			View =	glm::rotate(glm::mat4(1), glm::radians(30.0f), glm::vec3(1,0,0)) *
 					  glm::rotate(glm::mat4(1), glm::radians(-60.0f), glm::vec3(0,1,0)) *
 					  glm::translate(glm::mat4(1), -playerPos);
+			cameraPos = playerPos;
 
 			ViewPrj = Prj * View;
 			break;
@@ -146,6 +144,7 @@ void ViewControls::updateViewPrj() {
 			glm::mat4 shear(1.0f);
 			shear[2][0] = -l * cos(alpha); // z affects x
 			shear[2][1] = -l * sin(alpha); // z affects y
+			cameraPos = playerPos;
 
 			// just translate the scene by -playerPos
 			View = shear * glm::translate(glm::mat4(1.0f), -playerPos);

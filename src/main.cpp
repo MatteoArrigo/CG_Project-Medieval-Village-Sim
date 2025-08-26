@@ -17,8 +17,6 @@
 #include "InteractionsManager.hpp"
 #include "ViewControls.hpp"
 
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
 //TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
 // Nota: nell'acqua usiamo ora la equirectangular map per la reflection, non preprocessata
 // Si potrebbe implementare IBL nelle altre tecniche, come PBR+IBL, usando radiance cubemap, quindi preprocessata
@@ -551,9 +549,6 @@ class CGProject : public BaseProject {
 		 * this project, getShapeFromModel() is not able to correctly extract a collision shape from the player model we are using.
 		 * That method should be re-implemented to better support different model types.
 		 */
-		// int playerModelIdx = playerCharacter->getInstances()[0]->Mid; // assuming the player has only one instance
-		// const Model * playerModel = SC.M[playerModelIdx];
-		// PhysicsMgr.addPlayerFromModel(playerModel);
 		physicsMgr.addCapsulePlayer();
 
 		// Add static meshes to the PhysicsManager for collision detection
@@ -846,17 +841,15 @@ class CGProject : public BaseProject {
 				} else if(techniqueName == "CharPBR") {
 					for(int im = 0; im < TMsp->size(); im++) {
 						geomCharUbo.mMat[im]   = I->Wm * AdaptMat * (*TMsp)[im];
+						if(*(I->id) == "player" && viewControls->getViewMode()==ViewMode::FIRST_PERSON)
+							// If view mode is "first person", the player is moved underground to make it invisible
+							// Note: For it to work, the player must be rendered with PBR with exact id "player"
+							geomCharUbo.mMat[im] *= glm::translate(glm::mat4(1), glm::vec3(0.0f, -100.0f, 0.0f));
 						geomCharUbo.mvpMat[im] = viewControls->getViewPrj() * geomCharUbo.mMat[im];
 						geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
                         shadowMapUboChar.model[im] = geomCharUbo.mMat[im];
 					}
 					geomCharUbo.jointsCount = TMsp->size();
-
-					// Old code for PBR specular/glossiness
-					// pbrUbo.diffuseFactor = I->diffuseFactor;
-					// pbrUbo.specularFactor = I->specularFactor;
-					// pbrUbo.glossinessFactor = I->factor1;
-					// pbrUbo.aoFactor = I->factor2;
 
 					pbrMRUbo.metallicFactor = I->factor1;
 					pbrMRUbo.roughnessFactor = I->factor2;
