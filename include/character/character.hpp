@@ -17,7 +17,7 @@ public:
     void setPosition(const glm::vec3& pos);
     glm::vec3 getPosition() const;
     void setState(const std::string& stateName);
-    std::string getState() const;
+    std::string getCurrentState() const;
     int getStateIndex() const;
     int getStateIndex(const std::string& stateName) const;
     std::vector<std::string> getStateNames() const;
@@ -45,6 +45,8 @@ public:
 
     std::string charStateToString(const std::string& stateName) const;
     std::vector<glm::mat4>* getTransformMatrices();
+
+    void setIdle();
 
 private:
     std::string name;

@@ -708,6 +708,10 @@ class CGProject : public BaseProject {
 
         // Handle of command keys
         interactionsManager.updateNearInteractable(physicsMgr.getPlayerPosition());
+		static std::shared_ptr<Character> lastCharInteracted;
+		if (firstTime)
+			 lastCharInteracted = nullptr;
+		glm::vec3 playerPos = physicsMgr.getPlayerPosition();
         {
             handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
                 sunLightManager.nextLight(interactableState);
@@ -729,12 +733,12 @@ class CGProject : public BaseProject {
 
             // Handle the E key for Character interaction
             handleKeyToggle(window, GLFW_KEY_E, debounce, curDebounce, [&]() {
-                glm::vec3 playerPos = physicsMgr.getPlayerPosition();
-                auto nearest = charManager.getNearestCharacter(playerPos);
-                if (nearest) {
-                    nearest->interact();
-                    txt.print(0.5f, 0.1f, nearest->getCurrentDialogue(), 1, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
-                    std::cout << "Character in state : " << nearest->getState() << "\n";
+            	auto nearestCharacter = charManager.getNearestCharacter(playerPos);
+                if (nearestCharacter) {
+                    nearestCharacter->interact();
+                	lastCharInteracted = nearestCharacter;
+                    txt.print(0.5f, 0.1f, nearestCharacter->getCurrentDialogue(), 3, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+                    std::cout << "Character in state : " << nearestCharacter->getCurrentState() << "\n";
                 } else {
                     std::cout << "No Character nearby to interact with.\n";
                 }
@@ -745,6 +749,13 @@ class CGProject : public BaseProject {
                 interactionsManager.interact(interactableState);
             });
         }
+
+		// when a player walks away from a character he interacted with, it stops the interaction
+		if (lastCharInteracted != nullptr && glm::distance(lastCharInteracted->getPosition(), playerPos) > charManager.getMaxDistance()) {
+			lastCharInteracted->setIdle();
+			lastCharInteracted = nullptr;
+			txt.removeText(3);
+		}
 
 		// moves the view
 		float deltaT = GameLogic();
@@ -994,17 +1005,29 @@ class CGProject : public BaseProject {
 		}
 
 		// Print current projection mode
-		txt.print(-0.98f, -0.99f, "View: "+viewControls->getViewModeStr(), 2, "SS",
+		txt.print(-0.98f, -0.99f, "View: "+viewControls->getViewModeStr(), 5, "SS",
 				  false, false, true, TAL_LEFT, TRH_LEFT, TRV_TOP,
 				  {1,1,1,1}, {0,0,0,1}, {0.5f, 0.5f, 0.5f, 0.2f}, 1,1);
+
+		// Update message for interaction with idle Characters nearby
+		if(charManager.getNearestCharacter(physicsMgr.getPlayerPosition()) != nullptr) {
+			auto character = charManager.getNearestCharacter(physicsMgr.getPlayerPosition());
+			txt.print(0.5f, 0.1f, "Press E to talk with "+character->getName(), 2, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+		}
+		else {
+			txt.removeText(2);		// remove the text to interact if no idle character is nearby
+		}
 
         // Update message for interaction point in the nearby
         if(interactionsManager.isNearInteractable()) {
             auto interaction = interactionsManager.getNearInteractable();
-            txt.print(0.96f, -0.97f, "Press Z to interact\nwith "+interaction.id, 3, "SS", false, false, true,
+            txt.print(0.96f, -0.97f, "Press Z to interact\nwith "+interaction.id, 4, "SS", false, false, true,
 					  TAL_RIGHT, TRH_RIGHT, TRV_TOP, {1,1,1,1}, {0.5,0,0,1},
 					  {0.5,0,0,0.5}, 1.2, 1.2);
         }
+		else
+			txt.removeText(4);		// remove the text if no interaction point is nearby
+
 
         txt.updateCommandBuffer();
         firstTime = false;
