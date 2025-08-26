@@ -85,7 +85,7 @@ private:
     /**
      * Maximum distance to consider for interaction.
      */
-    constexpr static float maxDistance = 3.2f;  // TODO: parametro da tunare
+    constexpr static float maxDistance = 3.2f;
 
     /**
      * List of all interaction points managed by this class.
