@@ -52,6 +52,7 @@ public:
     const glm::mat4& getViewPrj() const {return ViewPrj;}
     const glm::vec3& getCameraPos() const {return cameraPos;}
 	const std::string getViewModeStr();
+	const ViewMode getViewMode() { return viewMode; }
 
 private:
 	/**
