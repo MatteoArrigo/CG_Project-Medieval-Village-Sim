@@ -24,14 +24,25 @@ void ViewControls::updateFrame(float deltaT, glm::vec3 moveInput, glm::vec3 rotI
 	switch (viewMode) {
 		case ViewMode::THIRD_PERSON: {
 			newPlayerYaw = glm::length(moveInput) > 0.0f ? yaw : oldPlayerYaw;
+			// Modify player yaw accordingly if user moves player left, right or backwards
+			if (glm::length(moveInput) > 0.0f) {
+				float moveAngle = atan2(-moveInput.x, -moveInput.z); // Angle of movement input in the XZ plane
+				newPlayerYaw += moveAngle;
+			}
 			break;
 		}
 		default:
 			newPlayerYaw = yaw;
 	}
-	// Smooth the player yaw update to avoid sudden jumps
-	const float yawDiff = glm::mod(newPlayerYaw - oldPlayerYaw + glm::radians(180.0f), glm::radians(360.0f)) - glm::radians(180.0f);
-	playerYaw = oldPlayerYaw + (1.0f - ef) * yawDiff;
+
+	// Smooth player yaw transition
+	float yawDiff = newPlayerYaw - oldPlayerYaw;
+	// 1. Normalize the angle difference to [-π, π] to take the shortest rotation path
+	while (yawDiff > M_PI) yawDiff -= 2.0f * M_PI;
+	while (yawDiff < -M_PI) yawDiff += 2.0f * M_PI;
+	// 2. Apply smoothing using exponential interpolation
+	float yawSmoothingFactor = exp(-8.0f * deltaT);
+	playerYaw = oldPlayerYaw + (1.0f - yawSmoothingFactor) * yawDiff;
 
 	// Calculate movement direction based on camera orientation
 	glm::vec3 ux = glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
