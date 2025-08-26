@@ -30,10 +30,7 @@ layout(location = 4) out vec4 fragPosLightSpace;
 layout(location = 5) out vec4 debug;
 
 void main() {
-	if(shadowClipUbo.debug.y == 1.0)
-		gl_Position = shadowClipUbo.lightVP * geomUbo.mMat * vec4(inPosition, 1.0);
-	else
-		gl_Position = geomUbo.mvpMat * vec4(inPosition, 1.0);
+	gl_Position = geomUbo.mvpMat * vec4(inPosition, 1.0);
 	fragPos = (geomUbo.mMat * vec4(inPosition, 1.0)).xyz;
 	fragNorm = normalize((geomUbo.nMat * vec4(inNorm, 0.0)).xyz);
 	fragUV = inUV;

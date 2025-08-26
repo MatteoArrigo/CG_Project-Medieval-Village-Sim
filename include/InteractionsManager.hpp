@@ -12,9 +12,11 @@
  * Currently, it includes
  *    - the state of torches (on/off). When the torch is on, it emits light and emissive/flickering effect is enabled
  *      When the torch is off, the corresponding point light is disabled, and only the basic texture is rendered.
+ *    - the state of crane wheels (rotating or not). When rotating, the corresponding animation is played.
  */
 struct InteractableState{
     std::vector<bool> torchesOn;
+    std::vector<bool> craneWheelsRotating;
 };
 
 /**

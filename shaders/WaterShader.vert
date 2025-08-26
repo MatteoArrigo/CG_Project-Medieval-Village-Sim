@@ -104,10 +104,7 @@ void main() {
 
     // Transform position to clip space
     // This is the final position that will be used for rendering
-    if( shadowClipUbo.debug.y == 1.0)
-        gl_Position = shadowClipUbo.lightVP * geomUbo.mMat * vec4(pos, 1.0);
-    else
-        gl_Position = geomUbo.mvpMat * vec4(pos, 1.0);
+    gl_Position = geomUbo.mvpMat * vec4(pos, 1.0);
 
     // Calculate UV coordinates for animated normal mapping
     // These UVs are offset by the position and scaled by time to create a dynamic effect

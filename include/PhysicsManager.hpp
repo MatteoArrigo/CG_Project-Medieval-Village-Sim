@@ -21,18 +21,18 @@ struct PhysicsObject {
 
 // Physical parameters for the player
 struct PlayerConfig {
-    float capsuleRadius = 0.15f;
-    float capsuleHeight = 1.3f;
-    float mass = 100.0f;
-    glm::vec3 startPosition = glm::vec3(30,10,15);
+    static constexpr float capsuleRadius = 0.15f;
+    static constexpr float capsuleHeight = 1.3f;
+    static constexpr float mass = 100.0f;
+    static constexpr glm::vec3 startPosition = glm::vec3(30,10,15);
 
-    float moveSpeed = 2.3f;
-    float runSpeed = 3.5f;
-    float jumpForce = 350.0f;
-    float airControl = 0.3f; // On-air control factor
-    float groundDamping = 0.5f; // Damping factor when grounded
-    float friction = 2.5f; // Friction coefficient
-    float rollingFriction = 5.1f; // Rolling friction coefficient
+    static constexpr float moveSpeed = 2.3f;
+    static constexpr float runSpeed = 3.5f;
+    static constexpr float jumpForce = 350.0f;
+    static constexpr float airControl = 0.3f; // On-air control factor
+    static constexpr float groundDamping = 0.5f; // Damping factor when grounded
+    static constexpr float friction = 2.5f; // Friction coefficient
+    static constexpr float rollingFriction = 5.1f; // Rolling friction coefficient
 };
 
 // Background terrain configuration.

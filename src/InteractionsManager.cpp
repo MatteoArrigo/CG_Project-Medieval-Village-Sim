@@ -93,12 +93,22 @@ void InteractionsManager::interact(InteractableState& state) const {
 
     std::string id = interaction.id;
     if (id.find("torch_fire") != std::string::npos) {
+        // *** Interaction with TORCHES ***
         int torchIdx = std::stoi(id.substr(id.find_last_of('.') + 1));
         if (torchIdx >= 0 && torchIdx < static_cast<int>(state.torchesOn.size())) {
             state.torchesOn[torchIdx] = !state.torchesOn[torchIdx];
         } else {
             std::cout << "Invalid torch index: " << torchIdx << "\n";
         }
+    } else if (id.find("crane_wheel") != std::string::npos) {
+        // *** Interaction with CRANE WHEELS ***
+        int craneWheelIdx = std::stoi(id.substr(id.find_last_of('.') + 1));
+        if (craneWheelIdx >= 0 && craneWheelIdx < static_cast<int>(state.craneWheelsRotating.size())) {
+            state.craneWheelsRotating[craneWheelIdx] = !state.craneWheelsRotating[craneWheelIdx];
+        } else {
+            std::cout << "Invalid crane wheel index: " << craneWheelIdx << "\n";
+        }
+
     } else {
         std::cout << "Interaction ID not recognized\n";
     }
