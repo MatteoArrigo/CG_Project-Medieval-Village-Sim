@@ -1,4 +1,5 @@
 // This has been adapted from the Vulkan tutorial
+#pragma once
 
 #include <iostream>
 #include <stdexcept>
@@ -164,9 +165,9 @@ class Model {
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
-	VertexDescriptor *VD;
 
 	public:
+	VertexDescriptor *VD;
 	glm::mat4 Wm;
 	std::vector<unsigned char> vertices{};
 	std::vector<uint32_t> indices{};
@@ -2199,11 +2200,12 @@ void BaseProject::getSixAxis(float &deltaT,
 		m.y = -1.0f;
 	}
 	
-	fire = glfwGetKey(window, GLFW_KEY_SPACE) | (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
-	handleGamePad(GLFW_JOYSTICK_1,m,r,fire);
-	handleGamePad(GLFW_JOYSTICK_2,m,r,fire);
-	handleGamePad(GLFW_JOYSTICK_3,m,r,fire);
-	handleGamePad(GLFW_JOYSTICK_4,m,r,fire);
+	fire = (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS);
+	/* The following are resetting fire to false for some reason */
+	// handleGamePad(GLFW_JOYSTICK_1,m,r,fire);
+	// handleGamePad(GLFW_JOYSTICK_2,m,r,fire);
+	// handleGamePad(GLFW_JOYSTICK_3,m,r,fire);
+	// handleGamePad(GLFW_JOYSTICK_4,m,r,fire);
 }
 
 void BaseProject::printFloat(const char *Name, float v) {
@@ -2851,7 +2853,10 @@ void AssetFile::initGLTF(std::string file) {
 				continue;
 			} else {
 				std::cout << "Primitive: " << PrimCount << ", Material: " <<
-					primitive.material << " -> " << model.materials[primitive.material].name <<"\n";
+					primitive.material;
+                if(primitive.material > -1)
+                    std::cout << " -> " << model.materials[primitive.material].name;
+                std::cout <<"\n";
 			}
 			GLTFmeshes[mesh.name].push_back(&primitive);
 			PrimCount++;
@@ -3155,27 +3160,35 @@ void Model::makeGLTFMesh(tinygltf::Model *M, const tinygltf::Primitive *Prm) {
 	const tinygltf::BufferView &bufferView = M->bufferViews[accessor.bufferView];
 	const tinygltf::Buffer &buffer = M->buffers[bufferView.buffer];
 	
-	switch(accessor.componentType) {
-		case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT:
-			{
-				const uint16_t *bufferIndex = reinterpret_cast<const uint16_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-				for(int i = 0; i < accessor.count; i++) {
-					indices.push_back(bufferIndex[i]);
-				}
-			}
-			break;
-		case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
-			{
-				const uint32_t *bufferIndex = reinterpret_cast<const uint32_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
-				for(int i = 0; i < accessor.count; i++) {
-					indices.push_back(bufferIndex[i]);
-				}
-			}
-			break;
-		default:
-			std::cerr << "Index component type " << accessor.componentType << " not supported!" << std::endl;
-			throw std::runtime_error("Error loading GLTF component");
-	}			
+    switch(accessor.componentType) {
+        case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT:
+            {
+                const uint16_t *bufferIndex = reinterpret_cast<const uint16_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
+                for(int i = 0; i < accessor.count; i++) {
+                    indices.push_back(bufferIndex[i]);
+                }
+            }
+            break;
+        case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
+            {
+                const uint32_t *bufferIndex = reinterpret_cast<const uint32_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
+                for(int i = 0; i < accessor.count; i++) {
+                    indices.push_back(bufferIndex[i]);
+                }
+            }
+            break;
+        case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE:
+            {
+                const uint8_t *bufferIndex = reinterpret_cast<const uint8_t *>(&(buffer.data[accessor.byteOffset + bufferView.byteOffset]));
+                for(int i = 0; i < accessor.count; i++) {
+                    indices.push_back(bufferIndex[i]);
+                }
+            }
+            break;
+        default:
+            std::cerr << "Index component type " << accessor.componentType << " not supported!" << std::endl;
+            throw std::runtime_error("Error loading GLTF component");
+    }
 }
 
 
@@ -3631,7 +3644,11 @@ void FrameBufferAttachment::createResources() {
 	int aspect = properties->aspect;
 	VkSampleCountFlagBits samples = properties->samples;
 	bool doDepthTransition = properties->doDepthTransition;
-	
+
+    if (aspect & VK_IMAGE_ASPECT_COLOR_BIT)   std::cout << "COLOR \n";
+    if (aspect & VK_IMAGE_ASPECT_DEPTH_BIT)   std::cout << "DEPTH \n";
+    if (aspect & VK_IMAGE_ASPECT_STENCIL_BIT) std::cout << "STENCIL\n ";
+
 	BP->createImage(RP->width, RP->height, 1, 1,
 				samples, format, VK_IMAGE_TILING_OPTIMAL,
 				usage, 0, 
