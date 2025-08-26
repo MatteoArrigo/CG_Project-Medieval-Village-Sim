@@ -45,6 +45,7 @@ public:
 	void nextViewMode();
 
     float getYaw() const {return yaw;}
+	float getPlayerYaw() const {return playerYaw;}
     float getPitch() const {return pitch;}
     const glm::vec3& getMoveDir() const {return moveDir;}
     const glm::mat4& getViewPrj() const {return ViewPrj;}
@@ -96,6 +97,7 @@ private:
     float moveSpeed;
     glm::vec3 moveDir;
     glm::vec3 playerPos;
+	float playerYaw;
 
     // Final results per frame
     glm::mat4 ViewPrj;

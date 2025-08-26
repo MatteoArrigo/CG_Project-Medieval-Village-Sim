@@ -16,15 +16,32 @@ void ViewControls::updateFrame(float deltaT, glm::vec3 moveInput, glm::vec3 rotI
     pitch = pitch - ROT_SPEED * deltaT * rotInput.x;
     pitch = glm::clamp(pitch, minPitch, maxPitch);
 
-    // Calculate movement direction based on camera orientation
-    glm::vec3 ux = glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
-    glm::vec3 uz = glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
-    glm::vec3 rawMoveDir = moveInput.x * ux - moveInput.z * uz;
-    if (isFlying)
-        rawMoveDir += moveInput.y * glm::vec3(0,1,0);
-    if (glm::length(rawMoveDir) > 0.0f)
-        rawMoveDir = glm::normalize(rawMoveDir);
-    moveDir = moveSpeed * rawMoveDir;
+	// Update player yaw.
+	// - In third person, the player faces the camera direction ONLY if moving
+	// - In all other modes, the player faces the camera direction always
+	float oldPlayerYaw = playerYaw;
+	float newPlayerYaw;
+	switch (viewMode) {
+		case ViewMode::THIRD_PERSON: {
+			newPlayerYaw = glm::length(moveInput) > 0.0f ? yaw : oldPlayerYaw;
+			break;
+		}
+		default:
+			newPlayerYaw = yaw;
+	}
+	// Smooth the player yaw update to avoid sudden jumps
+	const float yawDiff = glm::mod(newPlayerYaw - oldPlayerYaw + glm::radians(180.0f), glm::radians(360.0f)) - glm::radians(180.0f);
+	playerYaw = oldPlayerYaw + (1.0f - ef) * yawDiff;
+
+	// Calculate movement direction based on camera orientation
+	glm::vec3 ux = glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
+	glm::vec3 uz = glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
+	glm::vec3 rawMoveDir = moveInput.x * ux - moveInput.z * uz;
+	if (isFlying)
+		rawMoveDir += moveInput.y * glm::vec3(0,1,0);
+	if (glm::length(rawMoveDir) > 0.0f)
+		rawMoveDir = glm::normalize(rawMoveDir);
+	moveDir = moveSpeed * rawMoveDir;
 
     // Camera height adjustment
 //    camHeight += moveSpeed * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
