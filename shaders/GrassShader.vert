@@ -93,8 +93,5 @@ void main() {
     fragTangent = normalize((geomUbo.nMat * vec4(localTangent, 0.0)).xyz);
     fragBitangent = normalize((geomUbo.nMat * vec4(localBitangent, 0.0)).xyz);
 
-    if(shadowClipUbo.debug.y == 1.0)
-        gl_Position = shadowClipUbo.lightVP * geomUbo.mMat * vec4(pos, 1.0);
-    else
-        gl_Position = geomUbo.mvpMat * vec4(pos, 1.0);
+    gl_Position = geomUbo.mvpMat * vec4(pos, 1.0);
 }
