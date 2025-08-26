@@ -184,5 +184,5 @@ public:
 private:
     std::vector<std::shared_ptr<Character>> characters;
     std::vector<std::vector<Animations>> Anims; // Per cleanuppare le animazioni degli Character
-    float maxDistance = 5.0f; // Distanza massima per considerare un Character "vicino"
+    constexpr static float maxDistance = 5.0f; // Distanza massima per considerare un Character "vicino"
 };
