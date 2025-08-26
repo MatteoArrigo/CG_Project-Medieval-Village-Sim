@@ -8,13 +8,28 @@
  */
 void ViewControls::updateFrame(float deltaT, glm::vec3 moveInput, glm::vec3 rotInput, bool isRunning) {
     moveSpeed = isRunning ? MOVE_SPEED_RUN : MOVE_SPEED_BASE;
-    ef = exp(-10.0 * deltaT); // Exponential smoothing factor for camera damping
+    efCamera = exp(-10.0 * deltaT);		// Exponential smoothing factor for camera damping
+	efPlayerYaw = exp(-8.0f * deltaT);	// Exponential smoothing factor for player yaw
     playerPos = physicsMgr.getPlayerPosition();
 
     // Update camera rotation
     yaw = yaw - ROT_SPEED * deltaT * rotInput.y;
     pitch = pitch - ROT_SPEED * deltaT * rotInput.x;
     pitch = glm::clamp(pitch, minPitch, maxPitch);
+
+    // Update player yaw
+    // NOTE: we always keep playerYaw in [0, 2π] range
+    float oldPlayerYaw = playerYaw;
+    float newPlayerYaw = glm::length(moveInput) > 0.0f ? normalizeAngle(yaw) : oldPlayerYaw;
+    // Modify player yaw accordingly if user moves player left, right or backwards
+    if (glm::length(moveInput) > 0.0f) {
+        float moveAngle = atan2(-moveInput.x, -moveInput.z); // Angle of movement input in the XZ plane
+        newPlayerYaw = normalizeAngle(newPlayerYaw + moveAngle);
+    }
+
+    // Smooth player yaw transition using shortest path
+    float yawDiff = shortestAngularDiff(oldPlayerYaw, newPlayerYaw);
+    playerYaw = normalizeAngle(oldPlayerYaw + (1.0f - efPlayerYaw) * yawDiff);
 
     // Calculate movement direction based on camera orientation
     glm::vec3 ux = glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
@@ -51,7 +66,7 @@ void ViewControls::updateViewPrj() {
             glm::mat4 camWorld = glm::translate(glm::mat4(1), playerPos) *
 					glm::rotate(glm::mat4(1.0f), yaw, glm::vec3(0,1,0));
             cameraPos = camWorld * glm::vec4(0.0f, camHeight - camDist * sin(pitch), camDist * cos(pitch), 1.0);
-            dampedCamPos = ef * dampedCamPos + (1.0f - ef) * cameraPos;
+            dampedCamPos = efCamera * dampedCamPos + (1.0f - efCamera) * cameraPos;
             View = glm::lookAt(dampedCamPos, target, glm::vec3(0,1,0));
 
 			ViewPrj = Prj * View;

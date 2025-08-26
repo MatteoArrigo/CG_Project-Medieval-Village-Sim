@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include "PhysicsManager.hpp"
 #include "sun_light.hpp"
+#include "Utils.hpp"
 
 /**
  * Enum to indicate the current view mode (how 3D world is projected to 2D screen)
@@ -45,6 +46,7 @@ public:
 	void nextViewMode();
 
     float getYaw() const {return yaw;}
+	float getPlayerYaw() const {return playerYaw;}
     float getPitch() const {return pitch;}
     const glm::vec3& getMoveDir() const {return moveDir;}
     const glm::mat4& getViewPrj() const {return ViewPrj;}
@@ -85,7 +87,8 @@ private:
     float yaw = glm::radians(0.0f);
     float pitch = glm::radians(0.0f);
     float roll = glm::radians(0.0f);
-    float ef; // Exponential smoothing factor for camera damping
+    float efCamera;		// Exponential smoothing factor for camera damping
+	float efPlayerYaw;	// Exponential smoothing factor for player yaw
 
     // Camera target height and distance
     const float camHeight = 2.0f;
@@ -96,6 +99,7 @@ private:
     float moveSpeed;
     glm::vec3 moveDir;
     glm::vec3 playerPos;
+	float playerYaw;
 
     // Final results per frame
     glm::mat4 ViewPrj;

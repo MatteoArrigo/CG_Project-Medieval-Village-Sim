@@ -28,7 +28,7 @@
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = false;
-const std::string SCENE_FILEPATH = "assets/scene_reduced.json";
+const std::string SCENE_FILEPATH = "assets/scene.json";
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -1029,7 +1029,7 @@ class CGProject : public BaseProject {
 
 		// Move the player in the correct position (physics + model update)
         // Note: + 180 degrees to rotate so that he sees in direction of movement
-		player->move(viewControls->getMoveDir(), viewControls->getYaw() + glm::radians(180.0f));
+		player->move(viewControls->getMoveDir(), viewControls->getPlayerYaw() + glm::radians(180.0f));
 
 		// Update animated props
 		animatedProps->update(deltaT);
