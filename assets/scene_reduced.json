@@ -16,6 +16,8 @@
 		{"id": "guard2", "file": "assets/models/Characters/Guard/CastleGuard02.gltf", "format":"GLTF"},
 		{"id": "guard2_crying", "file": "assets/models/Characters/Guard/Crying.gltf", "format":"GLTF"},
 		{"id": "guard2_fighting", "file": "assets/models/Characters/Guard/Fighting.gltf", "format":"GLTF"},
+		{"id": "knight", "file": "assets/models/Characters/Knight/Knight.gltf", "format":"GLTF"},
+		{"id": "knight_talking", "file": "assets/models/Characters/Knight/Talking.gltf", "format":"GLTF"},
 
 		{"id": "village", "file": "assets/models/Buildings.gltf", "format":"GLTF"},
 		{"id":  "terrain", "file":  "assets/models/Terrain.gltf", "format":"GLTF"},
@@ -82,6 +84,26 @@
 			"charStates": ["Idle", "Fighting"],
 			"dialogues": ["Are you looking to fight?", "What are you looking at?"],
 			"BaseTrackName": "Armature|mixamo.com|Layer0"
+		},
+		{
+			"id": "knight1",
+			"name": "Fred",
+			"instanceIds": ["knight"],
+			"animList": ["knight", "knight_talking"],
+			"startEndFrames": [[0,299], [0,114]],
+			"charStates": ["Idle", "Talking"],
+			"dialogues": ["I'm the best of the whole kingdom!", "Want to duel?"],
+			"BaseTrackName": "Armature|mixamo.com|Layer0"
+		},
+		{
+			"id": "knight2",
+			"name": "Larry",
+			"instanceIds": ["knight2"],
+			"animList": ["knight", "knight_talking"],
+			"startEndFrames": [[0,299], [0,114]],
+			"charStates": ["Idle", "Talking"],
+			"dialogues": ["What a magnificent view!", "Want to duel?"],
+			"BaseTrackName": "Armature|mixamo.com|Layer0"
 		}
 	],
 	"models": [
@@ -93,6 +115,7 @@
 		{"id": "player",  "VD": "VDchar",  "model": "Paladin_J_Nordstrom", "node": "Paladin_J_Nordstrom", "meshId": 0, "asset": "player", "format":"ASSET"},
 		{"id": "guard",  "VD": "VDchar",  "model": "Guard02", "node": "Guard02", "meshId": 0, "asset": "guard", "format":"ASSET"},
 		{"id": "guard2",  "VD": "VDchar",  "model": "Guard03_Mesh", "node": "Guard03_Mesh", "meshId": 0, "asset": "guard2", "format":"ASSET"},
+		{"id": "knight",  "VD": "VDchar",  "model": "Lower_Armor", "node": "Lower_Armor", "meshId": 0, "asset": "knight", "format":"ASSET"},
 
 		{"id": "terrain_far_01-00", "VD": "VDtan", "model": "terrain_far_01.001", "node": "terrain_far_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
 		{"id": "terrain_near_01-00", "VD": "VDtan", "model": "terrain_near_01.001", "node": "terrain_near_01.001", "meshId": 0, "asset": "terrain", "format": "ASSET"},
@@ -130,6 +153,9 @@
 		{"id": "guard2_d",    "texture": "assets/textures/guard/Guard_03__diffuse.png", "format": "C"},
 		{"id": "guard2_n",    "texture": "assets/textures/guard/Guard_03__normal.png", "format": "D"},
 		{"id": "guard2_s",    "texture": "assets/textures/guard/Guard_03__specular.png", "format": "D"},
+		{"id": "knight_d",    "texture": "assets/textures/knight/Knight_diffuse.png", "format": "C"},
+		{"id": "knight_n",    "texture": "assets/textures/knight/Knight_normal.png", "format": "D"},
+		{"id": "knight_s",    "texture": "assets/textures/knight/Knight_specular.png", "format": "D"},
 
 		{"id": "day", "texture": "assets/textures/skybox/day.jpg", "format": "C"},
 		{"id": "sunset", "texture": "assets/textures/skybox/sunset.jpg", "format": "C"},
@@ -256,6 +282,22 @@
 				"texture": ["guard2_d", "guard2_n", "guard2_s"],
 				"translate": [-20.7352, 4.31104, 7.6688],
 				"eulerAngles": [0.0, 0.0, 0.0],
+				"metallicFactor": 0.5, "roughnessFactor": 0.7487671971321106
+			},
+			{
+				"id": "knight",
+				"model": "knight",
+				"texture": ["knight_d", "knight_n", "knight_s"],
+				"translate": [43, 5.6, -10.924],
+				"eulerAngles": [0.0, -90.0, 0.0],
+				"metallicFactor": 0.5, "roughnessFactor": 0.7487671971321106
+			},
+			{
+				"id": "knight2",
+				"model": "knight",
+				"texture": ["knight_d", "knight_n", "knight_s"],
+				"translate": [71.6406, 3.59822, 29.077],
+				"eulerAngles": [0.0, -135.0, 0.0],
 				"metallicFactor": 0.5, "roughnessFactor": 0.7487671971321106
 			}
 		]},
