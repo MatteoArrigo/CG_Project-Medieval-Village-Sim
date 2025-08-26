@@ -41,11 +41,6 @@ void ViewControls::updateFrame(float deltaT, glm::vec3 moveInput, glm::vec3 rotI
         rawMoveDir = glm::normalize(rawMoveDir);
     moveDir = moveSpeed * rawMoveDir;
 
-    // Camera height adjustment
-//    camHeight += moveSpeed * 0.1f * (glfwGetKey(window, GLFW_KEY_Q) ? 1.0f : 0.0f) * deltaT;
-//    camHeight -= moveSpeed * 0.1f * (glfwGetKey(window, GLFW_KEY_E) ? 1.0f : 0.0f) * deltaT;
-//    camHeight = glm::clamp(camHeight, 0.5f, 3.0f);
-
     // Final results computation
     updateViewPrj();
 }
