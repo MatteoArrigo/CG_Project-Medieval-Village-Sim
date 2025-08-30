@@ -36,7 +36,7 @@ layout(location = 4) flat in int toBeDiscarded;
 layout(location = 0) out vec4 outColor;
 
 // Global UBO (set=0)
-#define MAX_POINT_LIGHTS 10
+#define MAX_POINT_LIGHTS 20
 layout(set = 0, binding = 0) uniform LightModelUBO {
     vec3 lightDir;
     vec4 lightColor;
@@ -44,6 +44,7 @@ layout(set = 0, binding = 0) uniform LightModelUBO {
 
     vec3 pointLightPositions[MAX_POINT_LIGHTS];
     vec4 pointLightColors[MAX_POINT_LIGHTS];
+    int nPointLights;
 } lightUbo;
 
 // Material factors (set=2)
@@ -158,6 +159,32 @@ void main() {
     vec3 irradiance = lightUbo.lightColor.rgb * NdotL;
 
     vec3 Lo = (kD * albedo / PI + specular) * irradiance;
+
+    // ===== Point lights contribution =====
+    for (int i = 0; i < lightUbo.nPointLights; ++i) {
+        vec3 L = normalize(lightUbo.pointLightPositions[i] - fragPos);
+        vec3 H = normalize(V + L);
+
+        float distance = length(lightUbo.pointLightPositions[i] - fragPos);
+        float attenuation = 1.0 / (distance * distance); // simple inverse square
+
+        vec3 NDF = vec3(distributionGGX(N, H, roughnessFactor));
+        float G   = geometrySmith(N, V, L, roughnessFactor);
+        vec3  F   = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+        vec3 numerator = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
+        vec3 specular = numerator / denominator;
+
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - metallicFactor;
+
+        float NdotL = max(dot(N, L), 0.0);
+        vec3 irradiance = lightUbo.pointLightColors[i].rgb * NdotL * attenuation;
+
+        Lo += (kD * albedo / PI + specular) * irradiance;
+    }
 
     // Final color (no IBL for simplicity)
     vec3 ambient = vec3(0.15) * albedo;
