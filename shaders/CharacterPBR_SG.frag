@@ -36,6 +36,9 @@ layout(location = 2) in vec2 fragUV;
 layout(location = 3) in vec4 fragTan;
 layout(location = 4) flat in int toBeDiscarded;
 
+layout(location = 5) in vec4 fragPosLightSpace;
+layout(location = 6) in vec4 debug;
+
 layout(location = 0) out vec4 outColor;
 
 // Global UBO (set=0)
