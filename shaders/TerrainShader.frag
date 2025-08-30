@@ -137,7 +137,6 @@ float ShadowCalculation(vec4 fragPosLightSpace)
 // When the alpha channel is 1.0, the maskBlendFactor is applied to mix the main and tiled textures.
 float getMaskBlend() {
     return (texture(maskMap, fragUV).a) * terrainFactors.maskBlendFactor;
-//    return (1.0 - texture(maskMap, fragUV).a) * terrainFactors.maskBlendFactor;
 }
 
 vec4 getBlendedTexture(sampler2D mTex, sampler2D tTex) {
@@ -213,10 +212,13 @@ void main() {
         float NdotH = max(dot(N, H), 0.0);
         float VdotH = max(dot(V, H), 0.0);
 
+        // We use Blinn-Phong based PBR as a variant of PBR for terrain
+        // Phong-Blinn approach to compute specular term
         vec3 F = fresnelSchlick(VdotH, specularColor);
         float specularTerm = pow(NdotH, shininess);
         vec3 specular = F * specularTerm;
 
+        // Energy-conserving Lambertian approach to compute diffuse term
         float oneMinusSpec = 1.0 - max(max(specularColor.r, specularColor.g), specularColor.b);
         vec3 diffuse = albedo * oneMinusSpec / PI;
 

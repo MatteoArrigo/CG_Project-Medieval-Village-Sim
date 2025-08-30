@@ -289,8 +289,6 @@ std::cout << "}\n";
                     TI[k].I[j].usedForPhysics = false;
                 }
 
-                //TODO: pensa se lasciare così o gestire in qualche altro modo con array o che so io...
-                // Check optional PBR SpecularGlossiness parameters
                 if (is[j].contains("diffuseFactor"))
                     for (int d = 0; d < 3; ++d)
                         TI[k].I[j].diffuseFactor[d] = is[j]["diffuseFactor"][d];

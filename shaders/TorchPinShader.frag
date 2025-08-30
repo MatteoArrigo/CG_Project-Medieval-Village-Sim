@@ -37,7 +37,7 @@ void main() {
     vec3 torchColor = lightUbo.pointLightColors[indexUbo.index].rgb;
 
     // Distortion effect based on time and UV coordinates, to simulate shimmering flames
-    vec2 offset = 0.005 * (1-fragUV.y) * vec2(sin(timeUbo.time*0.5 + fragUV.y*0.5), cos(timeUbo.time*1.0 + fragUV.x*1.0));
+    vec2 offset = 0.0075 * (1-fragUV.y) * vec2(sin(timeUbo.time*0.5 + fragUV.y*0.5), cos(timeUbo.time*1.0 + fragUV.x*1.0));
     offset *= 0.2*length(torchColor);
     vec4 texColor = texture(burningText, fragUV + offset);
 
