@@ -844,7 +844,10 @@ class CGProject : public BaseProject {
 						if(*(I->id) == "player" && viewControls->getViewMode()==ViewMode::FIRST_PERSON)
 							// If view mode is "first person", the player is moved underground to make it invisible
 							// Note: For it to work, the player must be rendered with PBR with exact id "player"
-							geomCharUbo.mMat[im] *= glm::translate(glm::mat4(1), glm::vec3(0.0f, -100.0f, 0.0f));
+							// Theoretical Note: the translation changing the word matrix must be applied to the left
+							    // as is must be the last transform to be applied in the world matrix
+							geomCharUbo.mMat[im] = glm::translate(glm::mat4(1), glm::vec3(0.0f, -100.0f, 0.0f))
+													* geomCharUbo.mMat[im];
 						geomCharUbo.mvpMat[im] = viewControls->getViewPrj() * geomCharUbo.mMat[im];
 						geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
                         shadowMapUboChar.model[im] = geomCharUbo.mMat[im];
