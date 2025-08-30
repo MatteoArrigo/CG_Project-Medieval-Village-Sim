@@ -89,8 +89,7 @@ const float shadowBias = 0.001; // Bias to avoid shadow acne
 const int pcfRadius = 1; // Radius for PCF sampling
 const int pcfStride = 1; // Radius for PCF sampling
 const int pcfNSamples = 9; // number of samples considered in PCF sampling
-float ShadowCalculation(vec4 fragPosLightSpace)
-{
+float ShadowCalculation(vec4 fragPosLightSpace) {
     // Convert from light space clip coordinates to normalized device coordinates (NDC)
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     // Convert NDC [-1,1] to UV coordinates [0,1]
@@ -109,7 +108,7 @@ float ShadowCalculation(vec4 fragPosLightSpace)
         for (int y = -pcfRadius; y <= pcfRadius; y+=pcfStride) {
             vec2 offset = vec2(x, y) * texelSize;
             float sampleDepth = texture(shadowMap, projCoords.xy + offset).r;
-            shadow += currentDepth > sampleDepth + shadowBias ? 1.0 : 0.0;
+            shadow += currentDepth > sampleDepth + shadowBias ? 0.65 : 0.0;
             // 1 if is in shadow --> I'm counting how many considered samples are in shadow
         }
     }
@@ -230,9 +229,10 @@ void main() {
         kD *= 1.0 - metallicFactor; // Scale diffuse by metallic factor
 
         float NdotL = max(dot(N, L), 0.0);
+        float shadow = ShadowCalculation(fragPosLightSpace);
         vec3 irradiance = lightUbo.lightColor.rgb * NdotL;
 
-        vec3 Lo = (kD * albedo / PI + specular) * irradiance;
+        vec3 Lo = (kD * albedo / PI + specular) * irradiance * shadow;
 
         // ===== Point lights contribution =====
         for (int i = 0; i < lightUbo.nPointLights; ++i) {
