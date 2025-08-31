@@ -279,6 +279,7 @@ class CGProject : public BaseProject {
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
 			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
 			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
 		});
 		DSLtorches.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO),1},
@@ -408,6 +409,7 @@ class CGProject : public BaseProject {
                     {true,  0, {}},     // diffuse
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular
+					{false,  -1, RPshadow.attachments[0].getViewAndSampler() }
                     }
                 }}
         }, 3, &VDchar);
