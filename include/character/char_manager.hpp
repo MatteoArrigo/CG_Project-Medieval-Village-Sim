@@ -6,12 +6,11 @@
 
 class CharManager {
 public:
-
     void addChar(const std::shared_ptr<Character>& character) {
         characters.push_back(character);
     }
 
-    // Restituisce il Character interactable più vicino alla posizione del giocatore, entro una distanza massima
+    // Restituisce il Character interactable più vicino alla posizione del giocatore in stato idle, entro una distanza massima
     std::shared_ptr<Character> getNearestCharacter(const glm::vec3& playerPos) const {
         std::shared_ptr<Character> nearest = nullptr;
         float minDist = maxDistance;
@@ -23,10 +22,6 @@ public:
             }
         }
         return nearest;
-    }
-
-    void updateAll() {
-        // Aggiorna lo stato di tutti gli Character, se necessario
     }
 
     const std::vector<std::shared_ptr<Character>>& getCharacters() const {
@@ -178,8 +173,6 @@ public:
     float getMaxDistance() const {
         return maxDistance;
     }
-
-
 
 private:
     std::vector<std::shared_ptr<Character>> characters;

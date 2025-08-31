@@ -27,11 +27,13 @@ struct InteractableState{
  *  Used if it is necessary to recover the actual instance of the instance object to resolve the interaction.
  * @param position 3D position of the interaction point.
  *  May not be the position of an actual instance, but only the position where the interaction should become available.
+ * @param label Text label to show when the player is near the interaction point.
  */
 struct InteractionPoint {
     std::string id;                      // Id of interaction
     std::vector<std::string> instaceIds; // IDs of instances associated with this interaction
     glm::vec3 position;                  // Position of interaction
+    std::string label;                   // Label to show when near the interaction point
 };
 
 /**
