@@ -287,6 +287,7 @@ class CGProject : public BaseProject {
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
 			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
 			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
 		});
 		DSLtorches.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO),1},
@@ -415,6 +416,7 @@ class CGProject : public BaseProject {
                     {true,  0, {}},     // diffuse
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular
+					{false,  -1, RPshadow.attachments[0].getViewAndSampler() }
                     }
                 }}
         }, 3, &VDchar);
@@ -846,7 +848,10 @@ class CGProject : public BaseProject {
 						if(*(I->id) == "player" && viewControls->getViewMode()==ViewMode::FIRST_PERSON)
 							// If view mode is "first person", the player is moved underground to make it invisible
 							// Note: For it to work, the player must be rendered with PBR with exact id "player"
-							geomCharUbo.mMat[im] *= glm::translate(glm::mat4(1), glm::vec3(0.0f, -100.0f, 0.0f));
+							// Theoretical Note: the translation changing the word matrix must be applied to the left
+							    // as is must be the last transform to be applied in the world matrix
+							geomCharUbo.mMat[im] = glm::translate(glm::mat4(1), glm::vec3(0.0f, -100.0f, 0.0f))
+													* geomCharUbo.mMat[im];
 						geomCharUbo.mvpMat[im] = viewControls->getViewPrj() * geomCharUbo.mMat[im];
 						geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
                         shadowMapUboChar.model[im] = geomCharUbo.mMat[im];
@@ -1015,7 +1020,9 @@ class CGProject : public BaseProject {
 		// Update message for interaction with idle Characters nearby
 		if(charManager.getNearestCharacter(physicsMgr.getPlayerPosition()) != nullptr) {
 			auto character = charManager.getNearestCharacter(physicsMgr.getPlayerPosition());
-			txt.print(0.5f, 0.1f, "Press E to talk with "+character->getName(), 2, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+			txt.print(0.5f, -0.2f, "Press E to talk\nwith "+character->getName(), 2, "CO",
+					  false, true, true, TAL_CENTER, TRH_CENTER, TRV_MIDDLE,
+					  {1,1,1,1}, {0.5,0,0,1},{0.5,0,0,0.5}, 1.2, 1.2);
 		}
 		else {
 			txt.removeText(2);		// remove the text to interact if no idle character is nearby
@@ -1024,9 +1031,9 @@ class CGProject : public BaseProject {
         // Update message for interaction point in the nearby
         if(interactionsManager.isNearInteractable()) {
             auto interaction = interactionsManager.getNearInteractable();
-            txt.print(0.96f, -0.97f, "Press Z to interact\nwith "+interaction.label, 4, "SS", false, false, true,
-					  TAL_RIGHT, TRH_RIGHT, TRV_TOP, {1,1,1,1}, {0.5,0,0,1},
-					  {0.5,0,0,0.5}, 1.2, 1.2);
+            txt.print(0.96f, -0.97f, "Press Z to interact\nwith "+interaction.id, 4, "SS",
+					  false, false, true,TAL_RIGHT, TRH_RIGHT, TRV_TOP,
+					  {1,1,1,1}, {0.5,0,0,1},{0.5,0,0,0.5}, 1.2, 1.2);
         }
 		else
 			txt.removeText(4);		// remove the text if no interaction point is nearby
