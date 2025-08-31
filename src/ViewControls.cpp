@@ -182,6 +182,6 @@ const std::string ViewControls::getViewModeStr() {
 		case ViewMode::TRIMETRIC: return "Trimetric";
 		case ViewMode::CABINET: return "Cabinet";
 		case ViewMode::SHADOW_CLIP: return "Shadow Clip";
-		case ViewMode::COUNT: return "";
+		default: return "";
 	}
 }
