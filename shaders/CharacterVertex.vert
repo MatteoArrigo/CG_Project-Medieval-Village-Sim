@@ -14,7 +14,8 @@ layout(set = 1, binding = 1) uniform ShadowClipUBO {
 	mat4 lightVP;
 
 /** Debug vector for shadow map rendering.
-	 * If debug.x == 1.0, the terrain renders only white if lit and black if in shadow
+	 * If debug.x == 1.0, the character renders the greyscale version of the shadow coefficient used for shadow computations
+	 * If debug.x == 2.0, the character renders only (almost-)white if lit by at least one torch, black otherwise
 	 * If debug.y == 1.0, the light's clip space is visualized instead of the basic perspective view
 	 */
 	vec4 debug;
@@ -33,6 +34,9 @@ layout(location = 1) out vec3 fragNorm;
 layout(location = 2) out vec2 fragUV;
 layout(location = 3) out vec4 fragTan;
 layout(location = 4) out int toBeDiscarded;
+
+layout(location = 5) out vec4 fragPosLightSpace;
+layout(location = 6) out vec4 debug;
 
 void main() {
 	if(	inJointIndex.x >= charUbo.jointsCount ||
@@ -65,6 +69,13 @@ void main() {
 		gl_Position += inJointWeight.w * charUbo.mvpMat[inJointIndex.w] * vec4(inPosition, 1.0);
 		fragPos += inJointWeight.w * (charUbo.mMat[inJointIndex.w] * vec4(inPosition, 1.0)).xyz;
 		fragNorm += inJointWeight.w * (charUbo.nMat[inJointIndex.w] * vec4(inNorm, 0.0)).xyz;
+
+		fragPosLightSpace =
+			inJointWeight.x * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.x] * vec4(inPosition, 1.0) +
+			inJointWeight.y * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.y] * vec4(inPosition, 1.0) +
+			inJointWeight.z * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.z] * vec4(inPosition, 1.0) +
+			inJointWeight.w * shadowClipUbo.lightVP * charUbo.mMat[inJointIndex.w] * vec4(inPosition, 1.0);
+		debug = shadowClipUbo.debug;
 	}
 	fragUV = inUV;
 
