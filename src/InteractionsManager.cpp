@@ -22,6 +22,7 @@ int InteractionsManager::init(std::string file) {
         std::cout << "Read interactable point: " << interactable["id"] << "\n";
         InteractionPoint interaction;
         interaction.id = interactable["id"];
+        interaction.label = interactable["label"];
         nlohmann::json pos = interactable["pos"];
         if (pos.is_array() && pos.size() == 3) {
             interaction.position = glm::vec3(pos[0], pos[1], pos[2]);
@@ -108,7 +109,6 @@ void InteractionsManager::interact(InteractableState& state) const {
         } else {
             std::cout << "Invalid crane wheel index: " << craneWheelIdx << "\n";
         }
-
     } else {
         std::cout << "Interaction ID not recognized\n";
     }

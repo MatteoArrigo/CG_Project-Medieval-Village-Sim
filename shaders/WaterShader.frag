@@ -31,20 +31,9 @@ layout(set = 2, binding = 2) uniform sampler2D envMap[N_SUNLIGHTS]; // Equirecta
 // Convert 3D direction vector to UVs for equirectangular map
 vec2 dirToEquirectUV(vec3 dir) {
     dir = normalize(dir);
-    
-    //TODO: Da capire...
-    // Capisci anche se così va bene lo specular highlight della skybox, discutere insieme agli altri
-
-    float yaw = -(atan(dir.x, dir.z)/6.2831853+0.5);
-    float pitch = -(atan(dir.y, sqrt(dir.x*dir.x+dir.z*dir.z))/3.14159265+0.5);
-
-//    float yaw = atan(dir.z, dir.x);               // range [-pi, pi]
-//    float pitch = asin(clamp(dir.y, -1.0, 1.0));   // range [-pi/2, pi/2]
-//
-//    float u = (yaw / (2.0 * 3.1415926535)) + 0.5;       // [0,1]
-//    float v = (pitch / 3.1415926535) + 0.5;             // [0,1]
-//
-//    return vec2(u, 1.0 - v); // Flip V to match texture convention
+    // Compute sort of spherical coordinates for dir
+    float yaw = -(atan(dir.x, dir.z)/6.2831853+0.5);        // Angle in XZ plane
+    float pitch = -(atan(dir.y, sqrt(dir.x*dir.x+dir.z*dir.z))/3.14159265+0.5);     // vertical angle from plane XZ
     return vec2(yaw, pitch); // Flip V to match texture convention
 }
 
@@ -117,7 +106,6 @@ void main() {
 
     // ---- Final color computation ----
 
-//    vec3 finalColor = reflectionColor;
     vec3 finalColor = mix(mainDiffColor * diffuse + specular, reflectionColor, fresnel);
     float alpha = mix(0.3, 0.9, fresnel); // more transparent at grazing angles
     outColor = vec4(finalColor, alpha);

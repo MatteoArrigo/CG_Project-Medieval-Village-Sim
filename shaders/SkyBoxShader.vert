@@ -17,6 +17,9 @@ void main()
 {
     fragTexCoord = inPosition;
     vec4 pos = geomUbo.mvpMat * vec4(inPosition, 1.0);
+    // 3D normalized coordinates
+    // Z = W = 1, so that the skybox is always at the farthest depth
+    // This implies that the skybox is rendered only if no other object is in that direction
     gl_Position = pos.xyww;
     texId = geomUbo.texId;
     debug = geomUbo.debug;

@@ -229,11 +229,8 @@ void main() {
             vec3 Hp = normalize(V + Lp);
             vec3 radianceP = lightUbo.pointLightColors[i].rgb;
 
-            // TODO: puoi provare diversi attenuation models
             // Distance attenuation (inverse square)
             float attenuation = 1.0 / (distance * distance);
-//            float attenuation = (distance < 4.0) ? 1.0 : 0.0; // Simple cutoff for point lights
-//            float attenuation = 1.0 / (distance+1.0);
             radianceP *= attenuation;
 
             float NDFp = DistributionBlinnPhong(Nmap, Hp, glossiness * 256.0);

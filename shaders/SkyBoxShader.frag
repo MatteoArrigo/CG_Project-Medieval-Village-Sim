@@ -11,8 +11,6 @@ layout(location = 0) out vec4 outColor;
 layout(set = 0, binding = 1) uniform sampler2D texs[N_SUNLIGHTS];
 
 void main() {
-//	if(debug.y == 1.0)
-//		discard;	// Light orthographic clip space mode, skybox not rendered
 	if(texId<0 || texId>=N_SUNLIGHTS)
 		discard;	// Invalid texture ID
 

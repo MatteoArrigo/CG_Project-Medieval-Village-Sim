@@ -17,16 +17,16 @@
 #include "InteractionsManager.hpp"
 #include "ViewControls.hpp"
 
-//TODO: pensa se aggiungere la cubemap ambient lighting in tutti i fragment shader, non solo l'acqua
-// Nota: nell'acqua usiamo ora la equirectangular map per la reflection, non preprocessata
-// Si potrebbe implementare IBL nelle altre tecniche, come PBR+IBL, usando radiance cubemap, quindi preprocessata
-// Così come è ora, invece, viene sempre considerata luce bianca come luce ambientale da tutte le direzioni
-
 /** If true, gravity and inertia are disabled
  And vertical movement (along y, thus actual fly) is enabled.
  */
 const bool FLY_MODE = false;
 const std::string SCENE_FILEPATH = "assets/scene.json";
+
+
+///////////////////////////////////////////////
+/// VERTEX DESCRIPTORS					  /////
+///////////////////////////////////////////////
 
 struct VertexChar {
 	glm::vec3 pos;
@@ -54,6 +54,11 @@ struct VertexTan {
 	glm::vec4 tan;
 };
 
+
+///////////////////////////////////////////////
+/// UNIFORM BUFFER OBJECTS		     	  /////
+///////////////////////////////////////////////
+
 #define MAX_POINT_LIGHTS 20
 struct LightModelUBO {
 	alignas(16) glm::vec3 lightDir;
@@ -70,7 +75,6 @@ struct LightModelUBO {
 
 #define MAX_JOINTS 100
 struct GeomCharUBO {
-	alignas(16) glm::vec4 debug1;
 	alignas(16) glm::mat4 mvpMat[MAX_JOINTS];
 	alignas(16) glm::mat4 mMat[MAX_JOINTS];
 	alignas(16) glm::mat4 nMat[MAX_JOINTS];
@@ -127,7 +131,10 @@ struct TerrainFactorsUBO {
     alignas(4) float tilingFactor;
 };
 
-// MAIN ! 
+///////////////////////////////////////////////
+/// MAIN						     	  /////
+///////////////////////////////////////////////
+
 class CGProject : public BaseProject {
 	protected:
 
@@ -140,9 +147,14 @@ class CGProject : public BaseProject {
     DescriptorSetLayout DSLshadowMap, DSLshadowMapChar;
     // VD, RP, Pipelines
 	VertexDescriptor VDchar, VDnormUV, VDpos, VDtan;
+
+	// Two different render passes: one for the shadow map, one for the rest of the scene
 	RenderPass RPshadow, RP;
-	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings, Ptorches;
+
+	// First render pass pipelines
     Pipeline PshadowMap, PshadowMapChar, PshadowMapSky, PshadowMapWater;
+	// Second render pass pipelines
+	Pipeline Pchar, PcharPbr, Pskybox, Pwater, Pgrass, Pterrain, Pprops, Pbuildings, Ptorches;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Scene SC;
@@ -153,33 +165,29 @@ class CGProject : public BaseProject {
 	TextMaker txt;
 
 	// Controller classes
-	PhysicsManager physicsMgr;
-    ViewControls* viewControls;
-    SunLightManager sunLightManager;
-	CharManager charManager;			// Character manager for animations
-	Player * player;						// Player manger
-    InteractionsManager interactionsManager;
-    InteractableState interactableState;
-	AnimatedProps* animatedProps;
+	PhysicsManager physicsMgr;					// Physics manager
+    ViewControls* viewControls;					// Camera and view controls
+    SunLightManager sunLightManager;			// Sunlight manager
+	CharManager charManager;					// Character manager for animations
+	Player* player;								// Player manger
+    InteractionsManager interactionsManager;	// Interactions manager
+    InteractableState interactableState;		// State of the interactions
+	AnimatedProps* animatedProps;				// Animated props manager
 
 	// Other application parameters / objects
-	float ar;	// Aspect ratio
-    Texture Tvoid;
+	float ar;					// Aspect ratio
+    Texture Tvoid;				// Blank texture
     LightModelUBO lightUbo;
 
     /** Debug vector present in DSL for shadow map. Basic version is vec4(0,0,0,0)
      * if debugLightView.x == 1.0, the terrain and buildings render only white if lit and black if in shadow
      * if debugLightView.x == 2.0, the terrain and buildings show only the point lights illumination
-     * if debugLightView.y == 1.0, the light's clip space is visualized instead of the basic perspective view
      */
     glm::vec4 debugLightView = glm::vec4(0.0);
-	glm::vec4 debug1 = glm::vec4(0);        // TODO: secondo me si può togliere
 
     // Here you set the main application parameters
 	void setWindowParameters() {
 		// window size, title
-//		windowWidth = 1920;
-//		windowHeight = 1080;
 		windowWidth = 1500;
 		windowHeight = 1000;
 		windowTitle = "CGProject - Medieval Village Sim";
@@ -279,6 +287,7 @@ class CGProject : public BaseProject {
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
 			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
 			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
 		});
 		DSLtorches.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO),1},
@@ -361,16 +370,15 @@ class CGProject : public BaseProject {
 		Pskybox.setCullMode(VK_CULL_MODE_BACK_BIT);
 		Pskybox.setPolygonMode(VK_POLYGON_MODE_FILL);
 
-        Pwater.init(this, &VDnormUV, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLwater});
-        Pwater.setTransparency(true);
-
 		Pchar.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterCookTorrance.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLchar});
 		PcharPbr.init(this, &VDchar, "shaders/CharacterVertex.vert.spv", "shaders/CharacterPBR_MR.frag.spv", {&DSLlightModel, &DSLgeomShadow4Char, &DSLcharPbr});
-        Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
-        Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
 		Pbuildings.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/BuildingPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbrShadow});
 		Pprops.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/PropsPBR.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLpbr});
+        Pterrain.init(this, &VDtan, "shaders/TerrainShader.vert.spv", "shaders/TerrainShader.frag.spv", {&DSLlightModel, &DSLgeomShadow, &DSLterrain});
 		Ptorches.init(this, &VDtan, "shaders/GeneralPBR.vert.spv", "shaders/TorchPinShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLtorches});
+        Pgrass.init(this, &VDtan, "shaders/GrassShader.vert.spv", "shaders/GrassShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLgrass});
+        Pwater.init(this, &VDnormUV, "shaders/WaterShader.vert.spv", "shaders/WaterShader.frag.spv", {&DSLlightModel, &DSLgeomShadowTime, &DSLwater});
+        Pwater.setTransparency(true);
 
         // --------- TECHNIQUES INITIALIZATION ---------
         std::vector<TextureDefs> skyboxTexs;        // automatic fill-up of textures for skybox
@@ -408,6 +416,7 @@ class CGProject : public BaseProject {
                     {true,  0, {}},     // diffuse
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular
+					{false, -1, RPshadow.attachments[0].getViewAndSampler() }
                     }
                 }}
         }, 3, &VDchar);
@@ -473,7 +482,7 @@ class CGProject : public BaseProject {
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}},     // ambient occlusion
-                    {false,  4, RPshadow.attachments[0].getViewAndSampler() }
+                    {false,  -1, RPshadow.attachments[0].getViewAndSampler() }
                 }
             }}
         }, 4, &VDtan);
@@ -535,8 +544,6 @@ class CGProject : public BaseProject {
 
 		// submits the main command buffer
 		submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
-
-		txt.print(1.0f, 1.0f, "FPS:",1,"CO",false,false,true,TAL_RIGHT,TRH_RIGHT,TRV_BOTTOM,{1.0f,0.0f,0.0f,1.0f},{0.8f,0.8f,0.0f,1.0f});
 
 		// Initialize PhysicsManager
 		if(!physicsMgr.initialize(FLY_MODE)) {
@@ -708,9 +715,7 @@ class CGProject : public BaseProject {
 
         // Handle of command keys
         interactionsManager.updateNearInteractable(physicsMgr.getPlayerPosition());
-		static std::shared_ptr<Character> lastCharInteracted;
-		if (firstTime)
-			 lastCharInteracted = nullptr;
+		static std::shared_ptr<Character> lastCharInteracted = nullptr;
 		glm::vec3 playerPos = physicsMgr.getPlayerPosition();
         {
             handleKeyToggle(window, GLFW_KEY_0, debounce, curDebounce, [&]() {
@@ -773,7 +778,9 @@ class CGProject : public BaseProject {
         lightUbo.eyePos = viewControls->getCameraPos();
         for(int i=0 ; i<lightUbo.nPointLights; i++) {
             lightUbo.pointLightColors[i] = interactableState.torchesOn[i] ?
-                    glm::vec4(10,0,0,1) : glm::vec4(0,0,0,1);
+            		// red							  black
+                    glm::vec4(5 + 0.1*std::sin(glfwGetTime()*1.5f+i),0.4 + 0.15*std::cos(glfwGetTime()*0.8f+i),0.3,1) :
+					glm::vec4(0,0,0,1);
         }
         if(firstTime)
             for (int i = 0; i < lightUbo.nPointLights; ++i) {
@@ -793,9 +800,7 @@ class CGProject : public BaseProject {
         };
         TimeUBO timeUbo{.time = static_cast<float>(glfwGetTime())};
         GeomUBO geomUbo{};
-        GeomCharUBO geomCharUbo{
-                .debug1 = debug1
-        };
+        GeomCharUBO geomCharUbo;
         GeomSkyboxUBO geomSkyboxUbo{
             .skyboxTextureIdx = sunLightManager.getIndex(),
             .debug = debugLightView,
@@ -844,7 +849,10 @@ class CGProject : public BaseProject {
 						if(*(I->id) == "player" && viewControls->getViewMode()==ViewMode::FIRST_PERSON)
 							// If view mode is "first person", the player is moved underground to make it invisible
 							// Note: For it to work, the player must be rendered with PBR with exact id "player"
-							geomCharUbo.mMat[im] *= glm::translate(glm::mat4(1), glm::vec3(0.0f, -100.0f, 0.0f));
+							// Theoretical Note: the translation changing the word matrix must be applied to the left
+							    // as is must be the last transform to be applied in the world matrix
+							geomCharUbo.mMat[im] = glm::translate(glm::mat4(1), glm::vec3(0.0f, -100.0f, 0.0f))
+													* geomCharUbo.mMat[im];
 						geomCharUbo.mvpMat[im] = viewControls->getViewPrj() * geomCharUbo.mMat[im];
 						geomCharUbo.nMat[im] = glm::inverse(glm::transpose(geomCharUbo.mMat[im]));
                         shadowMapUboChar.model[im] = geomCharUbo.mMat[im];
@@ -865,6 +873,7 @@ class CGProject : public BaseProject {
 			}
 		}
 
+		// TECHNIQUE Skybox
         techniqueId++;
         if(firstTime) std::cout << "Updating technique " << techniqueId << " UBOs\n";
 		geomSkyboxUbo.mvpMat = viewControls->getViewPrj() * glm::translate(glm::mat4(1), viewControls->getCameraPos()) * glm::scale(glm::mat4(1), glm::vec3(100.0f));
@@ -1012,7 +1021,9 @@ class CGProject : public BaseProject {
 		// Update message for interaction with idle Characters nearby
 		if(charManager.getNearestCharacter(physicsMgr.getPlayerPosition()) != nullptr) {
 			auto character = charManager.getNearestCharacter(physicsMgr.getPlayerPosition());
-			txt.print(0.5f, 0.1f, "Press E to talk with "+character->getName(), 2, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+			txt.print(0.5f, -0.2f, "Press E to talk\nwith "+character->getName(), 2, "CO",
+					  false, true, true, TAL_CENTER, TRH_CENTER, TRV_MIDDLE,
+					  {1,1,1,1}, {0.5,0,0,1},{0.5,0,0,0.5}, 1.2, 1.2);
 		}
 		else {
 			txt.removeText(2);		// remove the text to interact if no idle character is nearby
@@ -1021,9 +1032,9 @@ class CGProject : public BaseProject {
         // Update message for interaction point in the nearby
         if(interactionsManager.isNearInteractable()) {
             auto interaction = interactionsManager.getNearInteractable();
-            txt.print(0.96f, -0.97f, "Press Z to interact\nwith "+interaction.id, 4, "SS", false, false, true,
-					  TAL_RIGHT, TRH_RIGHT, TRV_TOP, {1,1,1,1}, {0.5,0,0,1},
-					  {0.5,0,0,0.5}, 1.2, 1.2);
+            txt.print(0.96f, -0.97f, "Press Z to interact\nwith "+interaction.id, 4, "SS",
+					  false, false, true,TAL_RIGHT, TRH_RIGHT, TRV_TOP,
+					  {1,1,1,1}, {0.5,0,0,1},{0.5,0,0,0.5}, 1.2, 1.2);
         }
 		else
 			txt.removeText(4);		// remove the text if no interaction point is nearby

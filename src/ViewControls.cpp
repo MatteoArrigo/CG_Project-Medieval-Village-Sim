@@ -93,10 +93,15 @@ void ViewControls::updateViewPrj() {
 							 orthoNearPlane, orthoFarPlane );
 			Prj[1][1] *= -1;
 
-			View =	glm::rotate(glm::mat4(1), glm::radians(35.26f), glm::vec3(1,0,0)) *
-					glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(0,1,0)) *
-					glm::translate(glm::mat4(1), -playerPos);
-			cameraPos = playerPos;
+			// Camera rotation depends on axonometric view
+			// By Vulkan convention, the camera looks forward -Z axis, so that camera itself is in axis +Z
+			// Rotation matrix is then to be applied to versor for axis +Z to retrieve the camera direction
+			// Camera is then positioned along this direction at a certain distance from the player
+			// While its inverse (computed as transpose as it is orthogonal) is used to compute the View matrix
+			glm::mat4 cameraRot = 	glm::rotate(glm::mat4(1), glm::radians(45.0f), glm::vec3(0,1,0)) *
+									glm::rotate(glm::mat4(1), glm::radians(-35.26f), glm::vec3(1,0,0));
+			View = glm::transpose(cameraRot) * glm::translate(glm::mat4(1), -playerPos);
+			cameraPos = playerPos + 20.0f * glm::vec3(cameraRot*glm::vec4(0,0,1,1));
 
 			ViewPrj = Prj * View;
 			break;
@@ -108,10 +113,10 @@ void ViewControls::updateViewPrj() {
 							 orthoNearPlane, orthoFarPlane );
 			Prj[1][1] *= -1;
 
-			View =	glm::rotate(glm::mat4(1), glm::radians(20.0f), glm::vec3(1,0,0)) *
-					  glm::rotate(glm::mat4(1), glm::radians(-45.0f), glm::vec3(0,1,0)) *
-					  glm::translate(glm::mat4(1), -playerPos);
-			cameraPos = playerPos;
+			glm::mat4 cameraRot = 	glm::rotate(glm::mat4(1), glm::radians(45.0f), glm::vec3(0,1,0)) *
+									 glm::rotate(glm::mat4(1), glm::radians(-20.0f), glm::vec3(1,0,0));
+			View = glm::transpose(cameraRot) * glm::translate(glm::mat4(1), -playerPos);
+			cameraPos = playerPos + 20.0f * glm::vec3(cameraRot*glm::vec4(0,0,1,1));
 
 			ViewPrj = Prj * View;
 			break;
@@ -123,10 +128,10 @@ void ViewControls::updateViewPrj() {
 							 orthoNearPlane, orthoFarPlane );
 			Prj[1][1] *= -1;
 
-			View =	glm::rotate(glm::mat4(1), glm::radians(30.0f), glm::vec3(1,0,0)) *
-					  glm::rotate(glm::mat4(1), glm::radians(-60.0f), glm::vec3(0,1,0)) *
-					  glm::translate(glm::mat4(1), -playerPos);
-			cameraPos = playerPos;
+			glm::mat4 cameraRot = 	glm::rotate(glm::mat4(1), glm::radians(60.0f), glm::vec3(0,1,0)) *
+									 glm::rotate(glm::mat4(1), glm::radians(-30.0f), glm::vec3(1,0,0));
+			View = glm::transpose(cameraRot) * glm::translate(glm::mat4(1), -playerPos);
+			cameraPos = playerPos + 20.0f * glm::vec3(cameraRot*glm::vec4(0,0,1,1));
 
 			ViewPrj = Prj * View;
 			break;
@@ -144,10 +149,11 @@ void ViewControls::updateViewPrj() {
 			glm::mat4 shear(1.0f);
 			shear[2][0] = -l * cos(alpha); // z affects x
 			shear[2][1] = -l * sin(alpha); // z affects y
-			cameraPos = playerPos;
 
-			// just translate the scene by -playerPos
+			// For view matrix, just translate the scene by -playerPos
+			// For camera direction, we use the inverse of shear applied to versor +Z, where camera is
 			View = shear * glm::translate(glm::mat4(1.0f), -playerPos);
+			cameraPos = playerPos + 20.0f * glm::vec3(shear * glm::vec4(0,0,1,1));
 
 			ViewPrj = Prj * View;
 			break;
@@ -176,6 +182,6 @@ const std::string ViewControls::getViewModeStr() {
 		case ViewMode::TRIMETRIC: return "Trimetric";
 		case ViewMode::CABINET: return "Cabinet";
 		case ViewMode::SHADOW_CLIP: return "Shadow Clip";
-		case ViewMode::COUNT: return "";
+		default: return "";
 	}
 }
