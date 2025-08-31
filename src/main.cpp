@@ -287,6 +287,7 @@ class CGProject : public BaseProject {
 			{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0,1},
 			{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1,1},
 			{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2,1},
+			{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3,1},
 		});
 		DSLtorches.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(IndexUBO),1},
@@ -415,6 +416,7 @@ class CGProject : public BaseProject {
                     {true,  0, {}},     // diffuse
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular
+					{false, -1, RPshadow.attachments[0].getViewAndSampler() }
                     }
                 }}
         }, 3, &VDchar);
@@ -480,7 +482,7 @@ class CGProject : public BaseProject {
                     {true,  1, {}},     // normal
                     {true,  2, {}},     // specular / glossiness
                     {true,  3, {}},     // ambient occlusion
-                    {false,  4, RPshadow.attachments[0].getViewAndSampler() }
+                    {false,  -1, RPshadow.attachments[0].getViewAndSampler() }
                 }
             }}
         }, 4, &VDtan);
@@ -777,7 +779,8 @@ class CGProject : public BaseProject {
         for(int i=0 ; i<lightUbo.nPointLights; i++) {
             lightUbo.pointLightColors[i] = interactableState.torchesOn[i] ?
             		// red							  black
-                    glm::vec4(10,0,0,1) : glm::vec4(0,0,0,1);
+                    glm::vec4(5 + 0.1*std::sin(glfwGetTime()*1.5f+i),0.4 + 0.15*std::cos(glfwGetTime()*0.8f+i),0.3,1) :
+					glm::vec4(0,0,0,1);
         }
         if(firstTime)
             for (int i = 0; i < lightUbo.nPointLights; ++i) {
