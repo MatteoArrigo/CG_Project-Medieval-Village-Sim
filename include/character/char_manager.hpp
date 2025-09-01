@@ -1,5 +1,6 @@
 #pragma once
 #include "character.hpp"
+#include "Utils.hpp"
 #include <vector>
 #include <memory>
 #include <glm/glm.hpp>
@@ -132,6 +133,8 @@ public:
             // Crea Character e aggiungi
             auto charac = std::make_shared<Character>(name, pos, ab, SKA, charStates);
             if (!dialogues.empty()) {
+				for(int i=0 ; i<dialogues.size(); i++)
+					dialogues[i] = wrapText(dialogues[i], 25);
                 charac->setDialogues(dialogues);
             }
             addChar(charac);

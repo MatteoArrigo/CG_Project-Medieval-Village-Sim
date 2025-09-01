@@ -742,7 +742,9 @@ class CGProject : public BaseProject {
                 if (nearestCharacter) {
                     nearestCharacter->interact();
                 	lastCharInteracted = nearestCharacter;
-                    txt.print(0.5f, 0.1f, nearestCharacter->getCurrentDialogue(), 3, "CO", false, false, true, TAL_CENTER, TRH_CENTER, TRV_TOP, {1,1,1,1}, {0,0,0,0.5});
+                    txt.print(0.0f, 0.96f, nearestCharacter->getCurrentDialogue(), 3, "CO",
+							  false, true, true, TAL_CENTER, TRH_CENTER, TRV_BOTTOM,
+							  {1,1,1,1}, {0,0,0,1.0}, {0,0,0,1}, 1.8, 1.8);
                     std::cout << "Character in state : " << nearestCharacter->getCurrentState() << "\n";
                 } else {
                     std::cout << "No Character nearby to interact with.\n";
@@ -1032,7 +1034,7 @@ class CGProject : public BaseProject {
         // Update message for interaction point in the nearby
         if(interactionsManager.isNearInteractable()) {
             auto interaction = interactionsManager.getNearInteractable();
-            txt.print(0.96f, -0.97f, "Press Z to interact\nwith "+interaction.id, 4, "SS",
+            txt.print(0.96f, -0.97f, "Press Z to interact\nwith "+interaction.label, 4, "SS",
 					  false, false, true,TAL_RIGHT, TRH_RIGHT, TRV_TOP,
 					  {1,1,1,1}, {0.5,0,0,1},{0.5,0,0,0.5}, 1.2, 1.2);
         }

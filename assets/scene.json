@@ -65,7 +65,7 @@
 			"animList": ["guard2", "guard2_crying"],
 			"startEndFrames": [[0,85], [0,189]],
 			"charStates": ["Idle", "Crying"],
-			"dialogues": ["Someone stole my sward, I'm so sad!", "Waaaahhh!"],
+			"dialogues": ["Someone stole my sword, I'm so sad!", "Waaaahhh!"],
 			"BaseTrackName": "Armature|mixamo.com|Layer0"
 		},
 		{
@@ -7193,6 +7193,5 @@
 				"diffuseFactor": [0.02063463, 0.02063463, 0.02063463]}
 		]}
 	]
-
 }
 

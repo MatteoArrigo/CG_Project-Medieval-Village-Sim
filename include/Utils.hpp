@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <glm/ext/scalar_constants.hpp>
+#include <string>
 
 /**
  * Handles key toggle events with debounce logic.
@@ -70,3 +71,9 @@ float normalizeAngle(float angle);
  */
 float shortestAngularDiff(float from, float to);
 
+/**
+ * Wraps the input text to ensure that no line exceeds the specified maximum line length.
+ * This function breaks lines at spaces to avoid splitting words, and inserts newline
+ * characters as needed.
+ */
+std::string wrapText(const std::string& text, size_t maxWidth);

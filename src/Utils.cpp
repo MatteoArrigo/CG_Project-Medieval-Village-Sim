@@ -1,4 +1,5 @@
 #include "Utils.hpp"
+#include <sstream>
 
 /**
  * Handles key toggle events with debounce logic.
@@ -93,5 +94,27 @@ float shortestAngularDiff(float from, float to) {
         diff += 2.0f * glm::pi<float>();
     }
     return diff;
+}
+
+std::string wrapText(const std::string &text, size_t maxWidth) {
+	std::istringstream iss(text);
+	std::string word;
+	std::string result;
+	std::string line;
+
+	while (iss >> word) {
+		if (line.empty()) {
+			line = word;
+		} else if (line.size() + 1 + word.size() <= maxWidth) {
+			line += " " + word;
+		} else {
+			result += line + "\n";
+			line = word;
+		}
+	}
+	if (!line.empty())
+		result += line;
+
+	return result;
 }
 
