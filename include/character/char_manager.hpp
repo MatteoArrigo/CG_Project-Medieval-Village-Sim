@@ -4,13 +4,27 @@
 #include <memory>
 #include <glm/glm.hpp>
 
+// Create comments for the CharManager class and its methods following the style of the other custom classes in the include folder.
+/**
+ * Manages a collection of Character instances.
+ * Provides functionalities to add characters, find the nearest character to a given position,
+ * and initialize characters from a scene file.
+ */
 class CharManager {
 public:
+    /**
+     * Adds a Character to the manager's collection.
+     * @param character character to be added.
+     */
     void addChar(const std::shared_ptr<Character>& character) {
         characters.push_back(character);
     }
 
-    // Restituisce il Character interactable più vicino alla posizione del giocatore in stato idle, entro una distanza massima
+    /**
+     * Finds the nearest Character in "Idle" state to the given player position within a specified maximum distance.
+     * @param playerPos The current position of the player.
+     * @return A shared pointer to the nearest Character in "Idle" state within maxDistance, or nullptr if none found.
+     */
     std::shared_ptr<Character> getNearestCharacter(const glm::vec3& playerPos) const {
         std::shared_ptr<Character> nearest = nullptr;
         float minDist = maxDistance;
@@ -23,11 +37,17 @@ public:
         }
         return nearest;
     }
+    /**
+     * Returns the collection of managed Character instances.
+     */
 
     const std::vector<std::shared_ptr<Character>>& getCharacters() const {
         return characters;
     }
 
+    /**
+     * Initializes characters from a json (scene) file.
+     */
     int init(std::string file, Scene SC) {
         AssetFile** af = SC.As;
         nlohmann::json sceneJson;
@@ -49,7 +69,7 @@ public:
 
         int skinId = 0; // Default skin ID, can be modified if needed
 
-        // Crea una mappa stringa (id asset file) -> indice nell'array degli AssetFile
+        // Creates a map string (asset file id) -> index in the AssetFile array
         std::unordered_map<std::string, int> assetFileIdToIndex;
         int assetFileIdx = 0;
         for (const auto& assetFile : sceneJson["assetfiles"]) {
@@ -59,7 +79,7 @@ public:
             assetFileIdx++;
         }
 
-        // Crea una mappa stringa (id instance) -> riferimento all'istanza di Instance
+        // Creates a map string (instance id) -> Instance*
         std::unordered_map<std::string, Instance*> instanceIdToInstanceRef;
         for (auto kv : SC.InstanceIds) {
             Instance *inst = SC.I[kv.second];
@@ -91,16 +111,16 @@ public:
             auto startEndFrames = charJson.value("startEndFrames", std::vector<std::vector<int>>{});
             std::string baseTrack = charJson.value("BaseTrackName", "");
 
-            // Inizializza Animations
+            // Animations initialization
             int animCount = static_cast<int>(animList.size());
-            // Inizializza Anims[skinId] come un vettore di Animations di dimensione animCount
+            // Initializes Anims[skinId] as a vector of Animations of size animCount
             if (Anims.size() <= skinId) {
                 Anims.resize(skinId + 1);
             }
             Anims[skinId].resize(animCount);
             for (int ian = 0; ian < animCount; ian++) {
 
-                // Trova l'AssetFile corrispondente all'ID dell'animazione
+                // Find the corresponding AssetFile for the animation ID
                 const std::string& idToSeek = animList[ian];
                 if (assetFileIdToIndex.find(idToSeek) != assetFileIdToIndex.end()) {
                     assetFileIdx = assetFileIdToIndex[idToSeek];
@@ -113,7 +133,7 @@ public:
                 std::cout << "ANIM " << ian << " of char " << skinId << " initialized with asset file: " << assetFilesList[assetFileIdx]["id"] << "\n";
             }
 
-            // Inizializza AnimBlender
+            // AnimBlender initialization
             std::vector<AnimBlendSegment> segments(startEndFrames.size());
             for (size_t i = 0; i < startEndFrames.size(); ++i) {
                 segments[i] = {startEndFrames[i][0], startEndFrames[i][1], 0.0f, static_cast<int>(i)};
@@ -124,19 +144,19 @@ public:
             // std::cout << "First segment starts at " << ab->segments[0].st << " and ends at " << ab->segments[0].en << "\n";
 
 
-            // Inizializza SkeletalAnimation
+            // SkeletalAnimation initialization
             auto SKA = std::make_shared<SkeletalAnimation>();
             SKA->init(Anims[skinId].data(), animCount, baseTrack);
             skinId++;
 
-            // Crea Character e aggiungi
+            // Creates the Character and adds it to the manager
             auto charac = std::make_shared<Character>(name, pos, ab, SKA, charStates);
             if (!dialogues.empty()) {
                 charac->setDialogues(dialogues);
             }
             addChar(charac);
 
-            // Aggiunta riferimento instances al charcter
+            // Adding instance references to the character
             std::vector<Instance*> charInstances;
             for (const auto& instanceId : instancesIds) {
                 if (instanceIdToInstanceRef.find(instanceId) != instanceIdToInstanceRef.end()) {
@@ -152,10 +172,16 @@ public:
         return 0;
     }
 
+    /**
+     * Returns the vector of Animations for cleanup purposes.
+     */
     std::vector<Animations>& getAnims() {
          return Anims[0]; // Ritorna l'ultima animazione caricata
     }
 
+    /**
+     * Cleans up all animations associated with the characters.
+     */
     void cleanup() {
         for (int i = 0; i < Anims.size(); ++i) {
             for (int j = 0; j < Anims[i].size(); ++j) {
@@ -163,19 +189,31 @@ public:
             }
             // Anims[i].cleanup();
         }
-        // if (Anim) {
-        //     delete[] Anim;
-        //     Anim = nullptr;
-        // }
-        // characters.clear();
     }
 
+    /**
+     * Returns the maximum distance to consider a Character "near".
+     */
     float getMaxDistance() const {
         return maxDistance;
     }
 
+
+
 private:
+    /**
+     * Collection of managed Character instances.
+     */
     std::vector<std::shared_ptr<Character>> characters;
-    std::vector<std::vector<Animations>> Anims; // Per cleanuppare le animazioni degli Character
-    constexpr static float maxDistance = 5.0f; // Distanza massima per considerare un Character "vicino"
+
+    /**
+     * 2D vector of Animations for cleanup purposes.
+     * Outer vector indexed by skin ID, inner vector contains Animations for that skin.
+     */
+    std::vector<std::vector<Animations>> Anims;
+
+    /**
+     * Maximum distance to consider a Character "near" for interaction.
+     */
+    constexpr static float maxDistance = 5.0f;
 };
