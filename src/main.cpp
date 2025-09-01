@@ -652,42 +652,49 @@ class CGProject : public BaseProject {
 	}
 
 	void localCleanup() {
+		Tvoid.cleanup();
+		charManager.cleanup();
+
+		DSLlightModel.cleanup();
+		DSLgeomShadowTime.cleanup();
+		DSLgeomShadow.cleanup();
 		DSLgeomShadow4Char.cleanup();
+		DSLshadowMap.cleanup();
+		DSLshadowMapChar.cleanup();
 		DSLpbr.cleanup();
 		DSLcharPbr.cleanup();
-        DSLpbrShadow.cleanup();
+		DSLpbrShadow.cleanup();
 		DSLskybox.cleanup();
-        DSLgeomShadowTime.cleanup();
-        DSLgeomShadow.cleanup();
-        DSLwater.cleanup();
-        DSLgrass.cleanup();
 		DSLterrain.cleanup();
-		DSLlightModel.cleanup();
-        DSLshadowMap.cleanup();
-        DSLshadowMapChar.cleanup();
+		DSLwater.cleanup();
+		DSLgrass.cleanup();
+		DSLchar.cleanup();
+		DSLtorches.cleanup();
+
+		VDtan.cleanup();
+		VDpos.cleanup();
+		VDnormUV.cleanup();
+		VDchar.cleanup();
 
 		Pchar.destroy();
-        PcharPbr.destroy();
+		PcharPbr.destroy();
 		Pskybox.destroy();
-        Pwater.destroy();
-        Pgrass.destroy();
-        Pprops.destroy();
-        Ptorches.destroy();
-        Pbuildings.destroy();
+		Pwater.destroy();
+		Pgrass.destroy();
+		Pprops.destroy();
+		Ptorches.destroy();
+		Pbuildings.destroy();
 		Pterrain.destroy();
-        PshadowMap.destroy();
-        PshadowMapChar.destroy();
-        PshadowMapSky.destroy();
-        PshadowMapWater.destroy();
+		PshadowMap.destroy();
+		PshadowMapChar.destroy();
+		PshadowMapSky.destroy();
+		PshadowMapWater.destroy();
 
-        RPshadow.destroy();
+		RPshadow.destroy();
 		RP.destroy();
 
-		SC.localCleanup();	
+		SC.localCleanup();
 		txt.localCleanup();
-
-        Tvoid.cleanup();
-		charManager.cleanup();
 	}
 
 	static void populateCommandBufferAccess(VkCommandBuffer commandBuffer, int currentImage, void *Params) {
