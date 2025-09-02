@@ -3,7 +3,7 @@
 Character::Character(const std::string& name, const glm::vec3& pos, std::shared_ptr<AnimBlender> AB, std::shared_ptr<SkeletalAnimation> SKA, const std::vector<std::string>& stateNames)
     : name(name), position(pos), stateNames(stateNames), currentStateIdx(getStateIndex("Idle")), currentDialogue(0), AB(AB), SKA(SKA) {
     
-    // Inizializza i dialoghi di default
+    // Initilize default dialogues if none are provided
     dialogues = {"Hello there!",
                  "Running dialogue",
                  "Idle dialogue",
@@ -38,7 +38,7 @@ int Character::getStateIndex(const std::string& stateName) const {
             return static_cast<int>(i);
         }
     }
-    return -1; // Stato non valido
+    return -1; // State not found
 }
 
 int Character::getStateIndex() const {
@@ -64,10 +64,11 @@ void Character::nextDialogue() {
         ++currentDialogue;
 }
 
+// Simple interaction logic: if in "Idle" state, switch to the next state and start corresponding animation
 void Character::interact() {
     if (getCurrentState() == "Idle") {
-        setState(stateNames[1]); // Cambia allo succesivo a quello Idle (assumendo che sia il secondo stato)
-        // Trova l'indice dello stato "Salute" e avvia l'animazione corrispondente
+        setState(stateNames[1]); // Change to the next state (e.g., "Running")
+        // Find the corresponding animation index and start the animation
         int nextAnimId = getStateIndex(getCurrentState());
         if (nextAnimId >= 0)
             AB->Start(nextAnimId, 0.5);
@@ -82,11 +83,13 @@ std::string Character::charStateToString(const std::string& stateName) const {
     return stateName;
 }
 
+// Returns the transformation matrices for the current skeletal animation state
 std::vector<glm::mat4>* Character::getTransformMatrices() {
     SKA->Sample(*AB.get());
     return SKA->getTransformMatrices();
 }
 
+// Sets the character state to "Idle", resets dialogue index, and starts the "Idle" animation
 void Character::setIdle() {
     setState("Idle");
     AB->Start(getStateIndex("Idle"), 0.5);
