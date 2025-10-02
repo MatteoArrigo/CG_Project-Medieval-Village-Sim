@@ -55,7 +55,7 @@ Switch between various camera perspectives:
 - Torch lights and point lights with flickering fire effects
 
 <p align="center">
-    <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMG5yd3F5cWNpbTJ5ZG5pMjBxc2Y1eWpkbDh3enBiazhoNDd6czBzaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9bTn6mLvKeZO5iD19M/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />
+    <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMG5yd3F5cWNpbTJ5ZG5pMjBxc2Y1eWpkbDh3enBiazhoNDd6czBzaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9bTn6mLvKeZO5iD19M/giphy.gif" style="display:block; margin: 0 auto; width:100%;" />
 </p>
 
 ---
@@ -96,5 +96,5 @@ Switch between various camera perspectives:
 ⚠️ Current collision detection of the player is supposed to work correctly with terrain only. Collision detection with other props such as buildings is currently work in progress (not working very well at the moment).
 
 <p align="center">
-    <img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmpycHcxNW9lZDYwZXEzbWp4NDE2ZHM5MHB6b2o5ZHh2Y21ob2h2cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/6HDntedpytvL7E77ed/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />
+    <img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmpycHcxNW9lZDYwZXEzbWp4NDE2ZHM5MHB6b2o5ZHh2Y21ob2h2cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/6HDntedpytvL7E77ed/giphy.gif" style="display:block; margin: 0 auto; width:100%;" />
 </p>
