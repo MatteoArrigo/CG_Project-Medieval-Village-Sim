@@ -76,7 +76,7 @@ Switch between various camera perspectives:
 - Props and decorative elements
 - Interactive torches and environmental objects
 
-<p align="center" style="display:block; margin: 0 auto; width:100%;" >
+<p align="center" style="display:block; margin: 0 auto; width:80%;" >
     <img src="assets/documentation/assets.png" />
 </p>
 
