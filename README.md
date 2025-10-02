@@ -57,6 +57,7 @@ Switch between various camera perspectives:
 <p align="center">
     <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMG5yd3F5cWNpbTJ5ZG5pMjBxc2Y1eWpkbDh3enBiazhoNDd6czBzaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9bTn6mLvKeZO5iD19M/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />
 </p>
+
 ---
 
 ### 🌳 Environment Rendering
@@ -65,7 +66,8 @@ Switch between various camera perspectives:
 - Grass and vegetation movement over time
 - Skybox rendering
 
-<img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZThvcnYzZTIwOGJhaTdxMXZ2bzZic2YxM29iNTg3aTlqZjVzYzlobCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5yYSBgeSQN2dFEykbX/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />
+[//]: # (The following GIF is not working :( skipping... )
+[//]: # (<img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZThvcnYzZTIwOGJhaTdxMXZ2bzZic2YxM29iNTg3aTlqZjVzYzlobCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5yYSBgeSQN2dFEykbX/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />)
 
 ---
 
@@ -74,7 +76,9 @@ Switch between various camera perspectives:
 - Props and decorative elements
 - Interactive torches and environmental objects
 
-<img src="assets/documentation/assets.png" style="display:block; margin: 0 auto; width:50%;" />
+<p align="center">
+    <img src="assets/documentation/assets.png" style="display:block; margin: 0 auto; width:50%;" />
+</p>
 
 ---
 
@@ -91,5 +95,6 @@ Switch between various camera perspectives:
 
 ⚠️ Current collision detection of the player is supposed to work correctly with terrain only. Collision detection with other props such as buildings is currently work in progress (not working very well at the moment).
 
-<img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmpycHcxNW9lZDYwZXEzbWp4NDE2ZHM5MHB6b2o5ZHh2Y21ob2h2cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/6HDntedpytvL7E77ed/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />
-
+<p align="center">
+    <img src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmpycHcxNW9lZDYwZXEzbWp4NDE2ZHM5MHB6b2o5ZHh2Y21ob2h2cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/6HDntedpytvL7E77ed/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />
+</p>
