@@ -77,7 +77,7 @@ Switch between various camera perspectives:
 - Interactive torches and environmental objects
 
 <p align="center">
-    <img src="assets/documentation/assets.png" style="display:block; margin: 0 auto; width:50%;" />
+    <img src="assets/documentation/assets.png" style="display:block; margin: 0 auto; width:80%;" />
 </p>
 
 ---
