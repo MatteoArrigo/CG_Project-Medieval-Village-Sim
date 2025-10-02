@@ -64,7 +64,7 @@ Switch between various camera perspectives:
 - Grass and vegetation movement over time
 - Skybox rendering
 
-<img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZndta3l5bHY0ZGo5NHU2eGp1bG80bGswOGtubXpnN2F5dnkycXQ4YyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7ZOtqhSZgogN6E1se5/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />
+<img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZndta3l5bHY0ZGo5NHU2eGp1bG80bGswOGtubXpnN2F5dnkycXQ4YyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/7ZOtqhSZgogN6E1se5/giphy.gif?raw=true" style="display:block; margin: 0 auto; width:50%;" />
 
 ---
 
