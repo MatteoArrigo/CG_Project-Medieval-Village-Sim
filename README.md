@@ -54,8 +54,9 @@ Switch between various camera perspectives:
 - Shadow mapping for character and props
 - Torch lights and point lights with flickering fire effects
 
-<img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMG5yd3F5cWNpbTJ5ZG5pMjBxc2Y1eWpkbDh3enBiazhoNDd6czBzaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9bTn6mLvKeZO5iD19M/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />
-
+<p align="center">
+    <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMG5yd3F5cWNpbTJ5ZG5pMjBxc2Y1eWpkbDh3enBiazhoNDd6czBzaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9bTn6mLvKeZO5iD19M/giphy.gif" style="display:block; margin: 0 auto; width:50%;" />
+</p>
 ---
 
 ### 🌳 Environment Rendering
